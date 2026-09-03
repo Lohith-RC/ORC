@@ -7,10 +7,34 @@ module.exports = {
   theme: {
     extend: {
       fontFamily: {
-        sans: ['Inter', 'sans-serif'],
-        display: ['Outfit', 'sans-serif'],
+        sans: ['"Plus Jakarta Sans"', 'Inter', '-apple-system', 'sans-serif'],
+        serif: ['Newsreader', 'Fraunces', 'Georgia', 'serif'],
+        mono: ['"Geist Mono"', 'JetBrains Mono', 'Consolas', 'monospace'],
+        display: ['Newsreader', 'Fraunces', 'Georgia', 'serif'],
       },
       colors: {
+        parchment: {
+          50: '#FDFBF7',
+          100: '#F7F4EC',
+          200: '#EFEAE0',
+          300: '#E4DDD0',
+          400: '#D5CCBD',
+        },
+        ink: {
+          700: '#2A2C34',
+          800: '#1E2026',
+          850: '#15161B',
+          900: '#101115',
+          950: '#0A0B0E',
+        },
+        clinical: {
+          teal: '#165B51',
+          celadon: '#237367',
+          sage: '#3A6852',
+          terracotta: '#9E3B2E',
+          ochre: '#B2761B',
+          slate: '#253545',
+        },
         teal: {
           50: '#f0fdfa',
           100: '#ccfbf1',
@@ -32,4 +56,4 @@ module.exports = {
     },
   },
   plugins: [],
-} 
+}

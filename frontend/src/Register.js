@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import { UserPlus, User, Lock, Mail, ArrowRight } from 'lucide-react';
+import { User, Lock, Mail, ArrowRight, UserCheck } from 'lucide-react';
 import axios from 'axios';
 import registerImage from './images/4.jpg';
 
@@ -26,7 +25,6 @@ const Register = ({ onLogin }) => {
                 email: email.trim()
             });
 
-            // Auto-login after successful registration
             const loginParams = new URLSearchParams();
             loginParams.append('username', username.trim());
             loginParams.append('password', password);
@@ -38,125 +36,140 @@ const Register = ({ onLogin }) => {
             navigate('/profile');
 
         } catch (err) {
-            // Show the real validation error from the server
             const detail = err.response?.data?.detail;
             if (Array.isArray(detail)) {
                 setError(detail.map(d => d.msg).join('. '));
             } else {
-                setError(detail || 'Registration failed. Please try a different username or email.');
+                setError(detail || 'Registration failed. Please check your credentials.');
             }
         } finally {
             setLoading(false);
         }
     };
-    
-    const ImagePlaceholder = ({ className }) => (
-        <div className={`hidden lg:block relative ${className}`}>
-            <img src={registerImage} alt="Register Illustration" className="absolute inset-0 w-full h-full object-cover rounded-l-2xl" />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
-            <div className="relative h-full flex flex-col justify-end p-10 text-white">
-                <UserPlus className="w-16 h-16 mb-4" />
-                <h2 className="text-3xl font-bold">Join Our Community</h2>
-                <p className="mt-2 text-gray-200">Create an account to get free, confidential analysis and track your results.</p>
-            </div>
-        </div>
-    );
-
 
     return (
-        <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center p-4">
-            <motion.div
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.5 }}
-                className="w-full max-w-6xl mx-auto bg-white dark:bg-gray-800/50 rounded-2xl shadow-xl overflow-hidden grid lg:grid-cols-2"
-            >
-                <div className="p-8 sm:p-12 lg:order-2">
-                    <div className="text-center lg:text-left mb-10">
-                         <Link to="/" className="inline-block mb-6 text-blue-600 dark:text-blue-400 hover:underline">
-                            &larr; Back to Home
-                        </Link>
-                        <h1 className="text-3xl sm:text-4xl font-extrabold text-gray-900 dark:text-white">Create Account</h1>
-                        <p className="mt-2 text-gray-600 dark:text-gray-300">
-                            Already have an account?{' '}
-                            <Link to="/login" className="font-semibold text-blue-600 dark:text-blue-400 hover:underline">
-                                Sign in
-                            </Link>
+        <div className="min-h-screen bg-parchment-100 dark:bg-ink-950 flex items-center justify-center p-4 font-sans text-stone-800 dark:text-stone-200">
+            <div className="w-full max-w-5xl mx-auto border border-stone-300 dark:border-stone-800 bg-stone-50 dark:bg-stone-900 shadow-xl overflow-hidden grid lg:grid-cols-12 relative">
+                <span className="absolute -top-1 -left-1 text-[10px] font-mono text-stone-400">+</span>
+                <span className="absolute -top-1 -right-1 text-[10px] font-mono text-stone-400">+</span>
+
+                {/* Imagery Column (5 cols) */}
+                <div className="hidden lg:block lg:col-span-5 relative bg-stone-950 border-r border-stone-200 dark:border-stone-800">
+                    <img src={registerImage} alt="Clinical Lab" className="w-full h-full object-cover filter contrast-105 opacity-80" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-stone-950 via-stone-950/40 to-transparent flex flex-col justify-end p-8 text-white">
+                        <div className="font-mono text-[10px] uppercase text-clinical-teal tracking-widest mb-1">
+                            RESEARCH & CLINICAL NETWORK
+                        </div>
+                        <h3 className="font-serif text-2xl font-light">Join the Screening Portal</h3>
+                        <p className="font-mono text-xs text-stone-400 mt-2">
+                            Securely track patient cohorts, export comprehensive diagnostic PDFs, and monitor triage analytics.
                         </p>
                     </div>
+                </div>
 
-                    <form onSubmit={handleSubmit} className="space-y-6">
-                        <div className="relative">
-                            <User className="w-5 h-5 text-gray-400 absolute left-4 top-1/2 -translate-y-1/2" />
-                            <input
-                                type="text"
-                                placeholder="Full Name"
-                                value={fullName}
-                                onChange={(e) => setFullName(e.target.value)}
-                                className="w-full pl-12 pr-4 py-3 border border-gray-300 dark:border-gray-600 rounded-full bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                required
-                            />
+                {/* Form Column (7 cols) */}
+                <div className="lg:col-span-7 p-8 sm:p-14">
+                    <div className="mb-6">
+                        <Link to="/" className="inline-block mb-4 font-mono text-xs text-clinical-teal dark:text-teal-400 hover:underline">
+                            &larr; RETURN TO REPOSITORY HOME
+                        </Link>
+                        <span className="font-mono text-[10px] text-stone-400 uppercase tracking-widest block mb-1">
+                            REGISTRATION PROTOCOL
+                        </span>
+                        <h1 className="font-serif text-3xl sm:text-4xl text-stone-900 dark:text-stone-100 font-normal">
+                            Create Practitioner Profile
+                        </h1>
+                    </div>
+
+                    <form onSubmit={handleSubmit} className="space-y-3.5 font-mono text-xs">
+                        <div>
+                            <label className="block text-[10px] uppercase text-stone-500 mb-1">Full Name & Title</label>
+                            <div className="relative">
+                                <User className="w-4 h-4 text-stone-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                                <input
+                                    type="text"
+                                    placeholder="Dr. Samantha Rao"
+                                    value={fullName}
+                                    onChange={(e) => setFullName(e.target.value)}
+                                    className="w-full pl-9 pr-3 py-2 bg-white dark:bg-stone-950 border border-stone-300 dark:border-stone-700 text-stone-900 dark:text-stone-100 text-sm font-sans focus:outline-none focus:border-clinical-teal"
+                                    required
+                                />
+                            </div>
                         </div>
-                        <div className="relative">
-                            <UserPlus className="w-5 h-5 text-gray-400 absolute left-4 top-1/2 -translate-y-1/2" />
-                            <input
-                                type="text"
-                                placeholder="Username"
-                                value={username}
-                                onChange={(e) => setUsername(e.target.value)}
-                                className="w-full pl-12 pr-4 py-3 border border-gray-300 dark:border-gray-600 rounded-full bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                required
-                            />
+
+                        <div>
+                            <label className="block text-[10px] uppercase text-stone-500 mb-1">Username Identifier</label>
+                            <div className="relative">
+                                <UserCheck className="w-4 h-4 text-stone-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                                <input
+                                    type="text"
+                                    placeholder="samantha_rao"
+                                    value={username}
+                                    onChange={(e) => setUsername(e.target.value)}
+                                    className="w-full pl-9 pr-3 py-2 bg-white dark:bg-stone-950 border border-stone-300 dark:border-stone-700 text-stone-900 dark:text-stone-100 text-sm font-sans focus:outline-none focus:border-clinical-teal"
+                                    required
+                                />
+                            </div>
                         </div>
-                        <div className="relative">
-                            <Mail className="w-5 h-5 text-gray-400 absolute left-4 top-1/2 -translate-y-1/2" />
-                            <input
-                                type="email"
-                                placeholder="Email Address"
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
-                                className="w-full pl-12 pr-4 py-3 border border-gray-300 dark:border-gray-600 rounded-full bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                required
-                            />
+
+                        <div>
+                            <label className="block text-[10px] uppercase text-stone-500 mb-1">Email Address</label>
+                            <div className="relative">
+                                <Mail className="w-4 h-4 text-stone-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                                <input
+                                    type="email"
+                                    placeholder="samantha@hospital.org"
+                                    value={email}
+                                    onChange={(e) => setEmail(e.target.value)}
+                                    className="w-full pl-9 pr-3 py-2 bg-white dark:bg-stone-950 border border-stone-300 dark:border-stone-700 text-stone-900 dark:text-stone-100 text-sm font-sans focus:outline-none focus:border-clinical-teal"
+                                    required
+                                />
+                            </div>
                         </div>
-                        <div className="relative">
-                            <Lock className="w-5 h-5 text-gray-400 absolute left-4 top-1/2 -translate-y-1/2" />
-                            <input
-                                type="password"
-                                placeholder="Password"
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                                className="w-full pl-12 pr-4 py-3 border border-gray-300 dark:border-gray-600 rounded-full bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                required
-                            />
+
+                        <div>
+                            <label className="block text-[10px] uppercase text-stone-500 mb-1">Password</label>
+                            <div className="relative">
+                                <Lock className="w-4 h-4 text-stone-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                                <input
+                                    type="password"
+                                    placeholder="••••••••"
+                                    value={password}
+                                    onChange={(e) => setPassword(e.target.value)}
+                                    className="w-full pl-9 pr-3 py-2 bg-white dark:bg-stone-950 border border-stone-300 dark:border-stone-700 text-stone-900 dark:text-stone-100 text-sm font-sans focus:outline-none focus:border-clinical-teal"
+                                    required
+                                />
+                            </div>
                         </div>
 
                         {error && (
-                            <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-red-500 text-sm text-center">
+                            <p className="p-2 border border-red-300 dark:border-red-900 bg-red-50 dark:bg-red-950/30 text-red-600 dark:text-red-400 text-xs">
                                 {error}
-                            </motion.p>
+                            </p>
                         )}
-                        
-                        <p className="text-xs text-gray-400 dark:text-gray-500 text-center">Password must be at least 6 characters.</p>
 
-                        <motion.button
-                            whileHover={{ scale: 1.05 }}
-                            whileTap={{ scale: 0.95 }}
-                            type="submit"
-                            disabled={loading}
-                            className="w-full flex items-center justify-center bg-gradient-to-r from-teal-500 to-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold py-3 px-4 rounded-full text-lg shadow-lg hover:shadow-xl transition-shadow duration-300"
-                        >
-                            <span>{loading ? 'Creating Account...' : 'Create Account'}</span>
-                            {!loading && <ArrowRight className="w-5 h-5 ml-2" />}
-                        </motion.button>
+                        <div className="pt-2">
+                            <button
+                                type="submit"
+                                disabled={loading}
+                                className="w-full py-3.5 bg-stone-900 dark:bg-stone-100 text-stone-100 dark:text-stone-900 text-xs font-mono uppercase tracking-wider font-semibold hover:bg-clinical-teal dark:hover:bg-clinical-teal dark:hover:text-white transition-colors flex items-center justify-center gap-2"
+                            >
+                                <span>{loading ? 'Registering Practitioner...' : 'Initialize Profile'}</span>
+                                <ArrowRight className="w-4 h-4" />
+                            </button>
+                        </div>
+
+                        <div className="pt-3 border-t border-stone-200 dark:border-stone-800 text-center font-sans text-xs text-stone-500">
+                            Already authorized?{' '}
+                            <Link to="/login" className="font-mono text-clinical-teal dark:text-teal-400 hover:underline">
+                                Sign into existing profile
+                            </Link>
+                        </div>
                     </form>
                 </div>
-                
-                <ImagePlaceholder className="lg:order-1" />
-
-            </motion.div>
+            </div>
         </div>
     );
 };
 
-export default Register; 
+export default Register;

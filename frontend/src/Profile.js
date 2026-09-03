@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { User, Mail, Calendar, Edit3, Save, XCircle, BarChart, AlertTriangle, Briefcase, Clock } from 'lucide-react';
+import { User, Mail, Calendar, Edit3, Save, X, BarChart, AlertTriangle, Clock, ShieldCheck, ShieldAlert, FileText } from 'lucide-react';
 import axios from 'axios';
 import profileImage from './images/7.webp';
 
@@ -29,7 +29,7 @@ const Profile = ({ token }) => {
                 setFormData({ full_name: userResponse.data.full_name, email: userResponse.data.email });
                 setHistory(historyResponse.data);
             } catch (err) {
-                setError('Could not load profile data. Please try again later.');
+                setError('Could not retrieve practitioner dossier. Please verify network connection.');
             } finally {
                 setLoading(false);
             }
@@ -50,145 +50,180 @@ const Profile = ({ token }) => {
                 headers: { Authorization: `Bearer ${token}` }
             });
             setUser(response.data);
-            setMessage('Profile updated successfully!');
+            setMessage('Practitioner profile updated successfully.');
             setIsEditing(false);
         } catch (err) {
-            setError('Failed to update profile. Please try again.');
+            setError('Failed to persist profile modifications.');
         }
     };
 
-    const AnalysisHistory = () => (
-        <div className="bg-gray-50 dark:bg-gray-800/50 p-6 rounded-2xl shadow-inner">
-            <h3 className="text-xl font-bold text-gray-800 dark:text-white mb-4 flex items-center">
-                <Briefcase className="mr-3 text-blue-500" />
-                Analysis History
-            </h3>
-            {history.length > 0 ? (
-                <div className="space-y-4">
-                    {history.map(item => (
-                        <div key={item.id} className="p-4 bg-white dark:bg-gray-700 rounded-lg shadow-sm flex justify-between items-center">
-                            <div>
-                                <p className="font-semibold">{item.prediction === 'cancer' ? 'Cancer Detected' : 'No Cancer Detected'}</p>
-                                <p className="text-sm text-gray-500 dark:text-gray-400">Confidence: {(item.confidence * 100).toFixed(1)}%</p>
-                            </div>
-                            <div className="text-right text-sm text-gray-500 dark:text-gray-400">
-                                <p>{new Date(item.timestamp).toLocaleDateString()}</p>
-                                <p className="flex items-center justify-end"><Clock className="w-3 h-3 mr-1" />{new Date(item.timestamp).toLocaleTimeString()}</p>
-                            </div>
-                        </div>
-                    ))}
-                </div>
-            ) : (
-                <div className="text-center py-10 text-gray-500 dark:text-gray-400">
-                     <BarChart className="w-12 h-12 mx-auto mb-3" />
-                    <p>Your analysis history is empty.</p>
-                    <p className="text-sm mt-1">Upload an image to see your results here.</p>
-                </div>
-            )}
-        </div>
-    );
-    
-    const ProfileImage = ({ className }) => (
-        <div className={`relative flex-shrink-0 ${className}`}>
-            <img src={profileImage} alt="Profile" className="w-full h-full rounded-full object-cover" />
-            <button 
-                onClick={() => setIsEditing(true)}
-                className="absolute bottom-0 right-0 bg-blue-600 text-white p-2 rounded-full shadow-md hover:bg-blue-700 transition"
-            >
-                <Edit3 className="w-4 h-4" />
-            </button>
-        </div>
-    );
-    
     if (loading) {
-        return <div className="text-center py-20">Loading profile...</div>;
+        return (
+            <div className="min-h-screen bg-parchment-100 dark:bg-ink-950 flex items-center justify-center font-mono text-xs text-stone-500">
+                LOADING PRACTITIONER DOSSIER...
+            </div>
+        );
     }
 
     return (
-        <div className="bg-gray-50 dark:bg-gray-900 min-h-screen py-20 px-4 sm:px-6 lg:px-8">
-            <div className="max-w-4xl mx-auto">
-                <AnimatePresence>
-                    {error && (
-                        <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="bg-red-100 border border-red-400 text-red-700 dark:bg-red-900/20 dark:border-red-600 dark:text-red-300 px-4 py-3 rounded-lg relative mb-6" role="alert">
-                            <AlertTriangle className="w-5 h-5 inline-block mr-2" />
-                            {error}
-                        </motion.div>
-                    )}
-                    {message && (
-                         <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="bg-green-100 border border-green-400 text-green-700 dark:bg-green-900/20 dark:border-green-600 dark:text-green-300 px-4 py-3 rounded-lg relative mb-6" role="alert">
-                            {message}
-                        </motion.div>
-                    )}
-                </AnimatePresence>
-                <motion.div
-                    initial={{ opacity: 0, y: -50 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.7 }}
-                    className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl overflow-hidden"
-                >
-                    <div className="p-8 md:p-12">
-                        <form onSubmit={handleSave}>
-                            <div className="flex flex-col md:flex-row items-center md:items-start space-y-6 md:space-y-0 md:space-x-10">
-                                <ProfileImage className="w-40 h-40" />
-                                <div className="text-center md:text-left flex-grow">
-                                    {isEditing ? (
-                                        <input 
-                                            type="text"
-                                            name="full_name"
-                                            value={formData.full_name}
-                                            onChange={handleFormChange}
-                                            className="text-4xl font-extrabold text-gray-900 dark:text-white bg-transparent border-b-2 border-gray-300 dark:border-gray-600 focus:border-blue-500 focus:outline-none w-full"
-                                        />
-                                    ) : (
-                                        <h1 className="text-4xl font-extrabold text-gray-900 dark:text-white">{user.full_name}</h1>
-                                    )}
-                                    <p className="mt-2 text-lg text-gray-600 dark:text-gray-300">Welcome to your personal dashboard.</p>
-                                    <div className="mt-6 space-y-4">
-                                        <div className="flex items-center text-gray-700 dark:text-gray-200">
-                                            <Mail className="w-5 h-5 mr-3 text-blue-500"/>
-                                            {isEditing ? (
-                                                <input 
-                                                    type="email"
-                                                    name="email"
-                                                    value={formData.email}
-                                                    onChange={handleFormChange}
-                                                    className="bg-transparent border-b border-gray-300 dark:border-gray-600 focus:border-blue-500 focus:outline-none w-full"
-                                                />
-                                            ) : (
-                                                <span>{user.email}</span>
-                                            )}
+        <div className="bg-parchment-100 dark:bg-ink-950 min-h-screen py-12 px-4 sm:px-6 lg:px-8 font-sans text-stone-800 dark:text-stone-200">
+            <div className="max-w-5xl mx-auto space-y-8">
+                {/* Header */}
+                <div className="border-b border-stone-200 dark:border-stone-800 pb-4 flex items-center justify-between font-mono text-xs text-stone-500">
+                    <span>PRACTITIONER DOSSIER // REPOSITORY ARCHIVE</span>
+                    <span>ID: USR-{user?.id || '001'}</span>
+                </div>
+
+                {error && (
+                    <div className="p-3 border border-red-300 dark:border-red-900 bg-red-50 dark:bg-red-950/20 text-red-700 dark:text-red-300 font-mono text-xs flex items-center gap-2">
+                        <AlertTriangle className="w-4 h-4 flex-shrink-0" />
+                        <span>{error}</span>
+                    </div>
+                )}
+                {message && (
+                    <div className="p-3 border border-teal-300 dark:border-teal-900 bg-teal-50 dark:bg-teal-950/20 text-teal-800 dark:text-teal-300 font-mono text-xs flex items-center gap-2">
+                        <ShieldCheck className="w-4 h-4 flex-shrink-0" />
+                        <span>{message}</span>
+                    </div>
+                )}
+
+                {/* Profile Overview Card */}
+                <div className="border border-stone-300 dark:border-stone-800 bg-stone-50 dark:bg-stone-900 p-8 relative">
+                    <span className="absolute -top-1 -left-1 text-[10px] font-mono text-stone-400">+</span>
+                    <span className="absolute -top-1 -right-1 text-[10px] font-mono text-stone-400">+</span>
+
+                    <form onSubmit={handleSave}>
+                        <div className="flex flex-col sm:flex-row items-center sm:items-start gap-8">
+                            <div className="relative w-32 h-32 flex-shrink-0 border border-stone-300 dark:border-stone-700 bg-stone-950">
+                                <img src={profileImage} alt="Profile" className="w-full h-full object-cover filter grayscale contrast-105" />
+                                <button 
+                                    type="button"
+                                    onClick={() => setIsEditing(!isEditing)}
+                                    className="absolute -bottom-2 -right-2 p-1.5 bg-stone-900 text-white text-xs font-mono hover:bg-clinical-teal transition-colors"
+                                    title="Edit credentials"
+                                >
+                                    <Edit3 className="w-3.5 h-3.5" />
+                                </button>
+                            </div>
+
+                            <div className="flex-grow text-center sm:text-left">
+                                {isEditing ? (
+                                    <div className="space-y-3 font-mono text-xs">
+                                        <div>
+                                            <label className="block text-[10px] text-stone-400 uppercase mb-1">Full Name</label>
+                                            <input 
+                                                type="text"
+                                                name="full_name"
+                                                value={formData.full_name}
+                                                onChange={handleFormChange}
+                                                className="w-full px-3 py-1.5 bg-white dark:bg-stone-950 border border-stone-300 dark:border-stone-700 text-sm font-sans"
+                                            />
                                         </div>
-                                        <div className="flex items-center text-gray-700 dark:text-gray-200">
-                                            <Calendar className="w-5 h-5 mr-3 text-blue-500"/>
-                                            <span>Member since: January 2024</span>
+                                        <div>
+                                            <label className="block text-[10px] text-stone-400 uppercase mb-1">Email</label>
+                                            <input 
+                                                type="email"
+                                                name="email"
+                                                value={formData.email}
+                                                onChange={handleFormChange}
+                                                className="w-full px-3 py-1.5 bg-white dark:bg-stone-950 border border-stone-300 dark:border-stone-700 text-sm font-sans"
+                                            />
+                                        </div>
+                                        <div className="flex gap-2 pt-2">
+                                            <button type="submit" className="px-4 py-1.5 bg-clinical-teal text-white text-xs font-mono uppercase">
+                                                Save Modifications
+                                            </button>
+                                            <button type="button" onClick={() => setIsEditing(false)} className="px-3 py-1.5 border border-stone-300 text-xs font-mono uppercase">
+                                                Cancel
+                                            </button>
                                         </div>
                                     </div>
-                                </div>
-                                <div className="flex-shrink-0 flex items-center space-x-2">
-                                    {isEditing ? (
-                                        <>
-                                            <button type="button" onClick={() => setIsEditing(false)} className="flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-full shadow-sm text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">
-                                                <XCircle className="w-4 h-4 mr-2"/> Cancel
-                                            </button>
-                                            <button type="submit" className="flex items-center px-4 py-2 border border-transparent rounded-full shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700">
-                                                <Save className="w-4 h-4 mr-2"/> Save
-                                            </button>
-                                        </>
-                                    ) : (
-                                        <button type="button" onClick={() => setIsEditing(true)} className="flex items-center px-4 py-2 border border-transparent rounded-full shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700">
-                                            <Edit3 className="w-4 h-4 mr-2"/> Edit Profile
-                                        </button>
-                                    )}
-                                </div>
+                                ) : (
+                                    <div>
+                                        <span className="font-mono text-[10px] text-clinical-teal dark:text-teal-400 uppercase tracking-widest block mb-1">
+                                            CLINICAL PRACTITIONER
+                                        </span>
+                                        <h1 className="font-serif text-3xl text-stone-900 dark:text-stone-100 font-normal">
+                                            {user?.full_name || user?.username}
+                                        </h1>
+                                        <p className="font-mono text-xs text-stone-500 mt-1">
+                                            ID: @{user?.username} • {user?.email}
+                                        </p>
+                                        <div className="mt-4 pt-4 border-t border-stone-200 dark:border-stone-800 flex flex-wrap gap-4 font-mono text-xs text-stone-500">
+                                            <span>REGISTERED: {user?.created_at ? new Date(user.created_at).toLocaleDateString() : 'N/A'}</span>
+                                            <span>TOTAL SPECIMENS EVALUATED: {history.length}</span>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
-                        </form>
-                    </div>
-                    
-                    <div className="p-8 md:p-12 border-t border-gray-200 dark:border-gray-700">
-                       <AnalysisHistory />
+                        </div>
+                    </form>
+                </div>
+
+                {/* Analysis History Log */}
+                <div className="border border-stone-300 dark:border-stone-800 bg-stone-50 dark:bg-stone-900 p-8">
+                    <div className="flex items-center justify-between border-b border-stone-200 dark:border-stone-800 pb-3 mb-6">
+                        <div className="flex items-center gap-2">
+                            <FileText className="w-4 h-4 text-clinical-teal" />
+                            <h2 className="font-serif text-2xl text-stone-900 dark:text-stone-100 font-normal">
+                                Historical Specimen Triage Log
+                            </h2>
+                        </div>
+                        <span className="font-mono text-xs text-stone-400">{history.length} RECORDS</span>
                     </div>
 
-                </motion.div>
+                    {history.length > 0 ? (
+                        <div className="space-y-3">
+                            {history.map(item => {
+                                const isCancer = item.prediction?.toLowerCase() === 'cancer';
+                                const isUncertain = item.prediction?.toLowerCase() === 'uncertain';
+
+                                return (
+                                    <div 
+                                        key={item.id} 
+                                        className="border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-950 p-4 flex flex-col sm:flex-row justify-between sm:items-center gap-4"
+                                    >
+                                        <div className="flex items-center gap-3">
+                                            {isCancer ? (
+                                                <div className="p-2 border border-clinical-terracotta bg-red-50 dark:bg-red-950/20 text-clinical-terracotta">
+                                                    <ShieldAlert className="w-4 h-4" />
+                                                </div>
+                                            ) : isUncertain ? (
+                                                <div className="p-2 border border-clinical-ochre bg-amber-50 dark:bg-amber-950/20 text-clinical-ochre">
+                                                    <AlertTriangle className="w-4 h-4" />
+                                                </div>
+                                            ) : (
+                                                <div className="p-2 border border-clinical-teal bg-teal-50 dark:bg-teal-950/20 text-clinical-teal">
+                                                    <ShieldCheck className="w-4 h-4" />
+                                                </div>
+                                            )}
+
+                                            <div>
+                                                <div className="font-serif text-base font-normal text-stone-900 dark:text-stone-100">
+                                                    {isCancer ? 'Presumptive OSCC Malignancy' : isUncertain ? 'Uncertain / Variance Outlier' : 'Non-Malignant Mucosa'}
+                                                </div>
+                                                <div className="font-mono text-[10px] text-stone-400 space-x-2">
+                                                    <span>CONF: {(item.confidence * 100).toFixed(1)}%</span>
+                                                    {item.uncertainty !== null && <span>• σ²: {item.uncertainty}</span>}
+                                                    {item.risk_score !== null && <span>• RISK: {item.risk_score}</span>}
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div className="font-mono text-xs text-stone-500 text-left sm:text-right">
+                                            <div>{new Date(item.timestamp).toLocaleDateString()}</div>
+                                            <div className="text-[10px] text-stone-400">{new Date(item.timestamp).toLocaleTimeString()}</div>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    ) : (
+                        <div className="text-center py-12 font-mono text-xs text-stone-400">
+                            NO RECORDED INTAKE SPECIMENS IN THIS DOSSIER.
+                        </div>
+                    )}
+                </div>
             </div>
         </div>
     );

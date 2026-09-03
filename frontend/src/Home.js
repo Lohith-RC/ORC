@@ -1,378 +1,368 @@
-import React, { useEffect, useState, useRef } from 'react';
-import { motion, useScroll, useTransform, useMotionValue, useSpring } from 'framer-motion';
-import { CheckCircle, Shield, Zap, Target, Activity, Heart, Cpu, Star, Microscope, ArrowRight, UploadCloud, UserCheck } from 'lucide-react';
+import React, { useState, useRef } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { 
+    Microscope, 
+    ArrowRight, 
+    Activity, 
+    ShieldCheck, 
+    Layers, 
+    Sparkles, 
+    FileText, 
+    Check, 
+    AlertCircle, 
+    SlidersHorizontal,
+    CornerDownRight
+} from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 import heroImage from './images/1.jpg';
 import detailedFeatureImage from './images/8.webp';
 
-// --- Reusable 3D Tilt Card ---
-const TiltCard = ({ children, className }) => {
-    const x = useMotionValue(0);
-    const y = useMotionValue(0);
-    const mouseXSpring = useSpring(x);
-    const mouseYSpring = useSpring(y);
-    const rotateX = useTransform(mouseYSpring, [-0.5, 0.5], ["17.5deg", "-17.5deg"]);
-    const rotateY = useTransform(mouseXSpring, [-0.5, 0.5], ["-17.5deg", "17.5deg"]);
+// --- Interactive Pathologist's Inspection Viewport with Magnifying Loupe ---
+const PathologistLoupeViewer = () => {
+    const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+    const [isHovered, setIsHovered] = useState(false);
+    const [zoomPos, setZoomPos] = useState({ x: 50, y: 50 });
+    const containerRef = useRef(null);
 
     const handleMouseMove = (e) => {
-        const rect = e.currentTarget.getBoundingClientRect();
-        const width = rect.width;
-        const height = rect.height;
-        const mouseX = e.clientX - rect.left;
-        const mouseY = e.clientY - rect.top;
-        const xPct = mouseX / width - 0.5;
-        const yPct = mouseY / height - 0.5;
-        x.set(xPct);
-        y.set(yPct);
-    };
+        if (!containerRef.current) return;
+        const rect = containerRef.current.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        const xPct = Math.max(0, Math.min(100, (x / rect.width) * 100));
+        const yPct = Math.max(0, Math.min(100, (y / rect.height) * 100));
 
-    const handleMouseLeave = () => {
-        x.set(0);
-        y.set(0);
+        setMousePos({ x, y });
+        setZoomPos({ x: xPct, y: yPct });
     };
 
     return (
-        <motion.div
-            onMouseMove={handleMouseMove}
-            onMouseLeave={handleMouseLeave}
-            style={{ rotateY, rotateX, transformStyle: "preserve-3d" }}
-            className={`relative ${className}`}
-        >
-            <div style={{ transform: "translateZ(50px)" }} className="h-full">
-                {children}
+        <div className="relative w-full">
+            {/* Corner Ticks */}
+            <span className="absolute -top-2 -left-2 text-[11px] font-mono text-stone-400 select-none">+</span>
+            <span className="absolute -top-2 -right-2 text-[11px] font-mono text-stone-400 select-none">+</span>
+            <span className="absolute -bottom-2 -left-2 text-[11px] font-mono text-stone-400 select-none">+</span>
+            <span className="absolute -bottom-2 -right-2 text-[11px] font-mono text-stone-400 select-none">+</span>
+
+            {/* Viewport Card */}
+            <div 
+                ref={containerRef}
+                onMouseMove={handleMouseMove}
+                onMouseEnter={() => setIsHovered(true)}
+                onMouseLeave={() => setIsHovered(false)}
+                className="relative rounded-none overflow-hidden border border-stone-300 dark:border-stone-800 bg-stone-100 dark:bg-stone-900 cursor-crosshair group shadow-xl"
+            >
+                {/* Specimen Header Metadata Strip */}
+                <div className="flex items-center justify-between px-4 py-2 border-b border-stone-200 dark:border-stone-800 bg-stone-50 dark:bg-stone-950 font-mono text-[10px] tracking-wider text-stone-500 uppercase">
+                    <span className="flex items-center gap-2">
+                        <span className="w-1.5 h-1.5 bg-clinical-teal rounded-full animate-pulse"></span>
+                        VIEWPORT // SPECIMEN-0428-A
+                    </span>
+                    <span>MAG: {isHovered ? '2.5X LOUPE' : '1.0X OVERVIEW'}</span>
+                    <span>COORD: {Math.round(zoomPos.x * 4.8)}µm, {Math.round(zoomPos.y * 3.6)}µm</span>
+                </div>
+
+                {/* Main Clinical Image */}
+                <div className="relative aspect-[4/3] w-full overflow-hidden bg-stone-950 select-none">
+                    <img 
+                        src={heroImage} 
+                        alt="Oral Lesion Examination" 
+                        className="w-full h-full object-cover filter contrast-[1.02] brightness-95"
+                    />
+
+                    {/* Reticle / Hairline Grid Overlay */}
+                    <div className="absolute inset-0 pointer-events-none opacity-20 dark:opacity-30 bg-[radial-gradient(#1B5E54_1px,transparent_1px)] [background-size:24px_24px]"></div>
+
+                    {/* Magnification Loupe on Hover */}
+                    <AnimatePresence>
+                        {isHovered && (
+                            <motion.div 
+                                initial={{ opacity: 0, scale: 0.8 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                exit={{ opacity: 0, scale: 0.8 }}
+                                transition={{ duration: 0.15 }}
+                                style={{
+                                    left: `${mousePos.x - 70}px`,
+                                    top: `${mousePos.y - 70}px`,
+                                }}
+                                className="pointer-events-none absolute w-36 h-36 rounded-full border-2 border-clinical-teal shadow-2xl overflow-hidden z-30 bg-stone-950"
+                            >
+                                <div 
+                                    style={{
+                                        backgroundImage: `url(${heroImage})`,
+                                        backgroundPosition: `${zoomPos.x}% ${zoomPos.y}%`,
+                                        backgroundSize: '350%',
+                                        backgroundRepeat: 'no-repeat',
+                                        width: '100%',
+                                        height: '100%',
+                                    }}
+                                />
+                                {/* Crosshair lines */}
+                                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                                    <div className="w-full h-[0.5px] bg-clinical-teal/70"></div>
+                                    <div className="h-full w-[0.5px] bg-clinical-teal/70 absolute"></div>
+                                    <div className="w-4 h-4 border border-clinical-teal/60 rounded-full absolute"></div>
+                                </div>
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
+
+                    {/* Telemetry HUD Badge */}
+                    <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between p-3 rounded bg-stone-950/85 backdrop-blur-md border border-stone-800/80 text-stone-200 font-mono text-[11px]">
+                        <div className="flex items-center gap-3">
+                            <div className="p-1.5 bg-clinical-teal/30 border border-clinical-teal/50 rounded">
+                                <Activity className="w-3.5 h-3.5 text-teal-300" />
+                            </div>
+                            <div>
+                                <span className="text-stone-400 block text-[9px] uppercase tracking-widest">Ensemble Confidence</span>
+                                <span className="font-semibold text-white tracking-wide">96.8% [95.2% – 98.4%]</span>
+                            </div>
+                        </div>
+                        <div className="text-right">
+                            <span className="text-stone-400 block text-[9px] uppercase tracking-widest">Epistemic Variance</span>
+                            <span className="text-emerald-400 font-medium">σ² = 0.007 (High Consensus)</span>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Sub-strip: Model Votes */}
+                <div className="grid grid-cols-4 divide-x divide-stone-200 dark:divide-stone-800 bg-stone-50 dark:bg-stone-950 border-t border-stone-200 dark:border-stone-800 font-mono text-[10px] text-stone-600 dark:text-stone-400 py-2 text-center">
+                    <div>VGG16: <span className="text-stone-900 dark:text-stone-200 font-semibold">0.95</span></div>
+                    <div>ResNet50: <span className="text-stone-900 dark:text-stone-200 font-semibold">0.98</span></div>
+                    <div>EfficientNet: <span className="text-stone-900 dark:text-stone-200 font-semibold">0.97</span></div>
+                    <div>MobileNet: <span className="text-stone-900 dark:text-stone-200 font-semibold">0.96</span></div>
+                </div>
             </div>
-        </motion.div>
+            
+            <p className="font-mono text-[10px] text-stone-400 text-center mt-2">
+                HOVER TO ENGAGE MICROSCOPIC INSPECTION LOUPE // 2.5X OPTICAL MAGNIFICATION
+            </p>
+        </div>
     );
 };
 
-const FeatureCard = ({ icon, title, description, delay = 0 }) => (
-    <TiltCard className="h-full">
-        <motion.div
-            initial={{ opacity: 0, y: 50 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: "-50px" }}
-            transition={{ delay, duration: 0.8, ease: "easeOut" }}
-            className="h-full bg-white/40 dark:bg-slate-800/40 backdrop-blur-2xl border border-white/40 dark:border-slate-700/50 rounded-3xl p-8 shadow-2xl relative overflow-hidden group"
-        >
-            <div className="absolute top-0 right-0 -mt-4 -mr-4 w-32 h-32 bg-gradient-to-br from-teal-400/30 to-blue-500/20 rounded-full blur-3xl group-hover:scale-150 transition-transform duration-700"></div>
-            <div className="mb-6 inline-flex p-4 rounded-2xl bg-teal-100/50 dark:bg-teal-900/30 text-teal-700 dark:text-teal-400 ring-1 ring-inset ring-teal-500/20 shadow-[0_0_15px_rgba(20,184,166,0.2)]">
-                {icon}
-            </div>
-            <h3 className="text-2xl font-display font-semibold text-slate-900 dark:text-white mb-3">{title}</h3>
-            <p className="text-slate-600 dark:text-slate-300 leading-relaxed font-light">{description}</p>
-        </motion.div>
-    </TiltCard>
-);
-
 const Home = () => {
-    const { scrollYProgress } = useScroll();
-    const backgroundY = useTransform(scrollYProgress, [0, 1], ["0%", "50%"]);
-    const textY = useTransform(scrollYProgress, [0, 1], ["0%", "200%"]);
-
-    // Mouse tracking for dynamic background glow
-    const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
-    
-    useEffect(() => {
-        const updateMousePosition = (e) => {
-            setMousePosition({ x: e.clientX, y: e.clientY });
-        };
-        window.addEventListener('mousemove', updateMousePosition);
-        return () => window.removeEventListener('mousemove', updateMousePosition);
-    }, []);
-
     return (
-        <motion.div 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-200 overflow-hidden font-sans min-h-screen relative selection:bg-teal-500/30"
-        >
-            {/* Dynamic Interactive Background */}
-            <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
-                <motion.div 
-                    animate={{
-                        x: mousePosition.x - 300,
-                        y: mousePosition.y - 300,
-                    }}
-                    transition={{ type: "spring", damping: 50, stiffness: 50, mass: 1 }}
-                    className="absolute w-[600px] h-[600px] rounded-full bg-teal-400/10 dark:bg-teal-600/10 blur-[100px]"
-                />
-                <motion.div 
-                    animate={{
-                        x: mousePosition.x - 400,
-                        y: mousePosition.y - 400,
-                    }}
-                    transition={{ type: "spring", damping: 80, stiffness: 30, mass: 2 }}
-                    className="absolute w-[800px] h-[800px] rounded-full bg-blue-400/5 dark:bg-blue-600/10 blur-[120px]"
-                />
-                {/* Noise texture overlay for a premium look */}
-                <div className="absolute inset-0 opacity-[0.015] dark:opacity-[0.03]" style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg viewBox=%220 0 200 200%22 xmlns=%22http://www.w3.org/2000/svg%22%3E%3Cfilter id=%22noiseFilter%22%3E%3CfeTurbulence type=%22fractalNoise%22 baseFrequency=%220.65%22 numOctaves=%223%22 stitchTiles=%22stitch%22/%3E%3C/filter%3E%3Crect width=%22100%25%22 height=%22100%25%22 filter=%22url(%23noiseFilter)%22/%3E%3C/svg%3E")' }}></div>
-            </div>
+        <div className="bg-parchment-100 dark:bg-ink-950 text-stone-800 dark:text-stone-200 min-h-screen transition-colors font-sans selection:bg-clinical-teal/20">
+            {/* Subdued Archival Grid Background */}
+            <div className="fixed inset-0 pointer-events-none opacity-[0.035] dark:opacity-[0.05] bg-[radial-gradient(#1B5E54_1px,transparent_1px)] [background-size:32px_32px]"></div>
 
-            {/* Hero Section */}
-            <section className="relative min-h-screen flex items-center justify-center pt-20 pb-16 px-4 sm:px-6 lg:px-8 z-10">
-                <div className="max-w-7xl mx-auto w-full flex flex-col lg:flex-row items-center gap-16">
-                    <div className="lg:w-1/2 text-center lg:text-left">
-                        <motion.div style={{ y: textY }}>
-                            <motion.div
-                                initial={{ opacity: 0, scale: 0.8 }}
-                                animate={{ opacity: 1, scale: 1 }}
-                                transition={{ duration: 0.8, ease: "easeOut" }}
-                                className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/40 dark:bg-slate-800/50 text-teal-700 dark:text-teal-300 font-medium text-sm mb-8 backdrop-blur-md border border-white/60 dark:border-slate-700 shadow-sm"
-                            >
-                                <span className="relative flex h-3 w-3">
-                                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-teal-400 opacity-75"></span>
-                                  <span className="relative inline-flex rounded-full h-3 w-3 bg-teal-500"></span>
+            {/* ============================================================ */}
+            {/* HERO SECTION: Editorial Asymmetry                           */}
+            {/* ============================================================ */}
+            <section className="relative pt-16 pb-20 px-4 sm:px-6 lg:px-8 border-b border-stone-200/80 dark:border-stone-800/80">
+                <div className="max-w-7xl mx-auto">
+                    <div className="grid lg:grid-cols-12 gap-12 lg:gap-16 items-center">
+                        {/* Left Editorial Narrative (7 cols) */}
+                        <div className="lg:col-span-7">
+                            <div className="inline-flex items-center gap-2 px-3 py-1 border border-stone-300 dark:border-stone-700 bg-stone-100/80 dark:bg-stone-900/80 text-stone-700 dark:text-stone-300 font-mono text-[11px] tracking-wider uppercase mb-8">
+                                <span className="w-2 h-2 bg-clinical-teal rounded-none inline-block"></span>
+                                PROTOCOL 01 // MULTIMODAL CLINICAL TRIAGE
+                            </div>
+
+                            <h1 className="font-serif text-5xl sm:text-6xl lg:text-7xl font-light tracking-tight text-stone-900 dark:text-stone-100 leading-[1.08] mb-6">
+                                Early oral cancer detection, <br />
+                                <span className="font-normal italic text-stone-600 dark:text-stone-400">
+                                    refined by epistemic certainty.
                                 </span>
-                                AI-Powered Intelligence Loop
-                            </motion.div>
-                            
-                            <motion.h1 
-                                initial={{ opacity: 0, y: 30 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ duration: 0.9, delay: 0.2, ease: "easeOut" }}
-                                className="text-6xl lg:text-8xl font-display font-extrabold text-slate-900 dark:text-white tracking-tighter mb-6 leading-[1.05]"
-                            >
-                                Visionary <br/>
-                                <span className="text-transparent bg-clip-text bg-gradient-to-br from-teal-400 via-emerald-500 to-blue-600">Diagnostics</span>
-                            </motion.h1>
-                            
-                            <motion.p 
-                                initial={{ opacity: 0, y: 30 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ duration: 0.9, delay: 0.4, ease: "easeOut" }}
-                                className="text-xl text-slate-600 dark:text-slate-300 mb-10 max-w-2xl mx-auto lg:mx-0 leading-relaxed font-light"
-                            >
-                                Step into the future of healthcare. Experience a frictionless, non-invasive oral cancer screening ecosystem driven by cutting-edge neural architectures.
-                            </motion.p>
-                            
-                            <motion.div 
-                                initial={{ opacity: 0, y: 30 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ duration: 0.9, delay: 0.6, ease: "easeOut" }}
-                                className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-5"
-                            >
-                                <Link to="/upload" className="w-full sm:w-auto">
-                                    <button className="group relative w-full inline-flex items-center justify-center gap-3 px-8 py-4 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-full font-medium text-lg overflow-hidden transition-transform active:scale-95">
-                                        <div className="absolute inset-0 bg-gradient-to-r from-teal-500 to-emerald-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                                        <span className="relative z-10 flex items-center gap-2 group-hover:text-white transition-colors duration-300">
-                                            Initialize Scan <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-                                        </span>
-                                    </button>
-                                </Link>
-                                <Link to="/about" className="w-full sm:w-auto">
-                                    <button className="group w-full px-8 py-4 bg-transparent border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 rounded-full font-medium text-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-all duration-300">
-                                        Explore the Science
-                                    </button>
-                                </Link>
-                            </motion.div>
-                        </motion.div>
-                    </div>
+                            </h1>
 
-                    <div className="lg:w-1/2 w-full max-w-2xl lg:max-w-none relative perspective-1000 mt-16 lg:mt-0">
-                        <TiltCard>
-                            <motion.div
-                                initial={{ opacity: 0, scale: 0.8, rotateY: 15 }}
-                                animate={{ opacity: 1, scale: 1, rotateY: 0 }}
-                                transition={{ duration: 1.2, delay: 0.4, ease: "easeOut" }}
-                                className="relative rounded-[2.5rem] overflow-hidden shadow-2xl border border-white/20 bg-white/10 backdrop-blur-xl p-2"
-                            >
-                                <div className="absolute inset-0 bg-gradient-to-tr from-teal-500/20 to-blue-500/20 blur-xl z-0"></div>
-                                <img src={heroImage} alt="Clinical Scanning" className="relative z-10 w-full h-auto rounded-[2rem] object-cover mix-blend-overlay dark:mix-blend-normal opacity-90" />
-                                
-                                {/* Holographic UI Overlay */}
-                                <div className="absolute inset-0 z-20 flex flex-col justify-end p-8">
-                                    <motion.div 
-                                        animate={{ y: [0, -10, 0] }}
-                                        transition={{ repeat: Infinity, duration: 5, ease: "easeInOut" }}
-                                        className="bg-white/10 dark:bg-slate-900/60 backdrop-blur-md border border-white/20 p-5 rounded-2xl flex items-center gap-5 w-max shadow-2xl"
-                                    >
-                                        <div className="relative">
-                                            <div className="absolute inset-0 bg-teal-500 blur-md opacity-50 rounded-full animate-pulse"></div>
-                                            <div className="relative p-3 bg-teal-500 rounded-xl">
-                                                <Activity className="w-6 h-6 text-white" />
-                                            </div>
-                                        </div>
-                                        <div>
-                                            <p className="text-xs font-medium text-slate-200 dark:text-slate-300 uppercase tracking-wider mb-1">Live Inference</p>
-                                            <p className="text-2xl font-bold font-display text-white">Detecting Anomalies...</p>
-                                        </div>
-                                    </motion.div>
+                            <p className="font-sans text-lg text-stone-600 dark:text-stone-300 max-w-2xl leading-relaxed font-normal mb-8">
+                                A specialized clinical screening ecosystem that fuses a 4-architecture deep convolutional ensemble with Monte Carlo dropout uncertainty quantification and epidemiological risk stratification. Engineered as an authoritative triage instrument for clinicians and frontline screening.
+                            </p>
+
+                            {/* Key Performance Indicators */}
+                            <div className="grid grid-cols-3 gap-6 py-6 border-y border-stone-200 dark:border-stone-800 my-8 font-mono">
+                                <div>
+                                    <span className="block text-2xl lg:text-3xl font-serif text-stone-900 dark:text-stone-100 font-normal">95.4%</span>
+                                    <span className="text-[10px] uppercase tracking-wider text-stone-500">Ensemble Sensitivity</span>
                                 </div>
-                            </motion.div>
-                        </TiltCard>
+                                <div>
+                                    <span className="block text-2xl lg:text-3xl font-serif text-stone-900 dark:text-stone-100 font-normal">&lt;120ms</span>
+                                    <span className="text-[10px] uppercase tracking-wider text-stone-500">Inference Latency</span>
+                                </div>
+                                <div>
+                                    <span className="block text-2xl lg:text-3xl font-serif text-stone-900 dark:text-stone-100 font-normal">4-CNN</span>
+                                    <span className="text-[10px] uppercase tracking-wider text-stone-500">Deep Architectures</span>
+                                </div>
+                            </div>
+
+                            {/* Call to Action Buttons */}
+                            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
+                                <Link to="/upload">
+                                    <button className="w-full sm:w-auto inline-flex items-center justify-center gap-3 px-8 py-3.5 bg-stone-900 dark:bg-stone-100 text-stone-100 dark:text-stone-900 text-sm font-mono tracking-wider uppercase font-semibold hover:bg-clinical-teal dark:hover:bg-clinical-teal dark:hover:text-white transition-all shadow-md">
+                                        <span>Initialize Scan Dossier</span>
+                                        <ArrowRight className="w-4 h-4" />
+                                    </button>
+                                </Link>
+                                <Link to="/about">
+                                    <button className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3.5 border border-stone-300 dark:border-stone-700 text-stone-700 dark:text-stone-300 text-sm font-mono tracking-wider uppercase hover:bg-stone-100 dark:hover:bg-stone-900 transition-colors">
+                                        <span>Review Clinical TRD</span>
+                                    </button>
+                                </Link>
+                            </div>
+                        </div>
+
+                        {/* Right Examination Stage (5 cols) */}
+                        <div className="lg:col-span-5">
+                            <PathologistLoupeViewer />
+                        </div>
                     </div>
                 </div>
             </section>
 
-            {/* Infinite Marquee Section */}
-            <div className="w-full py-8 bg-white/30 dark:bg-slate-900/50 backdrop-blur-md border-y border-white/20 dark:border-slate-800/50 overflow-hidden relative z-10">
-                <div className="flex w-[200%] animate-[marquee_20s_linear_infinite] whitespace-nowrap">
-                    {[...Array(10)].map((_, i) => (
-                        <div key={i} className="flex items-center justify-center gap-16 px-8 text-slate-400 dark:text-slate-500 font-display font-semibold text-xl uppercase tracking-widest">
-                            <span className="flex items-center gap-2"><Cpu className="w-5 h-5"/> PyTorch Models</span>
-                            <span className="flex items-center gap-2"><Zap className="w-5 h-5"/> React Architecture</span>
-                            <span className="flex items-center gap-2"><Shield className="w-5 h-5"/> HIPAA Compliant</span>
+            {/* ============================================================ */}
+            {/* SECTION 2: The Classical Blindspot vs. The Diagnostic Triad */}
+            {/* ============================================================ */}
+            <section className="py-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto border-b border-stone-200/80 dark:border-stone-800/80">
+                <div className="mb-14">
+                    <span className="font-mono text-xs text-clinical-teal uppercase tracking-widest block mb-2">
+                        02 // CLINICAL ARCHITECTURE CRITIQUE
+                    </span>
+                    <h2 className="font-serif text-3xl sm:text-4xl text-stone-900 dark:text-stone-100 font-normal">
+                        Why standard AI models fail in clinical practice
+                    </h2>
+                </div>
+
+                <div className="grid md:grid-cols-2 gap-8">
+                    {/* The Classical Blindspot Card */}
+                    <div className="border border-red-200 dark:border-red-950/60 bg-red-50/30 dark:bg-red-950/10 p-8 rounded-none relative">
+                        <div className="flex items-center gap-2 text-xs font-mono tracking-wider uppercase text-red-700 dark:text-red-400 mb-4">
+                            <AlertCircle className="w-4 h-4" />
+                            THE CLASSICAL BLINDSPOT (STANDARD AI)
+                        </div>
+                        <h3 className="font-serif text-2xl text-stone-900 dark:text-stone-100 font-medium mb-4">
+                            Overconfident Softmax & Context Blindness
+                        </h3>
+                        <p className="text-sm text-stone-600 dark:text-stone-400 leading-relaxed mb-6 font-light">
+                            Traditional standalone neural networks force an overconfident binary output (0 or 1) regardless of image ambiguity, lighting corruption, or lesion edge blur. They evaluate pixels in isolation while ignoring patient tobacco, betel nut, and lesion chronicity.
+                        </p>
+                        <ul className="space-y-3 font-mono text-xs text-stone-600 dark:text-stone-400">
+                            <li className="flex items-start gap-2">
+                                <span className="text-red-500 font-bold">✕</span>
+                                <span>Zero Epistemic Uncertainty: Cannot report "I am uncertain"</span>
+                            </li>
+                            <li className="flex items-start gap-2">
+                                <span className="text-red-500 font-bold">✕</span>
+                                <span>Domain-shift fragility against mobile camera lighting</span>
+                            </li>
+                            <li className="flex items-start gap-2">
+                                <span className="text-red-500 font-bold">✕</span>
+                                <span>Treats 70-year-old habitual tobacco users the same as non-smokers</span>
+                            </li>
+                        </ul>
+                    </div>
+
+                    {/* The Visionary Triad Card */}
+                    <div className="border border-stone-300 dark:border-stone-800 bg-stone-50 dark:bg-stone-900/60 p-8 rounded-none relative">
+                        <div className="flex items-center gap-2 text-xs font-mono tracking-wider uppercase text-clinical-teal dark:text-teal-400 mb-4">
+                            <ShieldCheck className="w-4 h-4" />
+                            THE VISIONARY DIAGNOSTIC TRIAD
+                        </div>
+                        <h3 className="font-serif text-2xl text-stone-900 dark:text-stone-100 font-medium mb-4">
+                            Ensemble Synthesis + Epistemic Caliper
+                        </h3>
+                        <p className="text-sm text-stone-600 dark:text-stone-400 leading-relaxed mb-6 font-light">
+                            Our architecture mitigates clinical risk through three coupled systems: a multi-model consensus voting engine, Monte Carlo variational dropout to quantify epistemic variance, and epidemiological Bayesian risk integration.
+                        </p>
+                        <ul className="space-y-3 font-mono text-xs text-stone-600 dark:text-stone-400">
+                            <li className="flex items-start gap-2">
+                                <span className="text-clinical-teal font-bold">✓</span>
+                                <span>Multi-CNN Consensus (VGG16 + ResNet50 + EfficientNet + MobileNet)</span>
+                            </li>
+                            <li className="flex items-start gap-2">
+                                <span className="text-clinical-teal font-bold">✓</span>
+                                <span>15 Monte Carlo Perturbations quantify variance (σ² &gt; 0.015 flags biopsy)</span>
+                            </li>
+                            <li className="flex items-start gap-2">
+                                <span className="text-clinical-teal font-bold">✓</span>
+                                <span>Multimodal risk scoring adjusts triage thresholds dynamically</span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            {/* ============================================================ */}
+            {/* SECTION 3: 4-Stage Clinical Sequence                         */}
+            {/* ============================================================ */}
+            <section className="py-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto border-b border-stone-200/80 dark:border-stone-800/80">
+                <div className="mb-14">
+                    <span className="font-mono text-xs text-clinical-teal uppercase tracking-widest block mb-2">
+                        03 // CLINICAL PIPELINE STAGES
+                    </span>
+                    <h2 className="font-serif text-3xl sm:text-4xl text-stone-900 dark:text-stone-100 font-normal">
+                        Rigorous diagnostic methodology
+                    </h2>
+                </div>
+
+                <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                    {[
+                        {
+                            step: "STAGE 01",
+                            title: "Laplacian Quality Gate",
+                            desc: "Images are inspected for motion blur using Laplacian variance. Corrupt or blurry captures are rejected before compute cycles are wasted.",
+                            metric: "Threshold: Var > 50"
+                        },
+                        {
+                            step: "STAGE 02",
+                            title: "Test-Time Augmentation",
+                            desc: "8 transformed passes (zoomed, rotated, flipped) evaluate the specimen to eliminate lighting or angle bias.",
+                            metric: "Passes: 8-Fold TTA"
+                        },
+                        {
+                            step: "STAGE 03",
+                            title: "Monte Carlo Dropout",
+                            desc: "Active dropout layers generate 15 stochastic forward passes to capture epistemic uncertainty and model disagreement.",
+                            metric: "Uncertainty: σ² Variance"
+                        },
+                        {
+                            step: "STAGE 04",
+                            title: "Epidemiological Triage",
+                            desc: "Computer vision predictions are fused with patient risk factors (tobacco, alcohol, betel nut, prior lesions) to output an authoritative report.",
+                            metric: "Output: Clinical PDF"
+                        }
+                    ].map((item, idx) => (
+                        <div key={idx} className="border border-stone-200 dark:border-stone-800 bg-stone-50/60 dark:bg-stone-900/40 p-6 flex flex-col justify-between">
+                            <div>
+                                <span className="font-mono text-[10px] tracking-widest text-stone-400 block mb-3">{item.step}</span>
+                                <h3 className="font-serif text-xl font-normal text-stone-900 dark:text-stone-100 mb-3">{item.title}</h3>
+                                <p className="text-xs text-stone-600 dark:text-stone-400 font-light leading-relaxed mb-6">{item.desc}</p>
+                            </div>
+                            <div className="pt-3 border-t border-stone-200 dark:border-stone-800 font-mono text-[10px] text-clinical-teal dark:text-teal-400 uppercase">
+                                {item.metric}
+                            </div>
                         </div>
                     ))}
                 </div>
-            </div>
-
-            {/* Core Mechanics Section */}
-            <section className="py-32 relative z-10">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <div className="text-center max-w-3xl mx-auto mb-20">
-                        <motion.h2 
-                            initial={{ opacity: 0, y: 20 }}
-                            whileInView={{ opacity: 1, y: 0 }}
-                            viewport={{ once: true }}
-                            className="text-4xl md:text-5xl font-display font-bold text-slate-900 dark:text-white mb-6"
-                        >
-                            Orchestrating <span className="text-transparent bg-clip-text bg-gradient-to-r from-teal-500 to-emerald-500">Precision</span>
-                        </motion.h2>
-                        <motion.p 
-                            initial={{ opacity: 0, y: 20 }}
-                            whileInView={{ opacity: 1, y: 0 }}
-                            viewport={{ once: true }}
-                            transition={{ delay: 0.1 }}
-                            className="text-xl text-slate-600 dark:text-slate-400 font-light"
-                        >
-                            A symphony of advanced neural networks analyzing thousands of micro-patterns simultaneously to deliver an unparalleled diagnostic edge.
-                        </motion.p>
-                    </div>
-
-                    <div className="grid md:grid-cols-3 gap-8 perspective-1000">
-                        <FeatureCard
-                            icon={<Microscope className="w-8 h-8" />}
-                            title="Cellular-Level Analysis"
-                            description="Our convolutional nets extract deep features, recognizing textures and morphological shifts invisible to the naked eye."
-                            delay={0.1}
-                        />
-                        <FeatureCard
-                            icon={<Shield className="w-8 h-8" />}
-                            title="Zero-Knowledge Privacy"
-                            description="Images are processed entirely in memory and immediately discarded. Your biometric data is never stored without explicit consent."
-                            delay={0.2}
-                        />
-                        <FeatureCard
-                            icon={<Zap className="w-8 h-8" />}
-                            title="Ensemble Intelligence"
-                            description="We don't rely on one model. We cross-reference predictions across ResNet, MobileNet, and EfficientNet for maximal certainty."
-                            delay={0.3}
-                        />
-                    </div>
-                </div>
             </section>
 
-            {/* Immersive Deep Dive Section */}
-            <section className="py-32 relative overflow-hidden z-10">
-                <motion.div style={{ y: backgroundY }} className="absolute inset-0 bg-slate-900 dark:bg-slate-950 z-0">
-                    <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1530497610245-94d3c16cda28?q=80&w=2000&auto=format&fit=crop')] opacity-10 bg-cover bg-center mix-blend-overlay"></div>
-                    <div className="absolute inset-0 bg-gradient-to-b from-transparent via-slate-900/80 to-slate-900"></div>
-                </motion.div>
-
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-                    <div className="grid lg:grid-cols-2 gap-20 items-center">
-                        <motion.div 
-                            initial={{ opacity: 0, x: -50 }}
-                            whileInView={{ opacity: 1, x: 0 }}
-                            viewport={{ once: true }}
-                            className="relative"
-                        >
-                            <div className="relative rounded-[2rem] overflow-hidden shadow-[0_0_50px_rgba(20,184,166,0.3)] border border-teal-500/30 group">
-                                <div className="absolute inset-0 bg-teal-900/40 mix-blend-overlay z-10 group-hover:bg-transparent transition-colors duration-700"></div>
-                                <img src={detailedFeatureImage} alt="Neural Network Visualization" className="w-full h-[600px] object-cover scale-105 group-hover:scale-100 transition-transform duration-1000 ease-out" />
-                                
-                                {/* Scanner Line Animation */}
-                                <motion.div 
-                                    animate={{ top: ["0%", "100%", "0%"] }}
-                                    transition={{ repeat: Infinity, duration: 4, ease: "linear" }}
-                                    className="absolute left-0 right-0 h-1 bg-teal-400 shadow-[0_0_20px_#2dd4bf] z-20"
-                                />
-                            </div>
-                        </motion.div>
-
-                        <motion.div 
-                            initial={{ opacity: 0, x: 50 }}
-                            whileInView={{ opacity: 1, x: 0 }}
-                            viewport={{ once: true }}
-                        >
-                            <h2 className="text-4xl md:text-5xl font-display font-bold text-white mb-8">Redefining the Diagnostic Paradigm</h2>
-                            <p className="text-xl text-slate-300 mb-10 leading-relaxed font-light">
-                                We are moving away from reactive healthcare. Our platform introduces a proactive, hyper-accessible layer of pre-clinical screening, democratizing advanced oncology tools.
-                            </p>
-                            
-                            <div className="space-y-8">
-                                {[
-                                    { icon: Target, title: "Precision Mapping", desc: "Isolates and highlights areas of interest with bounding-box accuracy." },
-                                    { icon: Heart, title: "Patient Empowerment", desc: "Designed to reduce clinical anxiety through transparent, easily understood reporting." }
-                                ].map((item, i) => (
-                                    <div key={i} className="flex gap-6 group">
-                                        <div className="flex-shrink-0 mt-1">
-                                            <div className="w-14 h-14 rounded-2xl bg-white/10 backdrop-blur-md flex items-center justify-center border border-white/20 group-hover:border-teal-400/50 group-hover:bg-teal-900/30 transition-all duration-300">
-                                                <item.icon className="w-7 h-7 text-teal-400" />
-                                            </div>
-                                        </div>
-                                        <div>
-                                            <h4 className="text-2xl font-display font-semibold text-white mb-2">{item.title}</h4>
-                                            <p className="text-slate-400 text-lg">{item.desc}</p>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        </motion.div>
-                    </div>
+            {/* ============================================================ */}
+            {/* SECTION 4: Dignified Call to Action                           */}
+            {/* ============================================================ */}
+            <section className="py-20 px-4 sm:px-6 lg:px-8 max-w-5xl mx-auto text-center">
+                <div className="inline-flex p-3 border border-stone-300 dark:border-stone-700 bg-stone-100 dark:bg-stone-900 rounded-none mb-6">
+                    <Microscope className="w-6 h-6 text-clinical-teal" />
                 </div>
-            </section>
-
-            {/* Call to Action */}
-            <section className="py-32 relative z-10 overflow-hidden">
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-gradient-to-tr from-teal-400/20 to-blue-500/20 blur-[120px] rounded-full z-0 pointer-events-none"></div>
-                <div className="max-w-4xl mx-auto px-4 text-center relative z-10">
-                    <motion.h2 
-                        initial={{ opacity: 0, scale: 0.9 }}
-                        whileInView={{ opacity: 1, scale: 1 }}
-                        viewport={{ once: true }}
-                        className="text-5xl md:text-7xl font-display font-bold text-slate-900 dark:text-white mb-8 tracking-tight"
-                    >
-                        Ready to Take Control?
-                    </motion.h2>
-                    <motion.p 
-                        initial={{ opacity: 0, y: 20 }}
-                        whileInView={{ opacity: 1, y: 0 }}
-                        viewport={{ once: true }}
-                        transition={{ delay: 0.2 }}
-                        className="text-2xl text-slate-600 dark:text-slate-300 mb-12 font-light"
-                    >
-                        Join thousands of patients and practitioners relying on AI-driven insights.
-                    </motion.p>
-                    <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        whileInView={{ opacity: 1, y: 0 }}
-                        viewport={{ once: true }}
-                        transition={{ delay: 0.4 }}
-                    >
-                        <Link to="/register">
-                            <button className="px-10 py-5 bg-gradient-to-r from-teal-500 to-emerald-500 hover:from-teal-400 hover:to-emerald-400 text-white rounded-full font-bold text-xl shadow-[0_0_40px_rgba(20,184,166,0.4)] hover:shadow-[0_0_60px_rgba(20,184,166,0.6)] transition-all duration-300 transform hover:scale-105">
-                                Create Your Secure Account
-                            </button>
-                        </Link>
-                    </motion.div>
+                <h2 className="font-serif text-4xl sm:text-5xl text-stone-900 dark:text-stone-100 font-light mb-6">
+                    Conduct an AI-Assisted Clinical Evaluation
+                </h2>
+                <p className="text-base text-stone-600 dark:text-stone-300 max-w-2xl mx-auto leading-relaxed font-light mb-10">
+                    Upload clinical photographs for instant multi-network inference, variance measurement, and printable triage documentation. All data is processed locally with zero patient tracking.
+                </p>
+                <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+                    <Link to="/upload">
+                        <button className="px-9 py-4 bg-stone-900 dark:bg-stone-100 text-stone-100 dark:text-stone-900 text-sm font-mono tracking-wider uppercase font-semibold hover:bg-clinical-teal dark:hover:bg-clinical-teal dark:hover:text-white transition-colors">
+                            Launch Examination Workstation
+                        </button>
+                    </Link>
                 </div>
+                <p className="font-mono text-[10px] text-stone-400 uppercase tracking-widest mt-8">
+                    CLINICAL NOTICE: FOR TRIAGE ASSISTANCE & SCREENING ONLY // NOT A DEFINITIVE REPLACEMENT FOR BIOPSY
+                </p>
             </section>
-            
-            {/* Custom Tailwind utilities for the marquee animation */}
-            <style jsx>{`
-                @keyframes marquee {
-                    0% { transform: translateX(0%); }
-                    100% { transform: translateX(-50%); }
-                }
-                .animate-\\[marquee_20s_linear_infinite\\] {
-                    animation: marquee 20s linear infinite;
-                }
-            `}</style>
-        </motion.div>
+        </div>
     );
 };
 

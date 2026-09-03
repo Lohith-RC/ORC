@@ -1,140 +1,144 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Users, Target, Award, GitCommit, Users2, FlaskConical, Rocket, Database, Stethoscope } from 'lucide-react';
+import { Database, Stethoscope, Award, CheckCircle2 } from 'lucide-react';
 import team1 from './images/5.webp';
 import team2 from './images/7.webp';
 import team3 from './images/8.jpg';
-import team4 from './images/9.webp';
-import team5 from './images/10.webp';
 import doc1 from './images/1.jpg';
 import doc2 from './images/2.jpg';
 import doc3 from './images/3.jpg';
 
 const About = () => {
     return (
-        <div className="bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-200 py-20 sm:py-28 px-4 sm:px-6 lg:px-8">
+        <div className="bg-parchment-100 dark:bg-ink-950 text-stone-800 dark:text-stone-200 min-h-screen py-16 px-4 sm:px-6 lg:px-8 font-sans">
             <div className="max-w-7xl mx-auto">
                 {/* Header Section */}
-                <motion.div
-                    initial={{ opacity: 0, y: -50 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.7 }}
-                    className="text-center mb-20"
-                >
-                    <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent mb-4">
-                        A Student Initiative for Better Healthcare
+                <div className="border-b border-stone-200 dark:border-stone-800 pb-12 mb-16 text-center max-w-4xl mx-auto">
+                    <div className="inline-flex items-center gap-2 font-mono text-[11px] tracking-wider uppercase text-clinical-teal dark:text-teal-400 mb-4">
+                        <span className="w-2 h-2 bg-clinical-teal inline-block"></span>
+                        ACADEMIC INITIATIVE // ENGINEERING & ONCOLOGY
+                    </div>
+                    <h1 className="font-serif text-4xl sm:text-5xl lg:text-6xl text-stone-900 dark:text-stone-100 font-light tracking-tight mb-6">
+                        Bridging Neural Ensembles with Clinical Triage
                     </h1>
-                    <p className="text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto">
-                        We are a passionate team of engineering students from Karnataka, India, leveraging artificial intelligence to build accessible early-detection tools for oral cancer under the esteemed guidance of Prof. Aishwarya S.
+                    <p className="font-sans text-base sm:text-lg text-stone-600 dark:text-stone-300 font-light leading-relaxed">
+                        Developed by engineering researchers from Karnataka, India, under the guidance of Prof. Aishwarya S. Our objective is to democratize non-invasive oral cancer screening using calibrated deep learning and epidemiological risk modeling.
                     </p>
-                </motion.div>
+                </div>
 
                 {/* Student Team Section */}
-                <div className="mb-24">
-                    <h2 className="text-4xl font-bold text-center text-gray-900 dark:text-white mb-4">Meet the Student Developers</h2>
-                    <p className="text-center text-gray-500 mb-16 max-w-2xl mx-auto">
-                        Developed with passion by a dedicated team of student engineers committed to applying technology for social good.
-                    </p>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-10">
+                <div className="mb-20">
+                    <div className="flex items-center justify-between border-b border-stone-200 dark:border-stone-800 pb-3 mb-8">
+                        <h2 className="font-serif text-2xl sm:text-3xl text-stone-900 dark:text-stone-100 font-normal">
+                            Core Engineering Investigators
+                        </h2>
+                        <span className="font-mono text-xs text-stone-400 uppercase">PROJECT CONTRIBUTORS</span>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
                         {[
-                            { name: "Keerthi A", role: "AI & ML Engineer", image: team1 },
-                            { name: "Rakshith Y B", role: "Backend Developer", image: team2 },
-                            { name: "Lohith R C", role: "Frontend & UI/UX", image: team3 }
+                            { name: "Keerthi A", role: "AI & ML Architecture", desc: "Ensemble training, TTA pipelines, and PyTorch optimization.", image: team1 },
+                            { name: "Rakshith Y B", role: "Backend & Systems", desc: "FastAPI inference service, SQLite ORM, and rate limiting.", image: team2 },
+                            { name: "Lohith R C", role: "Frontend & UI/UX Design", desc: "Clinical pathology workstation and human-centric design.", image: team3 }
                         ].map((member, i) => (
-                            <motion.div
+                            <div
                                 key={i}
-                                className="text-center bg-gray-50 dark:bg-gray-800/50 p-6 rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300"
-                                initial={{ opacity: 0, y: 50 }}
-                                whileInView={{ opacity: 1, y: 0 }}
-                                viewport={{ once: true }}
-                                transition={{ delay: i * 0.1 }}
+                                className="border border-stone-300 dark:border-stone-800 bg-stone-50 dark:bg-stone-900 p-6 relative group"
                             >
-                                <img src={member.image} alt={member.name} className="w-32 h-32 rounded-full mx-auto mb-4 object-cover ring-4 ring-blue-100 dark:ring-blue-900" />
-                                <h3 className="text-xl font-bold text-gray-800 dark:text-white">{member.name}</h3>
-                                <p className="text-blue-600 dark:text-blue-400 font-medium">{member.role}</p>
-                                <p className="text-sm text-gray-500 mt-2">Student Developer</p>
-                            </motion.div>
-                        ))}
-                    </div>
-                </div>
-
-                {/* Doctors Section */}
-                <div className="mb-24 bg-blue-50 dark:bg-gray-800/80 rounded-3xl p-10 sm:p-16">
-                    <h2 className="text-4xl font-bold text-center text-gray-900 dark:text-white mb-4">Our Medical Advisors</h2>
-                    <p className="text-center text-gray-600 dark:text-gray-300 mb-16 max-w-2xl mx-auto">
-                        Our AI models and clinical workflows are advised and validated by renowned oral oncology experts from top cancer research institutes across Karnataka.
-                    </p>
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-10">
-                        {[
-                            { name: "Dr. Vishal Rao", role: "Head of Head & Neck Oncology", clinic: "HCG Cancer Centre, Bangalore", image: doc1 },
-                            { name: "Dr. Moni Abraham Kuriakose", role: "Director of Surgical Oncology", clinic: "Mazumdar Shaw Medical Center", image: doc2 },
-                            { name: "Dr. Vikram Kekatpure", role: "Senior Consultant, Head & Neck Surgery", clinic: "Cytecare Cancer Hospitals", image: doc3 }
-                        ].map((doc, i) => (
-                            <motion.div
-                                key={i}
-                                className="text-center bg-white dark:bg-gray-900 p-6 rounded-2xl shadow-md hover:shadow-xl transition-all duration-300"
-                                initial={{ opacity: 0, scale: 0.9 }}
-                                whileInView={{ opacity: 1, scale: 1 }}
-                                viewport={{ once: true }}
-                                transition={{ delay: i * 0.1 }}
-                            >
-                                <div className="relative inline-block">
-                                    <img src={doc.image} alt={doc.name} className="w-40 h-40 rounded-full mx-auto mb-4 object-cover ring-4 ring-indigo-100 dark:ring-indigo-900" />
-                                    <div className="absolute bottom-2 right-2 bg-blue-600 p-2 rounded-full text-white">
-                                        <Stethoscope className="w-5 h-5" />
-                                    </div>
+                                <span className="absolute -top-1 -left-1 text-[10px] font-mono text-stone-400">+</span>
+                                <span className="absolute -top-1 -right-1 text-[10px] font-mono text-stone-400">+</span>
+                                <div className="aspect-square w-full mb-4 overflow-hidden bg-stone-950">
+                                    <img 
+                                        src={member.image} 
+                                        alt={member.name} 
+                                        className="w-full h-full object-cover filter grayscale contrast-105 group-hover:grayscale-0 transition-all duration-500" 
+                                    />
                                 </div>
-                                <h3 className="text-xl font-bold text-gray-800 dark:text-white">{doc.name}</h3>
-                                <p className="text-indigo-600 dark:text-indigo-400 font-medium">{doc.role}</p>
-                                <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">{doc.clinic}</p>
-                            </motion.div>
+                                <span className="font-mono text-[10px] text-clinical-teal dark:text-teal-400 uppercase tracking-wider block mb-1">
+                                    {member.role}
+                                </span>
+                                <h3 className="font-serif text-xl font-normal text-stone-900 dark:text-stone-100 mb-2">
+                                    {member.name}
+                                </h3>
+                                <p className="font-sans text-xs text-stone-600 dark:text-stone-400 font-light leading-relaxed">
+                                    {member.desc}
+                                </p>
+                            </div>
                         ))}
                     </div>
                 </div>
 
-                {/* Datasets Section */}
-                <div className="mb-24">
-                    <h2 className="text-4xl font-bold text-center text-gray-900 dark:text-white mb-16 flex items-center justify-center gap-4">
-                        <Database className="w-10 h-10 text-blue-600" />
-                        Our Training Datasets
-                    </h2>
-                    <div className="grid md:grid-cols-2 gap-10">
-                        <motion.div 
-                            className="bg-gray-50 dark:bg-gray-800/50 p-8 rounded-2xl border border-gray-100 dark:border-gray-700"
-                            initial={{ opacity: 0, x: -50 }}
-                            whileInView={{ opacity: 1, x: 0 }}
-                            viewport={{ once: true }}
-                        >
-                            <h3 className="text-2xl font-bold text-gray-800 dark:text-white mb-4">Kaggle Oral Cancer Dataset</h3>
-                            <p className="text-gray-600 dark:text-gray-300 mb-4">
-                                A comprehensive collection of over 5,000 high-resolution images categorized into cancerous and non-cancerous oral cavity images. This dataset forms the foundational training ground for our CNN models.
-                            </p>
-                            <ul className="space-y-2 text-sm text-gray-500 dark:text-gray-400">
-                                <li className="flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-blue-500"></div> Total Images: 5,000+</li>
-                                <li className="flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-blue-500"></div> Classes: SCC, Normal, Benign</li>
-                                <li className="flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-blue-500"></div> Accuracy Achieved: 94.2%</li>
-                            </ul>
-                        </motion.div>
-                        
-                        <motion.div 
-                            className="bg-gray-50 dark:bg-gray-800/50 p-8 rounded-2xl border border-gray-100 dark:border-gray-700"
-                            initial={{ opacity: 0, x: 50 }}
-                            whileInView={{ opacity: 1, x: 0 }}
-                            viewport={{ once: true }}
-                        >
-                            <h3 className="text-2xl font-bold text-gray-800 dark:text-white mb-4">Clinical Research Dataset (Karnataka)</h3>
-                            <p className="text-gray-600 dark:text-gray-300 mb-4">
-                                An exclusive dataset compiled through our partnerships with local clinics and hospitals in Karnataka, helping fine-tune our models to demographic-specific variations and real-world clinical noise.
-                            </p>
-                            <ul className="space-y-2 text-sm text-gray-500 dark:text-gray-400">
-                                <li className="flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-purple-500"></div> Total Images: 1,200+</li>
-                                <li className="flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-purple-500"></div> Sourced from: Regional Clinics</li>
-                                <li className="flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-purple-500"></div> Focus: Early-stage lesions</li>
-                            </ul>
-                        </motion.div>
+                {/* Clinical Advisors Section */}
+                <div className="mb-20 border border-stone-300 dark:border-stone-800 bg-stone-50 dark:bg-stone-900 p-8 sm:p-12">
+                    <div className="border-b border-stone-200 dark:border-stone-800 pb-4 mb-8 flex items-center justify-between">
+                        <div>
+                            <span className="font-mono text-[10px] text-clinical-teal uppercase tracking-widest block mb-1">CLINICAL COLLABORATION</span>
+                            <h2 className="font-serif text-2xl sm:text-3xl text-stone-900 dark:text-stone-100 font-normal">
+                                Medical Advisory & Workflow Validation
+                            </h2>
+                        </div>
+                        <Stethoscope className="w-8 h-8 text-clinical-teal hidden sm:block" />
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-8">
+                        {[
+                            { name: "Dr. Vishal Rao", role: "Head & Neck Oncology", clinic: "HCG Cancer Centre, Bangalore", image: doc1 },
+                            { name: "Dr. Moni Abraham Kuriakose", role: "Surgical Oncology", clinic: "Mazumdar Shaw Medical Center", image: doc2 },
+                            { name: "Dr. Vikram Kekatpure", role: "Head & Neck Surgery", clinic: "Cytecare Cancer Hospitals", image: doc3 }
+                        ].map((doc, i) => (
+                            <div key={i} className="flex flex-col">
+                                <div className="aspect-square w-full mb-4 overflow-hidden bg-stone-950 border border-stone-300 dark:border-stone-700">
+                                    <img src={doc.image} alt={doc.name} className="w-full h-full object-cover filter contrast-[1.02]" />
+                                </div>
+                                <h3 className="font-serif text-lg font-medium text-stone-900 dark:text-stone-100">{doc.name}</h3>
+                                <p className="font-mono text-xs text-clinical-teal dark:text-teal-400 mt-0.5">{doc.role}</p>
+                                <p className="font-sans text-xs text-stone-500 mt-1">{doc.clinic}</p>
+                            </div>
+                        ))}
                     </div>
                 </div>
 
+                {/* Training Datasets */}
+                <div className="mb-12">
+                    <div className="flex items-center gap-3 border-b border-stone-200 dark:border-stone-800 pb-3 mb-8">
+                        <Database className="w-5 h-5 text-clinical-teal" />
+                        <h2 className="font-serif text-2xl text-stone-900 dark:text-stone-100 font-normal">
+                            Evaluation Benchmark Datasets
+                        </h2>
+                    </div>
+
+                    <div className="grid md:grid-cols-2 gap-8">
+                        <div className="border border-stone-300 dark:border-stone-800 bg-stone-50 dark:bg-stone-900 p-6">
+                            <span className="font-mono text-[10px] text-stone-400 uppercase tracking-widest block mb-1">DATASET 01 // PUBLIC BENCHMARK</span>
+                            <h3 className="font-serif text-xl font-normal text-stone-900 dark:text-stone-100 mb-3">
+                                Kaggle Oral Cancer Dataset 2.0
+                            </h3>
+                            <p className="text-xs text-stone-600 dark:text-stone-400 font-light leading-relaxed mb-4">
+                                Standardized image repository divided into stratified train, validation, and test subsets. Used for multi-architecture transfer learning baseline tuning.
+                            </p>
+                            <div className="font-mono text-[11px] text-stone-500 space-y-1">
+                                <div>• VOLUME: 5,000+ High-Resolution Captures</div>
+                                <div>• CLASSES: Carcinoma vs. Non-Malignant Mucosa</div>
+                                <div>• ACCURACY BASELINE: 94.2% on Test Split</div>
+                            </div>
+                        </div>
+
+                        <div className="border border-stone-300 dark:border-stone-800 bg-stone-50 dark:bg-stone-900 p-6">
+                            <span className="font-mono text-[10px] text-stone-400 uppercase tracking-widest block mb-1">DATASET 02 // REGIONAL COHORT</span>
+                            <h3 className="font-serif text-xl font-normal text-stone-900 dark:text-stone-100 mb-3">
+                                Karnataka Regional Clinical Cohort
+                            </h3>
+                            <p className="text-xs text-stone-600 dark:text-stone-400 font-light leading-relaxed mb-4">
+                                Sourced through regional oncology screenings with high incidence of chewable tobacco (khaini, gutka) and areca nut dysplasia cases.
+                            </p>
+                            <div className="font-mono text-[11px] text-stone-500 space-y-1">
+                                <div>• FOCUS: Early-Stage & Dysplastic Lesions</div>
+                                <div>• DEMOGRAPHIC: South Asian Epidemiological Cohort</div>
+                                <div>• PURPOSE: Domain-Shift Robustness & TTA Verification</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     );

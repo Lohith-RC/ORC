@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+    <title>High-End Academic Presentation - OSCC AI</title>
+
+    <!-- Reveal.js Core CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.3.1/reset.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.3.1/reveal.min.css">
+    
+    <!-- Custom High-End Designer Theme -->
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&family=Playfair+Display:wght@700&display=swap');
+        
+        .reveal {
+            font-family: 'Inter', sans-serif;
+            background: #fafafa;
+            color: #1f2937;
+        }
+
+        /* Typography */
+        .reveal h1, .reveal h2, .reveal h3, .reveal h4 {
+            font-family: 'Inter', sans-serif;
+            text-transform: none;
+            color: #111827;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+        }
+
+        .reveal h1 { font-size: 2.8em; margin-bottom: 20px; line-height: 1.1; color: #0f172a; }
+        .reveal h2 { font-size: 1.8em; margin-bottom: 40px; color: #0f172a; border-left: 6px solid #3b82f6; padding-left: 20px; text-align: left; }
+        .reveal p, .reveal li { font-size: 0.9em; line-height: 1.6; color: #4b5563; text-align: left; }
+        .reveal ul { display: block; margin-left: 40px; margin-bottom: 20px; }
+        .reveal li { margin-bottom: 15px; }
+
+        /* Slide Layouts */
+        .slide-content {
+            padding: 40px 60px;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+        }
+        
+        /* Title Slide */
+        .title-slide {
+            display: flex !important;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            height: 100%;
+            background: linear-gradient(135deg, #ffffff 0%, #f1f5f9 100%);
+        }
+        .title-slide h3 { font-size: 1.3em; font-weight: 400; color: #64748b; margin-bottom: 50px; max-width: 800px; margin-left: auto; margin-right: auto;}
+        
+        .team-grid {
+            display: flex;
+            justify-content: center;
+            gap: 60px;
+            margin-top: 40px;
+            background: white;
+            padding: 30px 60px;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px -10px rgba(0,0,0,0.05);
+            border: 1px solid #e2e8f0;
+        }
+        .team-grid strong { color: #3b82f6; font-size: 0.8em; text-transform: uppercase; letter-spacing: 0.05em; }
+
+        /* Card Layouts */
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+            width: 100%;
+        }
+        
+        .card {
+            background: white;
+            padding: 30px;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px -10px rgba(0,0,0,0.08);
+            border: 1px solid #f1f5f9;
+        }
+
+        .card h4 {
+            font-size: 1.1em;
+            color: #0f172a;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 10px;
+        }
+
+        /* Image Containers */
+        .diagram-container {
+            width: 100%;
+            height: 500px;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 15px 35px -10px rgba(0,0,0,0.1);
+            border: 1px solid #e2e8f0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .diagram-container img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+            border: none;
+            box-shadow: none;
+            margin: 0;
+        }
+
+        /* Fallback text if image doesn't load */
+        .diagram-placeholder-text {
+            position: absolute;
+            color: #94a3b8;
+            font-size: 0.8em;
+            text-align: center;
+            z-index: 0;
+        }
+        .diagram-container img { z-index: 1; position: relative; }
+
+        /* Emphasized Text */
+        .highlight { color: #3b82f6; font-weight: 600; }
+        .alert { color: #ef4444; font-weight: 600; }
+        
+        .slide-number { color: #94a3b8 !important; font-family: 'Inter', sans-serif; font-size: 14px !important; }
+    </style>
+</head>
+<body>
+    <div class="reveal">
+        <div class="slides">
+
+            <!-- Slide 1: Introduction -->
+            <section class="title-slide">
+                <div style="margin-bottom: 20px;">
+                    <span style="background: #e0e7ff; color: #4f46e5; padding: 8px 16px; border-radius: 30px; font-size: 0.6em; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase;">Final Year Project</span>
+                </div>
+                <h1>Visionary Diagnostics</h1>
+                <h3>A Multimodal Deep Learning Ecosystem for Early Detection, Uncertainty Quantification, and Risk Stratification of Oral Cancer</h3>
+                
+                <div class="team-grid">
+                    <div style="text-align: left;">
+                        <strong>Presented By</strong><br>
+                        <span style="font-size: 0.9em; font-weight: 600; color: #1e293b; line-height: 1.8;">
+                            Keerthi A<br>
+                            Rakshith Y B<br>
+                            Lohith R C
+                        </span>
+                    </div>
+                    <div style="text-align: left;">
+                        <strong>Project Guide</strong><br>
+                        <span style="font-size: 0.9em; font-weight: 600; color: #1e293b; line-height: 1.8;">
+                            Prof. Aishwarya S
+                        </span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Slide 2: Table of Contents -->
+            <section>
+                <div class="slide-content">
+                    <h2>Table of Contents</h2>
+                    <div class="card">
+                        <div class="grid-2">
+                            <div>
+                                <ul style="list-style-type: none; margin-left: 0;">
+                                    <li style="padding: 10px 0; border-bottom: 1px solid #f1f5f9;"><span class="highlight">01.</span> Problem Statement</li>
+                                    <li style="padding: 10px 0; border-bottom: 1px solid #f1f5f9;"><span class="highlight">02.</span> Background & Literature Review</li>
+                                    <li style="padding: 10px 0; border-bottom: 1px solid #f1f5f9;"><span class="highlight">03.</span> Objectives & Scope</li>
+                                    <li style="padding: 10px 0; border-bottom: 1px solid #f1f5f9;"><span class="highlight">04.</span> System Architecture</li>
+                                    <li style="padding: 10px 0; border-bottom: 1px solid #f1f5f9;"><span class="highlight">05.</span> CNN Data Flow</li>
+                                </ul>
+                            </div>
+                            <div>
+                                <ul style="list-style-type: none; margin-left: 0;">
+                                    <li style="padding: 10px 0; border-bottom: 1px solid #f1f5f9;"><span class="highlight">06.</span> Methodology</li>
+                                    <li style="padding: 10px 0; border-bottom: 1px solid #f1f5f9;"><span class="highlight">07.</span> Technical Stack & Algorithms</li>
+                                    <li style="padding: 10px 0; border-bottom: 1px solid #f1f5f9;"><span class="highlight">08.</span> Hardware & Software Requirements</li>
+                                    <li style="padding: 10px 0; border-bottom: 1px solid #f1f5f9;"><span class="highlight">09.</span> Conclusion</li>
+                                    <li style="padding: 10px 0; border-bottom: 1px solid #f1f5f9;"><span class="highlight">10.</span> References</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Slide 3: Problem Statement -->
+            <section>
+                <div class="slide-content">
+                    <h2>Problem Statement</h2>
+                    <p style="margin-bottom: 30px;">Translating deep learning into clinical practice is restricted by four critical AI faults:</p>
+                    <div class="grid-2">
+                        <div class="card">
+                            <h4>Overconfident Predictions</h4>
+                            <p>Standard models give definitive answers even when unsure, leading to dangerous misdiagnoses. They lack <span class="highlight">Uncertainty Quantification</span>.</p>
+                        </div>
+                        <div class="card">
+                            <h4>Contextual Blindness</h4>
+                            <p>Image-only AI ignores vital patient history like <span class="alert">tobacco use, age, and habits</span>, treating high-risk and low-risk patients identically.</p>
+                        </div>
+                        <div class="card">
+                            <h4>Domain Shift Vulnerability</h4>
+                            <p>Models trained on perfect lab datasets fail when processing real-world, blurry smartphone images.</p>
+                        </div>
+                        <div class="card">
+                            <h4>The "Black-Box" Effect</h4>
+                            <p>Without visual explanations, doctors cannot trust or validate the AI's decision-making process.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Slide 4: Background & Literature Review -->
+            <section>
+                <div class="slide-content">
+                    <h2>Background & Literature Review</h2>
+                    <div class="grid-2">
+                        <div>
+                            <div class="card" style="height: 100%;">
+                                <h4>Background Study</h4>
+                                <ul>
+                                    <li>Oral cancer presents a <span class="alert">30% survival rate</span> if diagnosed late.</li>
+                                    <li>India accounts for nearly <strong>one-third</strong> of the global burden (>135,000 cases/year).</li>
+                                    <li>Early pre-clinical screening can improve survival rates to over 80%.</li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="card" style="height: 100%;">
+                                <h4>Literature Review (2024-2025)</h4>
+                                <ul>
+                                    <li><strong>Ensemble Models:</strong> Combining multiple architectures (CNNs) drastically outperforms standalone models.</li>
+                                    <li><strong>Monte Carlo Dropout:</strong> A proven statistical method for estimating AI uncertainty.</li>
+                                    <li><strong>Explainable AI (XAI):</strong> Grad-CAM heatmaps are essential for clinical transparency.</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Slide 5: Objective & Scope -->
+            <section>
+                <div class="slide-content">
+                    <h2>Objective & Scope</h2>
+                    <div class="grid-2">
+                        <div class="card" style="border-left: 4px solid #10b981;">
+                            <h4>Project Objectives</h4>
+                            <ul>
+                                <li>Develop an <strong>ensemble-based AI web application</strong> for early detection.</li>
+                                <li>Implement <strong>Monte Carlo Dropout</strong> to flag ambiguous predictions.</li>
+                                <li>Fuse AI image results with <strong>Clinical Risk Factors</strong> (tobacco, age).</li>
+                                <li>Provide <strong>Explainable AI</strong> heatmaps to build clinical trust.</li>
+                            </ul>
+                        </div>
+                        <div class="card" style="border-left: 4px solid #8b5cf6;">
+                            <h4>Scope of the Project</h4>
+                            <ul>
+                                <li>Full-stack development: FastAPI backend & React frontend.</li>
+                                <li>Focuses purely on non-invasive clinical photographs (smartphone cameras).</li>
+                                <li>Designed as a <strong>pre-clinical triage tool</strong> to advise specialist referral, not to replace biopsy.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Slide 6: System Architecture -->
+            <section>
+                <div class="slide-content">
+                    <h2>System Architecture</h2>
+                    <div class="diagram-container">
+                        <div class="diagram-placeholder-text">System Architecture Diagram</div>
+                        <!-- IMPORTANT: Image Integration -->
+                        <img src="assets/diagrams/system_architecture.png" alt="System Architecture Diagram">
+                    </div>
+                </div>
+            </section>
+
+            <!-- Slide 7: CNN Data Flow -->
+            <section>
+                <div class="slide-content">
+                    <h2>CNN Data Flow</h2>
+                    <div class="diagram-container">
+                        <div class="diagram-placeholder-text">CNN Data Flow Diagram</div>
+                        <!-- IMPORTANT: Image Integration -->
+                        <img src="assets/diagrams/data_flow.png" alt="CNN Data Flow Diagram">
+                    </div>
+                </div>
+            </section>
+
+            <!-- Slide 8: Methodology -->
+            <section>
+                <div class="slide-content">
+                    <h2>Methodology</h2>
+                    <div class="diagram-container">
+                        <div class="diagram-placeholder-text">Methodology Diagram</div>
+                        <!-- IMPORTANT: Image Integration -->
+                        <img src="assets/diagrams/methodology.png" alt="Methodology Diagram">
+                    </div>
+                </div>
+            </section>
+
+            <!-- Slide 9: Technical Stack & Algorithms -->
+            <section>
+                <div class="slide-content">
+                    <h2>Technical Stack & Algorithms</h2>
+                    <div class="grid-2">
+                        <div class="diagram-container" style="height: 400px; border: none; box-shadow: none; background: transparent;">
+                            <div class="diagram-placeholder-text">Technical Stack Diagram</div>
+                            <!-- IMPORTANT: Image Integration -->
+                            <img src="assets/diagrams/tech_stack.png" alt="Technical Stack Diagram">
+                        </div>
+                        <div class="card" style="height: 400px; overflow-y: auto;">
+                            <h4>Algorithms Implemented</h4>
+                            <ul>
+                                <li><strong>Convolutional Neural Networks (CNN):</strong> For deep spatial feature extraction.</li>
+                                <li><strong>Ensemble Learning:</strong> Aggregating VGG16, ResNet50, EfficientNet, MobileNet.</li>
+                                <li><strong>Monte Carlo Dropout:</strong> Variational inference for uncertainty estimation.</li>
+                                <li><strong>Test-Time Augmentation (TTA):</strong> Ensuring robustness against lighting/angles.</li>
+                                <li><strong>Laplacian Variance:</strong> Edge detection for blur quantification.</li>
+                                <li><strong>Grad-CAM:</strong> Visualizing deep network decisions via heatmaps.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Slide 10: Software & Hardware Requirements -->
+            <section>
+                <div class="slide-content">
+                    <h2>Software & Hardware Requirements</h2>
+                    <div class="grid-2">
+                        <div class="card">
+                            <h4>Hardware Specifications</h4>
+                            <ul>
+                                <li><strong>Training Server:</strong> NVIDIA GPU (RTX 3060+, min 8GB VRAM), 16GB+ RAM, Intel i7 / AMD Ryzen 7 processor.</li>
+                                <li><strong>Deployment Server:</strong> Minimum 2 vCPUs, 4GB RAM (GPU recommended).</li>
+                                <li><strong>Client Device:</strong> Any standard PC, Tablet, or Smartphone with a browser and camera.</li>
+                            </ul>
+                        </div>
+                        <div class="card">
+                            <h4>Software Environment</h4>
+                            <ul>
+                                <li><strong>Operating System:</strong> Windows 10/11, macOS, or Linux (Ubuntu 20.04+).</li>
+                                <li><strong>Core Languages:</strong> Python 3.8+, Node.js (v16+).</li>
+                                <li><strong>Key Libraries:</strong> PyTorch, FastAPI, React, Tailwind CSS, SQLAlchemy.</li>
+                                <li><strong>Browsers:</strong> Chrome, Firefox, Safari, Edge (latest versions).</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Slide 11: Conclusion -->
+            <section>
+                <div class="slide-content">
+                    <h2>Conclusion</h2>
+                    <div class="card" style="padding: 40px;">
+                        <ul>
+                            <li>The Visionary Diagnostics platform represents a <strong>paradigm shift</strong> from binary black-box AI to a secure, uncertainty-aware clinical decision support system.</li>
+                            <li>By addressing the limitations of standard CNNs through <strong>Ensemble methodologies, MC Dropout, and Clinical Risk Fusion</strong>, the system bridges the gap between theoretical AI performance and real-world clinical utility.</li>
+                            <li>It successfully mitigates dangerous false-negative risks by deferring ambiguous cases to human specialists.</li>
+                            <li>Ultimately, it provides a scalable, non-invasive screening tool that empowers rural clinics and optimizes healthcare resource allocation.</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Slide 12: References -->
+            <section>
+                <div class="slide-content">
+                    <h2>References</h2>
+                    <div class="card">
+                        <ul>
+                            <li>National Institutes of Health (NIH). <em>Insights Into AI-Enabled Early Diagnosis of Oral Cancer: A Scoping Review</em> (2025).</li>
+                            <li><em>Frontiers in Oral Health</em>. "AI and Diagnosis of Oral Cavity Cancer from Clinical Photographs" (March 2025).</li>
+                            <li>Gaw, et al. <em>Optimized Deep Learning Ensemble for Accurate Oral Cancer Detection Using CNNs</em>. ScienceDirect (2025).</li>
+                            <li>Gal, Y., & Ghahramani, Z. <em>Dropout as a Bayesian Approximation: Representing Model Uncertainty in Deep Learning</em>. ICML.</li>
+                            <li>Selvaraju, R. R., et al. <em>Grad-CAM: Visual Explanations from Deep Networks via Gradient-Based Localization</em>. ICCV.</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Slide 13: End Presentation -->
+            <section class="title-slide">
+                <h1 style="font-size: 4em; margin-bottom: 20px;">Thank You</h1>
+                <h3 style="color: #64748b;">Any Questions?</h3>
+                <div style="margin-top: 50px; font-size: 0.8em; color: #94a3b8;">
+                    Project: Visionary Diagnostics
+                </div>
+            </section>
+
+        </div>
+    </div>
+
+    <!-- Reveal.js Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.3.1/reveal.min.js"></script>
+    <script>
+        Reveal.initialize({
+            hash: true,
+            controls: true,
+            progress: true,
+            center: false,
+            slideNumber: 'c/t',
+            transition: 'fade', // Keeping it static and highly professional
+            backgroundTransition: 'none',
+            width: 1100,
+            height: 700,
+            margin: 0.08
+        });
+    </script>
+</body>
+</html>

@@ -110,6 +110,33 @@ Explore detailed documentation in the [`docs/`](docs/) directory:
 
 ---
 
+## Environment Variables Configuration
+
+Copy `backend/.env.example` to `backend/.env` before starting the service:
+
+```bash
+cp backend/.env.example backend/.env
+```
+
+| Variable | Description | Default / Example |
+| :--- | :--- | :--- |
+| `ENVIRONMENT` | Environment tier (`development` or `production`) | `development` |
+| `DATABASE_URL` | PostgreSQL or SQLite connection string | `sqlite:///oralcancer.db` |
+| `SECRET_KEY` | High-entropy secret for JWT signature verification | *Required in production* |
+| `CORS_ORIGINS` | Comma-delimited list of allowed browser origins | `http://localhost:3000,http://localhost:8000` |
+| `PORT` | Uvicorn server port | `8000` |
+
+---
+
+## Security Architecture & Clinical Privacy
+
+- **Zero-Wildcard CORS**: Production origins are restricted to explicit whitelist domains.
+- **Defensive Cryptography**: Passwords protected with PBKDF2-HMAC-SHA256 (390,000 iterations); startup validation blocks weak default keys in production.
+- **PHI Leakage Prevention**: All clinical metadata is submitted strictly via multipart body payloads, keeping patient records out of query logs and browser history.
+- **Enterprise Headers**: Strict CSP, `Cache-Control: no-store` on diagnostic endpoints, `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, and `Strict-Transport-Security`.
+
+---
+
 ## Quickstart Guide
 
 ### 1. Backend Setup
@@ -119,14 +146,14 @@ The backend runs on Python 3.11 with FastAPI and PostgreSQL / SQLite with automa
 ```bash
 cd backend
 
-# Activate existing virtual environment (Windows)
-.\venv\Scripts\activate
+# Install dependencies (or activate your virtual environment)
+pip install -r requirements.txt
 
-# Run automated test suite (42 unit & integration tests)
+# Run automated backend test suite (46 unit, integration, and security tests)
 python -m pytest tests/ -v
 
 # Start the API server
-python -m uvicorn main:app --reload --port 8000
+python -m uvicorn app.main:app --reload --port 8000
 ```
 Backend Swagger API documentation will be available at: [http://localhost:8000/docs](http://localhost:8000/docs).
 
@@ -135,8 +162,11 @@ Backend Swagger API documentation will be available at: [http://localhost:8000/d
 ```bash
 cd frontend
 
-# Install Node dependencies (if not already installed)
+# Install Node dependencies
 npm install
+
+# Run automated frontend test suite
+npm test -- --watchAll=false
 
 # Start development server
 npm start

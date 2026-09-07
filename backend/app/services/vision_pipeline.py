@@ -27,7 +27,14 @@ def compute_lesion_segmentation(
     Stage I: Semantic Mucosal Lesion Segmentation & Spatial Morphology.
     Extracts lesion boundary, calibrated dimensions (mm), and border irregularity index.
     """
+    if not isinstance(image, Image.Image):
+        raise ValueError("Invalid image input: expected PIL.Image.Image instance")
+
+    distance_mm = max(10.0, min(500.0, float(distance_mm)))
     img_rgb = np.array(image.convert("RGB"))
+    if img_rgb.ndim != 3 or img_rgb.shape[0] < 16 or img_rgb.shape[1] < 16:
+        raise ValueError("Image dimensions too small for clinical segmentation (min 16x16 required)")
+
     h, w, _ = img_rgb.shape
 
     # 1. Color space transformation: mucosal erythema & leukoplakic contrast

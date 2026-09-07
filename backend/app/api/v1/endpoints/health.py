@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from sqlalchemy import text
 
+from app.core.config import settings
 from app.db.session import get_db
 from app.services.ml_engine import get_model, device
 
@@ -27,5 +28,5 @@ def health_check(db: Session = Depends(get_db)):
         "database": db_status,
         "model": "loaded" if model_loaded else "unloaded",
         "device": str(device),
-        "version": "2.0.0"
+        "version": settings.VERSION
     }

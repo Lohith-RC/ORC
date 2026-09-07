@@ -9,7 +9,10 @@ __pycache__/
 results_merged/
 .ipynb_checkpoints/
 cloudflared.exe
+*.exe
+*.pth
 *.db
+data_split/
 
 # Virtual Environments
 venv/

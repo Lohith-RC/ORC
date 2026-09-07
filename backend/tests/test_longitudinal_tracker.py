@@ -143,14 +143,11 @@ def test_indolent_expansion_trajectory():
     assert delta.has_prior is True
     assert delta.trajectory_status == TrajectoryStatus.INDOLENT_EXPANSION
 
-def test_predict_longitudinal_endpoint_flow():
-    from fastapi.testclient import TestClient
-    from main import app
+def test_predict_longitudinal_endpoint_flow(client):
     import io
     import uuid
     from PIL import Image
 
-    client = TestClient(app)
     uid = uuid.uuid4().hex[:6]
     username = f"long_doc_{uid}"
     pwd = "DocPassword123!"

@@ -106,6 +106,17 @@ def get_model() -> MergedNet:
     _ai_model = model
     return _ai_model
 
+def warmup_model() -> None:
+    """Execute a dry run forward pass to preheat PyTorch kernels and eliminate cold-start latency."""
+    try:
+        model = get_model()
+        dummy_input = torch.zeros((1, 3, 224, 224), device=device)
+        with torch.inference_mode():
+            _ = model(dummy_input)
+        logger.info("AI Model preheat warmup completed successfully.")
+    except Exception as e:
+        logger.warning(f"Model warmup notice: {e}")
+
 _inference_lock = threading.Lock()
 
 def _enable_dropout_only(module: nn.Module):
@@ -129,7 +140,7 @@ def run_inference_pipeline(image: Image.Image) -> Tuple[str, float, float, float
     with _inference_lock:
         model.eval()
         # 1. Batched TTA (Single forward pass with batch size 8 instead of 8 serial passes!)
-        with torch.no_grad():
+        with torch.inference_mode():
             tta_batch = torch.stack([t(image) for t in tta_transforms]).to(device)
             tta_out = model(tta_batch)
             tta_probs = torch.nn.functional.softmax(tta_out, dim=1)

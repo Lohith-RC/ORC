@@ -5,9 +5,9 @@ const getApiBaseUrl = () => {
     if (process.env.REACT_APP_API_URL) {
         return process.env.REACT_APP_API_URL.replace(/\/+$/, '');
     }
-    // ponytail: fallback to live Cloudflare tunnel on HTTPS, localhost on local dev
+    // Production Render backend fallback on HTTPS, localhost on local dev
     if (typeof window !== 'undefined' && window.location.protocol === 'https:') {
-        return 'https://gathered-download-cognitive-comparing.trycloudflare.com';
+        return 'https://oral-cancer-ai-x9q3.onrender.com';
     }
     return 'http://localhost:8000';
 };

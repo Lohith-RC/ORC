@@ -36,86 +36,8 @@ import SpecialistReferralModal from './SpecialistReferralModal';
 import WebRTCIntraoralCameraModal from './WebRTCIntraoralCameraModal';
 import { computeImageFileSharpness } from './clientBlurDetector';
 import { saveOfflineSpecimen, getOfflineSpecimens, deleteOfflineSpecimen } from './offlineVault';
+import { UncertaintyCaliper, RiskFactorToggle, OfflineSyncBanner } from './components/upload';
 
-// --- Analog Uncertainty Caliper Visualizer ---
-const UncertaintyCaliper = ({ confidence, uncertainty, prediction }) => {
-    // confidence: e.g. 0.96 (0 to 1)
-    // uncertainty: e.g. 0.008
-    const confPct = Math.min(100, Math.max(0, confidence * 100));
-    // uncertainty band width in percent (scaled for visual clarity)
-    const bandWidth = Math.min(25, Math.max(4, Math.sqrt(uncertainty) * 100));
-    const leftBound = Math.max(0, confPct - bandWidth / 2);
-    const rightBound = Math.min(100, confPct + bandWidth / 2);
-    const isUncertain = uncertainty > 0.015;
-
-    return (
-        <div className="border border-stone-300 dark:border-stone-800 bg-stone-50 dark:bg-stone-900/70 p-5 rounded-none my-4">
-            <div className="flex items-center justify-between font-mono text-[11px] mb-2 uppercase text-stone-500">
-                <span>EPISTEMIC UNCERTAINTY CALIPER</span>
-                <span className={isUncertain ? 'text-amber-500 font-bold' : 'text-clinical-teal dark:text-teal-400'}>
-                    σ² = {uncertainty.toFixed(5)} ({isUncertain ? 'HIGH VARIANCE' : 'STABLE CONSENSUS'})
-                </span>
-            </div>
-
-            {/* Ruler Scale */}
-            <div className="relative h-9 bg-stone-200/80 dark:bg-stone-800/80 rounded-none overflow-hidden my-3 border border-stone-300/80 dark:border-stone-700">
-                {/* Tick marks */}
-                <div className="absolute inset-0 flex justify-between px-2 items-end pb-1 pointer-events-none opacity-40 font-mono text-[8px]">
-                    <span>0%</span>
-                    <span>25%</span>
-                    <span>50%</span>
-                    <span>75%</span>
-                    <span>100%</span>
-                </div>
-
-                {/* Uncertainty Range Band */}
-                <div 
-                    style={{ left: `${leftBound}%`, width: `${bandWidth}%` }}
-                    className={`absolute top-0 bottom-0 ${isUncertain ? 'bg-amber-400/30 dark:bg-amber-400/20' : 'bg-clinical-teal/25 dark:bg-teal-400/20'} border-x-2 ${isUncertain ? 'border-amber-500' : 'border-clinical-teal'}`}
-                />
-
-                {/* Mean Confidence Indicator Point */}
-                <div 
-                    style={{ left: `${confPct}%` }}
-                    className="absolute top-0 bottom-0 w-1 bg-stone-900 dark:bg-white z-10 -ml-0.5"
-                >
-                    <div className="w-2.5 h-2.5 bg-stone-900 dark:bg-white rounded-full -ml-[3px] -mt-1 shadow-sm"></div>
-                </div>
-            </div>
-
-            <div className="flex items-center justify-between font-mono text-[10px] text-stone-500 pt-1">
-                <span>LOWER BOUND: {leftBound.toFixed(1)}%</span>
-                <span className="font-semibold text-stone-800 dark:text-stone-200">POINT ESTIMATE: {confPct.toFixed(1)}%</span>
-                <span>UPPER BOUND: {rightBound.toFixed(1)}%</span>
-            </div>
-        </div>
-    );
-};
-
-// --- Tactile Risk Switch Component ---
-const RiskFactorToggle = ({ label, weight, active, onChange, note }) => {
-    return (
-        <div 
-            onClick={() => onChange(!active)}
-            className={`cursor-pointer select-none border p-3 flex items-center justify-between transition-all ${
-                active 
-                    ? 'border-clinical-teal bg-teal-50/50 dark:bg-teal-950/20 dark:border-teal-700' 
-                    : 'border-stone-200 dark:border-stone-800 bg-stone-50/50 dark:bg-stone-900/30 hover:border-stone-300 dark:hover:border-stone-700'
-            }`}
-        >
-            <div className="flex flex-col">
-                <span className="text-xs font-mono font-medium text-stone-900 dark:text-stone-100">{label}</span>
-                <span className="text-[10px] text-stone-400 font-mono mt-0.5">{note}</span>
-            </div>
-            <div className="flex items-center gap-2">
-                <span className="font-mono text-[10px] text-clinical-teal dark:text-teal-400">{weight}</span>
-                <div className={`w-9 h-5 rounded-full p-0.5 transition-colors ${active ? 'bg-clinical-teal' : 'bg-stone-300 dark:bg-stone-700'}`}>
-                    <div className={`w-4 h-4 rounded-full bg-white transition-transform ${active ? 'translate-x-4' : 'translate-x-0'}`}></div>
-                </div>
-            </div>
-        </div>
-    );
-};
 
 const Upload = ({ token }) => {
     const [file, setFile] = useState(null);
@@ -440,37 +362,14 @@ const Upload = ({ token }) => {
                                         </span>
                                     )}
                                 </div>
-                            </div>
-
-                            {/* Offline Vault Indicator & Sync Action */}
-                            {offlineVaultCount > 0 && (
-                                <div className="mb-4 p-3 border border-amber-500/40 bg-amber-50/70 dark:bg-amber-950/30 flex items-center justify-between font-mono text-xs">
-                                    <div className="flex items-center gap-2 text-amber-800 dark:text-amber-300">
-                                        <HardDrive className="w-4 h-4 text-amber-600 dark:text-amber-400" />
-                                        <span>OFFLINE VAULT: <strong>{offlineVaultCount}</strong> queued</span>
-                                    </div>
-                                    <button
-                                        type="button"
-                                        disabled={isOffline || isSyncingVault}
-                                        onClick={handleSyncVault}
-                                        className={`px-3 py-1 text-[10px] font-semibold uppercase border transition-all flex items-center gap-1.5 ${
-                                            isOffline 
-                                                ? 'border-stone-300 dark:border-stone-700 text-stone-400 cursor-not-allowed'
-                                                : 'border-amber-600 bg-amber-600 text-white hover:bg-amber-700 shadow-xs'
-                                        }`}
-                                    >
-                                        <CloudUpload className="w-3 h-3" />
-                                        <span>{isSyncingVault ? 'SYNCING...' : 'SYNC TO CLOUD'}</span>
-                                    </button>
-                                </div>
-                            )}
-
-                            {offlineSuccessMsg && (
-                                <div className="mb-4 p-2.5 border border-teal-500/40 bg-teal-50 dark:bg-teal-950/30 text-teal-800 dark:text-teal-300 font-mono text-xs flex items-center gap-2">
-                                    <CheckCircle2 className="w-3.5 h-3.5 text-teal-600 shrink-0" />
-                                    <span>{offlineSuccessMsg}</span>
-                                </div>
-                            )}
+                            </div>                            {/* Offline Vault Indicator & Sync Action */}
+                            <OfflineSyncBanner
+                                offlineVaultCount={offlineVaultCount}
+                                isOffline={isOffline}
+                                isSyncingVault={isSyncingVault}
+                                onSyncVault={handleSyncVault}
+                                offlineSuccessMsg={offlineSuccessMsg}
+                            />
 
                             {/* Hardware Camera Viewfinder Trigger */}
                             <div className="mb-3">

@@ -8,7 +8,7 @@ on:
 
 jobs:
   backend-quality-and-tests:
-    name: Backend CI (Pytest & Security Scans)
+    name: Backend CI (Pytest & Code Quality)
     runs-on: ubuntu-latest
 
     steps:
@@ -21,39 +21,41 @@ jobs:
           python-version: '3.11'
           cache: 'pip'
 
-      - name: Install Dependencies
+      - name: Install Backend Dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r backend/requirements.txt
-          pip install pytest httpx flake8
 
       - name: Python Code Quality & Flake8 Linting
         run: |
           # Stop the build if there are Python syntax errors or undefined names
           flake8 backend/app --count --select=E9,F63,F7,F82 --show-source --statistics
-          # Exit-zero treats all errors as warnings
-          flake8 backend/app --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+          # Complexity and style warning check
+          flake8 backend/app --count --exit-zero --max-complexity=12 --max-line-length=127 --statistics
 
-      - name: Execute Automated Pytest Test Suite
+      - name: Execute Automated Pytest Test Suite with Coverage
         env:
           DATABASE_URL: sqlite:///oralcancer_test.db
           SECRET_KEY: ci_cd_test_secret_key_2026
+          CORS_ORIGINS: http://localhost:3000,http://localhost:8000
         run: |
           cd backend
-          python -m pytest tests/ -v
+          python -m pytest tests/ -v --cov=app --cov-report=term-missing
 
   frontend-build-verification:
-    name: Frontend CI (Build & Static Site Verification)
+    name: Frontend CI (Build Verification)
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Set up Node.js 18.x
+      - name: Set up Node.js 20.x
         uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
 
       - name: Install Frontend Dependencies
         run: |

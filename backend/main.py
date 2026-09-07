@@ -391,7 +391,11 @@ ai_model = MergedNet(num_classes=2)
 model_path = BASE_DIR / "merged_model.pth"
 if not model_path.exists():
     raise RuntimeError(f"Model file not found at: {model_path}")
-ai_model.load_state_dict(torch.load(model_path, map_location=device))
+import gc
+state_dict = torch.load(model_path, map_location=device)
+ai_model.load_state_dict(state_dict)
+del state_dict
+gc.collect()
 ai_model.eval()
 ai_model.to(device)
 logger.info("AI model loaded successfully.")

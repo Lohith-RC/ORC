@@ -28,6 +28,7 @@ import {
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
+import { API_BASE_URL } from './api';
 import defaultProfileImage from './images/7.webp';
 
 const Profile = ({ token }) => {
@@ -58,8 +59,8 @@ const Profile = ({ token }) => {
                 return;
             }
             try {
-                const userPromise = axios.get('http://localhost:8000/me', { headers: { Authorization: `Bearer ${token}` } });
-                const historyPromise = axios.get('http://localhost:8000/me/analyses', { headers: { Authorization: `Bearer ${token}` } });
+                const userPromise = axios.get(`${API_BASE_URL}/me`, { headers: { Authorization: `Bearer ${token}` } });
+                const historyPromise = axios.get(`${API_BASE_URL}/me/analyses`, { headers: { Authorization: `Bearer ${token}` } });
                 
                 const [userResponse, historyResponse] = await Promise.all([userPromise, historyPromise]);
 
@@ -140,7 +141,7 @@ const Profile = ({ token }) => {
         setError('');
         setMessage('');
         try {
-            const response = await axios.post('http://localhost:8000/me/update', {
+            const response = await axios.post(`${API_BASE_URL}/me/update`, {
                 full_name: formData.full_name,
                 email: formData.email
             }, {

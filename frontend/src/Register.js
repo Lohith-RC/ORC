@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { User, Lock, Mail, ArrowRight, UserCheck } from 'lucide-react';
 import axios from 'axios';
+import { API_BASE_URL } from './api';
 import registerImage from './images/4.jpg';
 
 const Register = ({ onLogin }) => {
@@ -18,7 +19,7 @@ const Register = ({ onLogin }) => {
         setError('');
         setLoading(true);
         try {
-            await axios.post('http://localhost:8000/register', { 
+            await axios.post(`${API_BASE_URL}/register`, { 
                 username: username.trim(),
                 password: password,
                 full_name: fullName.trim(),
@@ -28,7 +29,7 @@ const Register = ({ onLogin }) => {
             const loginParams = new URLSearchParams();
             loginParams.append('username', username.trim());
             loginParams.append('password', password);
-            const loginResponse = await axios.post('http://localhost:8000/login', loginParams, {
+            const loginResponse = await axios.post(`${API_BASE_URL}/login`, loginParams, {
                 headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
             });
             

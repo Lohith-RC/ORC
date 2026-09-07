@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { LogIn, User, Lock, ArrowRight, Shield } from 'lucide-react';
 import axios from 'axios';
+import { API_BASE_URL } from './api';
 import loginImage from './images/3.jpg';
 
 const Login = ({ onLogin }) => {
@@ -19,7 +20,7 @@ const Login = ({ onLogin }) => {
             formData.append('username', email);
             formData.append('password', password);
 
-            const response = await axios.post('http://localhost:8000/login', formData, {
+            const response = await axios.post(`${API_BASE_URL}/login`, formData, {
                 headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
             });
             onLogin(response.data.access_token);

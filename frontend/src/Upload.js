@@ -17,6 +17,7 @@ import {
     ArrowRight
 } from 'lucide-react';
 import axios from 'axios';
+import { API_BASE_URL } from './api';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 
@@ -129,7 +130,7 @@ const Upload = ({ token }) => {
 
     useEffect(() => {
         if (token) {
-            axios.get('http://localhost:8000/me', {
+            axios.get(`${API_BASE_URL}/me`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             }).then(response => {
                 setUser(response.data);
@@ -188,7 +189,7 @@ const Upload = ({ token }) => {
         });
 
         try {
-            const response = await axios.post(`http://localhost:8000/predict?${params.toString()}`, formData, {
+            const response = await axios.post(`${API_BASE_URL}/predict?${params.toString()}`, formData, {
                 headers: {
                     'Content-Type': 'multipart/form-data',
                     'Authorization': `Bearer ${token}`

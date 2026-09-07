@@ -395,12 +395,18 @@ if not model_path.exists():
     raise RuntimeError(f"Model file not found at: {model_path}")
 import gc
 state_dict = torch.load(model_path, map_location=device)
-ai_model.load_state_dict(state_dict)
+with torch.no_grad():
+    for name, param in ai_model.named_parameters():
+        if name in state_dict:
+            param.copy_(state_dict[name].float())
+    for name, buf in ai_model.named_buffers():
+        if name in state_dict:
+            buf.copy_(state_dict[name].float())
 del state_dict
 gc.collect()
 ai_model.eval()
 ai_model.to(device)
-logger.info("AI model loaded successfully.")
+logger.info("AI model loaded successfully with low-memory loader.")
 
 
 # ============================================================

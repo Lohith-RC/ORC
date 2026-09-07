@@ -107,6 +107,12 @@ def run_safe_migrations():
                 logger.info("Database migration: created composite index idx_analyses_patient_site")
             except Exception as e:
                 logger.warning(f"Index migration note: {e}")
+        if "idx_analyses_telemetry_gin" not in analysis_indexes and "postgresql" in settings.DATABASE_URL:
+            try:
+                conn.execute(text("CREATE INDEX IF NOT EXISTS idx_analyses_telemetry_gin ON analyses USING gin (cast(telemetry_data as jsonb))"))
+                logger.info("Database migration: created GIN index on telemetry_data JSONB")
+            except Exception as e:
+                logger.warning(f"GIN index migration note: {e}")
 
 
 from contextlib import asynccontextmanager

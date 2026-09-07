@@ -128,28 +128,24 @@ def run_inference_pipeline(image: Image.Image) -> Tuple[str, float, float, float
 
     with _inference_lock:
         model.eval()
-        # 1. TTA passes
-        tta_probs = []
+        # 1. Batched TTA (Single forward pass with batch size 8 instead of 8 serial passes!)
         with torch.no_grad():
-            for t in tta_transforms:
-                tensor = t(image).unsqueeze(0).to(device)
-                out = model(tensor)
-                tta_probs.append(torch.nn.functional.softmax(out, dim=1))
-        tta_mean = torch.stack(tta_probs).mean(dim=0)
+            tta_batch = torch.stack([t(image) for t in tta_transforms]).to(device)
+            tta_out = model(tta_batch)
+            tta_probs = torch.nn.functional.softmax(tta_out, dim=1)
+            tta_mean = tta_probs.mean(dim=0, keepdim=True)
 
-        # 2. Monte Carlo Dropout passes (Keep BatchNorm in eval mode)
+        # 2. Batched Monte Carlo Dropout (Single forward pass with batch size 15!)
         _enable_dropout_only(model)
-        mcd_preds = []
         with torch.no_grad():
             base_tensor = inference_transform(image).unsqueeze(0).to(device)
-            for _ in range(settings.MC_DROPOUT_PASSES):
-                out = model(base_tensor)
-                mcd_preds.append(torch.nn.functional.softmax(out, dim=1))
+            mcd_batch = base_tensor.repeat(settings.MC_DROPOUT_PASSES, 1, 1, 1)
+            mcd_out = model(mcd_batch)
+            mcd_probs = torch.nn.functional.softmax(mcd_out, dim=1)
         model.eval()
 
-    mcd_stack = torch.stack(mcd_preds)
-    mcd_mean = mcd_stack.mean(dim=0)
-    mcd_var = mcd_stack.var(dim=0)
+    mcd_mean = mcd_probs.mean(dim=0, keepdim=True)
+    mcd_var = mcd_probs.var(dim=0, keepdim=True)
 
     # 3. Fuse TTA and MCD probabilities
     final_probs = 0.5 * tta_mean + 0.5 * mcd_mean

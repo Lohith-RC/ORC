@@ -19,7 +19,12 @@ import {
     Sliders,
     Stethoscope,
     CheckSquare,
-    Layers
+    Layers,
+    Camera,
+    Wifi,
+    WifiOff,
+    CloudUpload,
+    HardDrive
 } from 'lucide-react';
 import axios from 'axios';
 import { API_BASE_URL } from './api';
@@ -28,6 +33,9 @@ import LesionSegmentationViewer from './LesionSegmentationViewer';
 import LongitudinalProgressionCard from './LongitudinalProgressionCard';
 import ClinicianVerificationModal from './ClinicianVerificationModal';
 import SpecialistReferralModal from './SpecialistReferralModal';
+import WebRTCIntraoralCameraModal from './WebRTCIntraoralCameraModal';
+import { computeImageFileSharpness } from './clientBlurDetector';
+import { saveOfflineSpecimen, getOfflineSpecimens, deleteOfflineSpecimen } from './offlineVault';
 
 // --- Analog Uncertainty Caliper Visualizer ---
 const UncertaintyCaliper = ({ confidence, uncertainty, prediction }) => {
@@ -135,6 +143,13 @@ const Upload = ({ token }) => {
 
     const [isVerificationOpen, setIsVerificationOpen] = useState(false);
     const [isReferralOpen, setIsReferralOpen] = useState(false);
+    const [isCameraOpen, setIsCameraOpen] = useState(false);
+    const [clientSharpness, setClientSharpness] = useState(null);
+    const [clientBlurWarning, setClientBlurWarning] = useState(null);
+    const [isOffline, setIsOffline] = useState(!navigator.onLine);
+    const [offlineVaultCount, setOfflineVaultCount] = useState(0);
+    const [isSyncingVault, setIsSyncingVault] = useState(false);
+    const [offlineSuccessMsg, setOfflineSuccessMsg] = useState('');
 
     // Clinical risk factors
     const [riskForm, setRiskForm] = useState({ 
@@ -148,6 +163,27 @@ const Upload = ({ token }) => {
     // Anatomical oral cavity lesion site
     const [selectedSite, setSelectedSite] = useState('buccal_mucosa');
 
+    const refreshVaultCount = useCallback(async () => {
+        try {
+            const items = await getOfflineSpecimens();
+            setOfflineVaultCount(items.length);
+        } catch {
+            setOfflineVaultCount(0);
+        }
+    }, []);
+
+    useEffect(() => {
+        refreshVaultCount();
+        const handleOnline = () => setIsOffline(false);
+        const handleOffline = () => setIsOffline(true);
+        window.addEventListener('online', handleOnline);
+        window.addEventListener('offline', handleOffline);
+        return () => {
+            window.removeEventListener('online', handleOnline);
+            window.removeEventListener('offline', handleOffline);
+        };
+    }, [refreshVaultCount]);
+
     useEffect(() => {
         if (token) {
             axios.get(`${API_BASE_URL}/me`, {
@@ -160,9 +196,10 @@ const Upload = ({ token }) => {
         }
     }, [token]);
 
-    const onDrop = useCallback(acceptedFiles => {
+    const onDrop = useCallback(async (acceptedFiles) => {
         setResult(null);
         setError('');
+        setOfflineSuccessMsg('');
         const selectedFile = acceptedFiles[0];
         if (selectedFile) {
             setFile(selectedFile);
@@ -171,8 +208,27 @@ const Upload = ({ token }) => {
                 setPreview(reader.result);
             };
             reader.readAsDataURL(selectedFile);
+
+            // Client-side Instant Focus & Laplacian Gating (<15ms)
+            const { sharpness, isBlurry } = await computeImageFileSharpness(selectedFile);
+            setClientSharpness(sharpness);
+            setClientBlurWarning(isBlurry ? `Client Optical Gating: Sharpness score (${sharpness.toFixed(1)} < 50.0) indicates motion blur or defocus. Consider capturing a sharper specimen.` : null);
         }
     }, []);
+
+    const handleCameraCapture = (capturedFile, sharpness) => {
+        setResult(null);
+        setError('');
+        setOfflineSuccessMsg('');
+        setFile(capturedFile);
+        const reader = new FileReader();
+        reader.onload = () => {
+            setPreview(reader.result);
+        };
+        reader.readAsDataURL(capturedFile);
+        setClientSharpness(sharpness);
+        setClientBlurWarning(sharpness < 50.0 ? `Client Optical Gating: Sharpness score (${sharpness.toFixed(1)} < 50.0) indicates motion blur. Consider recapturing.` : null);
+    };
 
     const { getRootProps, getInputProps, isDragActive } = useDropzone({
         onDrop,
@@ -180,11 +236,80 @@ const Upload = ({ token }) => {
         multiple: false
     });
 
+    const handleSaveOffline = async () => {
+        if (!file) return;
+        try {
+            await saveOfflineSpecimen({
+                patient_identifier: patientId.trim() || 'ANON-001',
+                lesion_site: selectedSite,
+                cross_polarized: crossPolarized,
+                distance_mm: distanceMm,
+                age: riskForm.age,
+                tobacco_use: riskForm.tobacco_use,
+                alcohol_use: riskForm.alcohol_use,
+                betel_nut: riskForm.betel_nut,
+                prior_lesions: riskForm.prior_lesions,
+                image_name: file.name,
+                image_blob: file,
+                client_sharpness: clientSharpness
+            });
+            await refreshVaultCount();
+            removeFile();
+            setOfflineSuccessMsg(`Specimen saved to local Offline Clinical Vault. Total queued: ${offlineVaultCount + 1}`);
+        } catch (err) {
+            setError(`Failed to save to local vault: ${err.message}`);
+        }
+    };
+
+    const handleSyncVault = async () => {
+        if (!token || isOffline) return;
+        setIsSyncingVault(true);
+        setError('');
+        try {
+            const items = await getOfflineSpecimens();
+            let synced = 0;
+            for (const item of items) {
+                const formData = new FormData();
+                formData.append('file', item.image_blob, item.image_name || 'offline.jpg');
+                formData.append('patient_identifier', item.patient_identifier);
+                formData.append('lesion_site', item.lesion_site);
+                formData.append('cross_polarized', item.cross_polarized);
+                formData.append('distance_mm', item.distance_mm);
+                formData.append('age', item.age);
+                formData.append('tobacco_use', item.tobacco_use);
+                formData.append('alcohol_use', item.alcohol_use);
+                formData.append('betel_nut', item.betel_nut);
+                formData.append('prior_lesions', item.prior_lesions);
+
+                await axios.post(`${API_BASE_URL}/predict`, formData, {
+                    headers: {
+                        'Content-Type': 'multipart/form-data',
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                await deleteOfflineSpecimen(item.id);
+                synced++;
+            }
+            await refreshVaultCount();
+            setOfflineSuccessMsg(`Successfully synchronized ${synced} offline screenings with cloud database.`);
+        } catch (err) {
+            setError(`Offline vault synchronization error: ${err.response?.data?.detail || err.message}`);
+        } finally {
+            setIsSyncingVault(false);
+        }
+    };
+
     const handleUpload = async () => {
         if (!file) {
             setError('Please select an oral image specimen first.');
             return;
         }
+
+        if (isOffline) {
+            await handleSaveOffline();
+            return;
+        }
+
         setLoading(true);
         setError('');
         setResult(null);
@@ -197,13 +322,13 @@ const Upload = ({ token }) => {
         setLoadingPhase('Executing Stage I Lesion Segmentation & Spatial Morphology...');
         phaseTimersRef.current.push(setTimeout(() => {
             setLoadingPhase('Executing 8-fold Test-Time Augmentation (TTA)...');
-        }, 700));
+        }, 600));
         phaseTimersRef.current.push(setTimeout(() => {
             setLoadingPhase('Computing Monte Carlo dropout variational passes (15 runs)...');
-        }, 1400));
+        }, 1200));
         phaseTimersRef.current.push(setTimeout(() => {
             setLoadingPhase('Synthesizing AJCC 8th Edition cTNM Clinical Decision Directives...');
-        }, 2100));
+        }, 1800));
 
         const formData = new FormData();
         formData.append('file', file);
@@ -302,9 +427,61 @@ const Upload = ({ token }) => {
                             <span className="absolute -bottom-1 -left-1 text-[10px] font-mono text-stone-400">+</span>
                             <span className="absolute -bottom-1 -right-1 text-[10px] font-mono text-stone-400">+</span>
 
-                            <div className="flex items-center justify-between font-mono text-[10px] text-stone-500 uppercase mb-4 border-b border-stone-200 dark:border-stone-800 pb-2">
+                            <div className="flex items-center justify-between font-mono text-[10px] text-stone-500 uppercase mb-3 border-b border-stone-200 dark:border-stone-800 pb-2">
                                 <span>01 // SPECIMEN CAPTURE</span>
-                                <span>ACCEPTED: JPEG • PNG • WEBP</span>
+                                <div className="flex items-center gap-2">
+                                    {isOffline ? (
+                                        <span className="flex items-center gap-1 text-amber-600 dark:text-amber-400 font-semibold">
+                                            <WifiOff className="w-3 h-3" /> OFFLINE MODE
+                                        </span>
+                                    ) : (
+                                        <span className="flex items-center gap-1 text-teal-600 dark:text-teal-400">
+                                            <Wifi className="w-3 h-3" /> ONLINE
+                                        </span>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* Offline Vault Indicator & Sync Action */}
+                            {offlineVaultCount > 0 && (
+                                <div className="mb-4 p-3 border border-amber-500/40 bg-amber-50/70 dark:bg-amber-950/30 flex items-center justify-between font-mono text-xs">
+                                    <div className="flex items-center gap-2 text-amber-800 dark:text-amber-300">
+                                        <HardDrive className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+                                        <span>OFFLINE VAULT: <strong>{offlineVaultCount}</strong> queued</span>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        disabled={isOffline || isSyncingVault}
+                                        onClick={handleSyncVault}
+                                        className={`px-3 py-1 text-[10px] font-semibold uppercase border transition-all flex items-center gap-1.5 ${
+                                            isOffline 
+                                                ? 'border-stone-300 dark:border-stone-700 text-stone-400 cursor-not-allowed'
+                                                : 'border-amber-600 bg-amber-600 text-white hover:bg-amber-700 shadow-xs'
+                                        }`}
+                                    >
+                                        <CloudUpload className="w-3 h-3" />
+                                        <span>{isSyncingVault ? 'SYNCING...' : 'SYNC TO CLOUD'}</span>
+                                    </button>
+                                </div>
+                            )}
+
+                            {offlineSuccessMsg && (
+                                <div className="mb-4 p-2.5 border border-teal-500/40 bg-teal-50 dark:bg-teal-950/30 text-teal-800 dark:text-teal-300 font-mono text-xs flex items-center gap-2">
+                                    <CheckCircle2 className="w-3.5 h-3.5 text-teal-600 shrink-0" />
+                                    <span>{offlineSuccessMsg}</span>
+                                </div>
+                            )}
+
+                            {/* Hardware Camera Viewfinder Trigger */}
+                            <div className="mb-3">
+                                <button
+                                    type="button"
+                                    onClick={() => setIsCameraOpen(true)}
+                                    className="w-full py-2.5 px-3 border border-clinical-teal bg-teal-50/60 dark:bg-teal-950/40 text-clinical-teal dark:text-teal-400 font-mono text-xs uppercase font-semibold flex items-center justify-center gap-2 hover:bg-clinical-teal hover:text-white dark:hover:bg-clinical-teal dark:hover:text-white transition-all shadow-xs"
+                                >
+                                    <Camera className="w-4 h-4" />
+                                    <span>Launch Intraoral Video Stream (Live Viewfinder)</span>
+                                </button>
                             </div>
 
                             <AnimatePresence mode="wait">
@@ -323,7 +500,7 @@ const Upload = ({ token }) => {
                                             {isDragActive ? 'Drop oral lesion photograph...' : 'Ingest Clinical Photograph'}
                                         </p>
                                         <p className="font-mono text-[11px] text-stone-400">
-                                            Click or drag specimen file here
+                                            Click or drag specimen file here (JPEG, PNG, WEBP)
                                         </p>
                                     </div>
                                 ) : (
@@ -344,6 +521,27 @@ const Upload = ({ token }) => {
                                     </div>
                                 )}
                             </AnimatePresence>
+
+                            {/* Client-Side Optical Focus & Blur Gating Telemetry */}
+                            {clientSharpness !== null && (
+                                <div className={`mt-3 p-2.5 border font-mono text-xs flex items-center justify-between ${
+                                    clientBlurWarning 
+                                        ? 'border-amber-500/60 bg-amber-500/15 text-amber-700 dark:text-amber-300' 
+                                        : 'border-teal-500/60 bg-teal-500/15 text-clinical-teal dark:text-teal-300'
+                                }`}>
+                                    <div className="flex items-center gap-2">
+                                        {clientBlurWarning ? (
+                                            <AlertTriangle className="w-4 h-4 text-amber-500 shrink-0" />
+                                        ) : (
+                                            <CheckCircle2 className="w-4 h-4 text-clinical-teal shrink-0" />
+                                        )}
+                                        <span className="text-[11px] font-semibold">
+                                            {clientBlurWarning ? 'POTENTIAL BLUR DETECTED' : 'OPTICAL CLARITY VERIFIED'}
+                                        </span>
+                                    </div>
+                                    <span className="text-[10px] opacity-80">SHARPNESS σ²: {clientSharpness.toFixed(1)} (Min 50.0)</span>
+                                </div>
+                            )}
                         </div>
 
                         {/* Patient Identifier & Serial Record Link */}
@@ -522,15 +720,41 @@ const Upload = ({ token }) => {
                             </div>
                         </div>
 
-                        {/* Submit Action */}
+                        {/* Submit Actions */}
                         {file && !loading && (
-                            <button
-                                onClick={handleUpload}
-                                className="w-full py-4 bg-stone-900 dark:bg-stone-100 text-stone-100 dark:text-stone-900 text-sm font-mono tracking-wider uppercase font-semibold hover:bg-clinical-teal dark:hover:bg-clinical-teal dark:hover:text-white transition-all shadow-lg flex items-center justify-center gap-2"
-                            >
-                                <span>Run Multi-Model Triage Synthesis</span>
-                                <ArrowRight className="w-4 h-4" />
-                            </button>
+                            <div className="space-y-2">
+                                <button
+                                    onClick={handleUpload}
+                                    className={`w-full py-4 text-sm font-mono tracking-wider uppercase font-semibold transition-all shadow-lg flex items-center justify-center gap-2 ${
+                                        isOffline
+                                            ? 'bg-amber-600 hover:bg-amber-700 text-white'
+                                            : 'bg-stone-900 dark:bg-stone-100 text-stone-100 dark:text-stone-900 hover:bg-clinical-teal dark:hover:bg-clinical-teal dark:hover:text-white'
+                                    }`}
+                                >
+                                    {isOffline ? (
+                                        <>
+                                            <HardDrive className="w-4 h-4" />
+                                            <span>Save to Offline Clinical Vault (Offline Active)</span>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <span>Run Multi-Model Triage Synthesis</span>
+                                            <ArrowRight className="w-4 h-4" />
+                                        </>
+                                    )}
+                                </button>
+
+                                {!isOffline && (
+                                    <button
+                                        type="button"
+                                        onClick={handleSaveOffline}
+                                        className="w-full py-2.5 border border-stone-300 dark:border-stone-700 bg-stone-50 dark:bg-stone-900 hover:bg-stone-100 dark:hover:bg-stone-800 text-stone-700 dark:text-stone-300 font-mono text-xs uppercase font-medium flex items-center justify-center gap-2 transition-colors"
+                                    >
+                                        <HardDrive className="w-3.5 h-3.5" />
+                                        <span>Save to Local Vault for Batch Sync Later</span>
+                                    </button>
+                                )}
+                            </div>
                         )}
                     </div>
 
@@ -816,6 +1040,14 @@ const Upload = ({ token }) => {
                     analysisId={result.id}
                 />
             )}
+
+            {/* Hardware WebRTC Intraoral Camera Viewfinder Modal */}
+            <WebRTCIntraoralCameraModal
+                isOpen={isCameraOpen}
+                onClose={() => setIsCameraOpen(false)}
+                onCapture={handleCameraCapture}
+                targetSite={selectedSite}
+            />
         </div>
     );
 };

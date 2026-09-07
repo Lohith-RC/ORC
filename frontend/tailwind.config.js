@@ -1,7 +1,8 @@
 /** @type {import('tailwindcss').Config} */
-module.exports = {
+export default {
   darkMode: 'class',
   content: [
+    "./index.html",
     "./src/**/*.{js,jsx,ts,tsx}",
   ],
   theme: {
@@ -47,13 +48,15 @@ module.exports = {
           800: '#115e59',
           900: '#134e4a',
         },
-        slate: {
-          850: '#1e293b',
-          900: '#0f172a',
-          950: '#020617',
-        }
-      }
+      },
+      boxShadow: {
+        'soft-sm': '0 1px 2px 0 rgba(16, 17, 21, 0.04)',
+        'soft': '0 2px 8px -2px rgba(16, 17, 21, 0.05), 0 1px 4px -1px rgba(16, 17, 21, 0.03)',
+        'soft-md': '0 6px 16px -4px rgba(16, 17, 21, 0.06), 0 2px 6px -1px rgba(16, 17, 21, 0.04)',
+        'soft-lg': '0 12px 28px -6px rgba(16, 17, 21, 0.08), 0 4px 10px -2px rgba(16, 17, 21, 0.04)',
+        'soft-xl': '0 20px 40px -10px rgba(16, 17, 21, 0.10)',
+      },
     },
   },
   plugins: [],
-}
+};

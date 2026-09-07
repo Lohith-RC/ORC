@@ -19,11 +19,23 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
+ANATOMICAL_SITE_METADATA = {
+    "buccal_mucosa": {"display": "Buccal Mucosa (Cheek Lining)", "risk_tier": "Standard", "metastatic_propensity": "Moderate"},
+    "lateral_tongue": {"display": "Lateral Border of Tongue", "risk_tier": "High Risk", "metastatic_propensity": "High (Early Occult Nodal Spread)"},
+    "floor_of_mouth": {"display": "Floor of Mouth", "risk_tier": "High Risk", "metastatic_propensity": "High (Early Lymphatic Drainage)"},
+    "dorsal_tongue": {"display": "Dorsal Tongue", "risk_tier": "Standard", "metastatic_propensity": "Low"},
+    "hard_palate": {"display": "Hard Palate", "risk_tier": "Standard", "metastatic_propensity": "Low"},
+    "soft_palate": {"display": "Soft Palate / Oropharynx", "risk_tier": "High Risk (HPV Predilection)", "metastatic_propensity": "High"},
+    "gingiva": {"display": "Gingiva / Retromolar Trigone", "risk_tier": "Elevated", "metastatic_propensity": "Moderate-High (Bone Infiltration Risk)"},
+    "lip": {"display": "Labial Mucosa / Vermilion Border", "risk_tier": "Standard (UV-related)", "metastatic_propensity": "Low-Moderate"}
+}
+
 @router.post("/predict")
 @limiter.limit("20/minute")
 async def predict(
     request: Request,
     file: UploadFile = File(...),
+    lesion_site: str = Form("buccal_mucosa"),
     age: int = Form(30),
     tobacco_use: bool = Form(False),
     alcohol_use: bool = Form(False),
@@ -108,6 +120,9 @@ async def predict(
     elif pred_class == "uncertain":
         clinical_alert = "WARNING: AI model epistemic uncertainty is elevated. Second opinion or clinical biopsy recommended."
 
+    # Resolve anatomical metadata
+    site_info = ANATOMICAL_SITE_METADATA.get(lesion_site, ANATOMICAL_SITE_METADATA["buccal_mucosa"])
+
     # 8. Persist to Relational Database
     new_analysis = Analysis(
         user_id=current_user.id,
@@ -117,6 +132,7 @@ async def predict(
         risk_score=round(clinical_risk_score, 3),
         image_quality_score=round(quality_score, 2),
         tta_used=True,
+        lesion_site=lesion_site,
         image_filename=file.filename or "upload.jpg",
     )
     db.add(new_analysis)
@@ -129,7 +145,7 @@ async def predict(
         action="RUN_PREDICTION",
         user_id=current_user.id,
         ip_address=get_client_ip(request),
-        details=f"Analysis #{new_analysis.id}: {pred_class} (conf={confidence_score:.3f}, risk={clinical_risk_score:.3f})"
+        details=f"Analysis #{new_analysis.id}: {pred_class} (site={lesion_site}, conf={confidence_score:.3f}, risk={clinical_risk_score:.3f})"
     )
 
     return {
@@ -138,6 +154,10 @@ async def predict(
         "confidence": round(confidence_score, 4),
         "uncertainty": round(uncertainty, 5),
         "clinical_risk_score": round(clinical_risk_score, 3),
+        "lesion_site": lesion_site,
+        "lesion_site_display": site_info["display"],
+        "lesion_site_risk": site_info["risk_tier"],
+        "metastatic_propensity": site_info["metastatic_propensity"],
         "clinical_alert": clinical_alert,
         "image_quality": image_quality_flag or "acceptable",
         "tta_passes": settings.TTA_PASSES,

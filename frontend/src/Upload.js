@@ -14,12 +14,14 @@ import {
     ShieldCheck, 
     HelpCircle,
     FileText,
-    ArrowRight
+    ArrowRight,
+    MapPin
 } from 'lucide-react';
 import axios from 'axios';
 import { API_BASE_URL } from './api';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
+import OralCavityMap, { ORAL_SITES } from './OralCavityMap';
 
 // --- Analog Uncertainty Caliper Visualizer ---
 const UncertaintyCaliper = ({ confidence, uncertainty, prediction }) => {
@@ -129,6 +131,9 @@ const Upload = ({ token }) => {
         prior_lesions: false 
     });
 
+    // Anatomical oral cavity lesion site
+    const [selectedSite, setSelectedSite] = useState('buccal_mucosa');
+
     useEffect(() => {
         if (token) {
             axios.get(`${API_BASE_URL}/me`, {
@@ -186,6 +191,7 @@ const Upload = ({ token }) => {
         const formData = new FormData();
         formData.append('file', file);
         // PHI Protection: transmit clinical risk factors in multipart body, not plaintext URL query string
+        formData.append('lesion_site', selectedSite);
         formData.append('age', riskForm.age);
         formData.append('tobacco_use', riskForm.tobacco_use);
         formData.append('alcohol_use', riskForm.alcohol_use);
@@ -316,10 +322,19 @@ const Upload = ({ token }) => {
                             </AnimatePresence>
                         </div>
 
+                        {/* Anatomical Lesion Site Targeting Map */}
+                        <div className="border border-stone-300 dark:border-stone-800 bg-stone-50 dark:bg-stone-900 p-6">
+                            <div className="flex items-center justify-between font-mono text-[10px] text-stone-500 uppercase mb-3 border-b border-stone-200 dark:border-stone-800 pb-2">
+                                <span>02 // ANATOMICAL LESION SITE</span>
+                                <span>TOPOLOGY SELECTOR</span>
+                            </div>
+                            <OralCavityMap selectedSite={selectedSite} onSelectSite={setSelectedSite} />
+                        </div>
+
                         {/* Patient Epidemiological Risk Factors */}
                         <div className="border border-stone-300 dark:border-stone-800 bg-stone-50 dark:bg-stone-900 p-6">
                             <div className="flex items-center justify-between font-mono text-[10px] text-stone-500 uppercase mb-4 border-b border-stone-200 dark:border-stone-800 pb-2">
-                                <span>02 // EPIDEMIOLOGICAL RISK PROFILE</span>
+                                <span>03 // EPIDEMIOLOGICAL RISK PROFILE</span>
                                 <span>PRIOR WEIGHTING</span>
                             </div>
 
@@ -474,6 +489,33 @@ const Upload = ({ token }) => {
                                             </p>
                                         </div>
                                     )}
+                                </div>
+
+                                {/* Anatomical Site & Metastatic Staging Ribbon */}
+                                <div className="my-4 p-4 border border-stone-200 dark:border-stone-800 bg-stone-50/80 dark:bg-stone-950/60 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                                    <div className="flex items-start gap-3">
+                                        <div className="p-2 border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-900 text-clinical-teal">
+                                            <MapPin className="w-4 h-4" />
+                                        </div>
+                                        <div>
+                                            <div className="font-mono text-[10px] text-stone-400 uppercase">ANATOMICAL LESION SITE</div>
+                                            <div className="font-serif text-base sm:text-lg font-medium text-stone-900 dark:text-stone-100">
+                                                {result.lesion_site_display || ORAL_SITES.find(s => s.id === selectedSite)?.label || 'Buccal Mucosa'}
+                                            </div>
+                                            <div className="font-sans text-xs text-stone-500 mt-0.5">
+                                                Metastatic Propensity: <span className="font-medium text-stone-700 dark:text-stone-300">{result.metastatic_propensity || 'Standard regional drainage'}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="sm:text-right">
+                                        <span className={`inline-block font-mono text-[10px] px-2.5 py-1 border font-semibold ${
+                                            (result.lesion_site_risk || '').includes('HIGH') 
+                                                ? 'bg-rose-500/15 border-rose-500/40 text-rose-700 dark:text-rose-300'
+                                                : 'bg-teal-500/15 border-teal-500/40 text-teal-700 dark:text-teal-300'
+                                        }`}>
+                                            {result.lesion_site_risk || 'STANDARD RISK'}
+                                        </span>
+                                    </div>
                                 </div>
 
                                 {/* Analog Caliper Display */}

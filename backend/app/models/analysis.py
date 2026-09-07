@@ -16,6 +16,7 @@ class Analysis(Base):
     risk_score = Column(Float, nullable=True)            # Clinical risk score
     image_quality_score = Column(Float, nullable=True)   # Laplacian variance
     tta_used = Column(Boolean, default=False)
+    lesion_site = Column(String, default="buccal_mucosa", nullable=True) # Anatomical oral cavity site
     timestamp = Column(DateTime, default=datetime.datetime.utcnow, index=True)
     image_filename = Column(String, nullable=False)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)

@@ -26,6 +26,7 @@ from pydantic import BaseModel, validator
 import torch
 import torch.nn as nn
 from torchvision import models, transforms
+from torchvision.models.vgg import make_layers, cfgs
 from PIL import Image
 
 # ============================================================
@@ -343,7 +344,8 @@ logger.info(f"Using compute device: {device}")
 class MergedNet(nn.Module):
     def __init__(self, num_classes):
         super(MergedNet, self).__init__()
-        self.vgg16 = models.vgg16(weights=None).features
+        # Direct feature construction saves >450 MB by skipping VGG16's unused 102M-param classifier
+        self.vgg16 = make_layers(cfgs['D'])
         self.resnet = nn.Sequential(*list(models.resnet50(weights=None).children())[:-2])
         self.efficientnet = models.efficientnet_b0(weights=None).features
         self.mobilenet = models.mobilenet_v2(weights=None).features

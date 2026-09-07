@@ -7,7 +7,7 @@ const getApiBaseUrl = () => {
     }
     // Production Render backend fallback on HTTPS, localhost on local dev
     if (typeof window !== 'undefined' && window.location.protocol === 'https:') {
-        return 'https://oral-cancer-ai-x9q3.onrender.com';
+        return 'https://oral-cancer-backend-fiwu.onrender.com';
     }
     return 'http://localhost:8000';
 };

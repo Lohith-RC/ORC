@@ -46,7 +46,10 @@ async def lifespan(app: FastAPI):
     Base.metadata.create_all(bind=engine)
     run_safe_migrations()
     logger.info("Database schema synchronized successfully.")
-    warmup_model()
+    if settings.WARMUP_ON_STARTUP:
+        warmup_model()
+    else:
+        logger.info("Startup model warmup skipped (lazy loading enabled to conserve container memory).")
     yield
 
 def create_application() -> FastAPI:

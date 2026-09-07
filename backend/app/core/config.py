@@ -57,6 +57,7 @@ class Settings:
     BLUR_THRESHOLD: float = 50.0               # Laplacian variance threshold
     MAX_IMAGE_SIZE_MB: int = 10
     ALLOWED_CONTENT_TYPES: Set[str] = {"image/jpeg", "image/jpg", "image/png", "image/webp"}
+    WARMUP_ON_STARTUP: bool = os.getenv("WARMUP_ON_STARTUP", "false").lower() in ("true", "1", "yes")
 
     def validate(self) -> None:
         """Validate critical configuration. Called on startup."""

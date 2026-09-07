@@ -14,6 +14,14 @@ from app.services.image_quality import compute_image_quality
 
 logger = logging.getLogger(__name__)
 
+# Restrict PyTorch thread pools to prevent memory bloat on shared cloud vCPUs
+torch.set_num_threads(1)
+if hasattr(torch, "set_num_interop_threads"):
+    try:
+        torch.set_num_interop_threads(1)
+    except RuntimeError:
+        pass
+
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 class MergedNet(nn.Module):
@@ -89,7 +97,10 @@ def get_model() -> MergedNet:
         _ai_model = model
         return _ai_model
         
-    state_dict = torch.load(settings.MODEL_PATH, map_location=device)
+    try:
+        state_dict = torch.load(settings.MODEL_PATH, map_location=device, mmap=True)
+    except Exception:
+        state_dict = torch.load(settings.MODEL_PATH, map_location=device)
     with torch.no_grad():
         for name, param in model.named_parameters():
             if name in state_dict:

@@ -28,14 +28,6 @@ class AnalysisInfo(AnalysisBase):
 
     model_config = ConfigDict(from_attributes=True)
 
-class PredictionResponse(AnalysisBase):
-    id: int
-    timestamp: datetime.datetime
-    image_quality_flag: Optional[str] = None
-    recommendation: str
-
-    model_config = ConfigDict(from_attributes=True)
-
 
 class ClinicianVerificationRequest(BaseModel):
     ground_truth_dx: str # e.g. OSCC_MALIGNANT, HIGH_GRADE_DYSPLASIA, MILD_MOD_DYSPLASIA, LICHEN_PLANUS, TRAUMATIC_ULCER, BENIGN_HYPERKERATOSIS, NORMAL_MUCOSA

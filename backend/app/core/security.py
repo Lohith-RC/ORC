@@ -6,12 +6,11 @@ import hmac
 import secrets
 import datetime
 from typing import Optional
-from enum import Enum
 
-from fastapi import Request, HTTPException, status
+from fastapi import Request
 from fastapi.security import OAuth2PasswordBearer
 from passlib.context import CryptContext
-from jose import JWTError, jwt
+from jose import jwt
 from starlette.middleware.base import BaseHTTPMiddleware
 
 from app.core.config import settings

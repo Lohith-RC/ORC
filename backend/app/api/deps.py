@@ -1,5 +1,5 @@
 from typing import Optional
-from fastapi import Depends, HTTPException, status, Request
+from fastapi import Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from jose import JWTError, jwt
 

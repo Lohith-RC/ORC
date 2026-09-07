@@ -109,6 +109,16 @@ def run_safe_migrations():
                 logger.warning(f"Index migration note: {e}")
 
 
+from contextlib import asynccontextmanager
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    logger.info(f"Initializing relational database on {settings.DATABASE_URL.split('@')[-1]}...")
+    Base.metadata.create_all(bind=engine)
+    run_safe_migrations()
+    logger.info("Database schema synchronized successfully.")
+    yield
+
 def create_application() -> FastAPI:
     application = FastAPI(
         title=settings.PROJECT_NAME,
@@ -116,6 +126,7 @@ def create_application() -> FastAPI:
         description="Production-grade AI diagnostic platform with epistemic uncertainty and multimodal triage.",
         docs_url="/docs",
         redoc_url="/redoc",
+        lifespan=lifespan,
     )
 
     # 1. Attach Rate Limiter
@@ -140,13 +151,6 @@ def create_application() -> FastAPI:
     application.include_router(api_router, prefix=settings.API_V1_STR)
     # Root API (100% Backwards Compatibility for existing frontend): /predict, /login, etc.
     application.include_router(api_router)
-
-    @application.on_event("startup")
-    def on_startup():
-        logger.info(f"Initializing relational database on {settings.DATABASE_URL.split('@')[-1]}...")
-        Base.metadata.create_all(bind=engine)
-        run_safe_migrations()
-        logger.info("Database schema synchronized successfully.")
 
     return application
 

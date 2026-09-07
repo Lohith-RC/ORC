@@ -174,7 +174,7 @@ async def predict(
         Analysis.lesion_site == lesion_site
     ).order_by(Analysis.timestamp.desc()).first()
 
-    current_timestamp = datetime.datetime.utcnow()
+    current_timestamp = datetime.datetime.now(datetime.timezone.utc)
     longitudinal_delta = compute_longitudinal_delta(
         current_area_mm2=telemetry.surface_area_mm2,
         current_diameter_mm=telemetry.diameter_mm,
@@ -224,6 +224,9 @@ async def predict(
         details=f"Analysis #{new_analysis.id}: {pred_class} (patient={patient_identifier}, site={lesion_site}, conf={confidence_score:.3f}, risk={clinical_risk_score:.3f})"
     )
 
+    staging_dict = staging_report.model_dump() if hasattr(staging_report, "model_dump") else staging_report.dict()
+    trajectory_dict = longitudinal_delta.model_dump() if hasattr(longitudinal_delta, "model_dump") else longitudinal_delta.dict()
+
     return {
         "id": new_analysis.id,
         "patient_identifier": patient_identifier,
@@ -241,7 +244,7 @@ async def predict(
         "mc_dropout_passes": settings.MC_DROPOUT_PASSES,
         "timestamp": new_analysis.timestamp,
         "telemetry": telemetry_dict,
-        "clinical_staging": staging_report.dict(),
-        "longitudinal_trajectory": longitudinal_delta.dict(),
+        "clinical_staging": staging_dict,
+        "longitudinal_trajectory": trajectory_dict,
     }
 

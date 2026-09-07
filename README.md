@@ -61,23 +61,22 @@ ORC/
 │       ├── s1.png ... s6.png
 │
 ├── backend/                       # FastAPI Server & PyTorch Inference Engine
-│   ├── data_split/                # Dataset splits (train, val, test)
-│   ├── venv/                      # Python virtual environment
-│   ├── main.py                    # Primary FastAPI server, models, and endpoints
-│   ├── merged_model.pth           # Pre-trained deep learning model weights
-│   ├── oralcancer.db              # SQLite development database
-│   ├── seed.py                    # Database seeding script (demo users & history)
-│   ├── test_api.py                # Automated API test suite
-│   ├── train.py                   # Model training script (ensemble)
-│   ├── train_model.py             # Advanced EfficientNet-B4 training pipeline
-│   └── requirements.txt           # Python dependency specifications
+│   ├── app/                       # Modular Enterprise Clean Architecture
+│   │   ├── api/                   # Versioned REST endpoints (predict, auth, history, fhir, active learning)
+│   │   ├── core/                  # Security, rate limiting, and configuration
+│   │   ├── db/                    # Session management and live migrations
+│   │   ├── models/                # SQLAlchemy relational models
+│   │   ├── schemas/               # Pydantic validation schemas
+│   │   └── services/              # Dual-stage vision, AJCC staging, longitudinal tracker, FHIR exporter
+│   ├── tests/                     # 42-test automated pytest suite
+│   ├── main.py                    # Application entrypoint
+│   ├── merged_model.pth           # Deep learning ensemble model weights
+│   ├── requirements.txt           # Python dependency specifications
+│   └── Dockerfile                 # Production hardened container definition
 │
 ├── frontend/                      # React.js Single Page Application
 │   ├── public/                    # Static assets, index.html, icons
-│   ├── src/                       # React components, pages, context, and styles
-│   │   ├── images/                # Component-specific visual assets
-│   │   ├── Upload.js, Home.js...  # Application views
-│   │   └── index.css, App.js...   # Tailwind styling & routing
+│   ├── src/                       # React components, clinical workstations, and styles
 │   ├── package.json               # Node.js dependencies and scripts
 │   └── tailwind.config.js         # Tailwind styling configuration
 │
@@ -107,7 +106,7 @@ Explore detailed documentation in the [`docs/`](docs/) directory:
 - [Product Requirements Document (PRD)](docs/PRD.md) - Clinical boundaries, triage rules, and user personas.
 - [Technical Requirements Document (TRD)](docs/TRD.md) - Security, API contracts, latency budgets, and deployment targets.
 - [Application Flow & Sequence](docs/APP_FLOW.md) - End-to-end user workflows and sequence diagrams.
-- [Backend Schema & ERD](docs/BACKEND_SCHEMA.md) - SQLite / PostgreSQL database schemas.
+- [Backend Schema & ERD](docs/BACKEND_SCHEMA.md) - Relational database schemas & indices.
 
 ---
 
@@ -115,7 +114,7 @@ Explore detailed documentation in the [`docs/`](docs/) directory:
 
 ### 1. Backend Setup
 
-The backend runs on Python 3.11 with FastAPI and SQLite (zero-config setup).
+The backend runs on Python 3.11 with FastAPI and PostgreSQL / SQLite with automated startup migrations.
 
 ```bash
 cd backend
@@ -123,8 +122,8 @@ cd backend
 # Activate existing virtual environment (Windows)
 .\venv\Scripts\activate
 
-# (Optional) Run database seed script for demo data
-python seed.py
+# Run automated test suite (42 unit & integration tests)
+python -m pytest tests/ -v
 
 # Start the API server
 python -m uvicorn main:app --reload --port 8000

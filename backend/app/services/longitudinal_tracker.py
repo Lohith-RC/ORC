@@ -83,8 +83,10 @@ def compute_longitudinal_delta(
         prior_diam = 12.0
 
     # Elapsed interval calculation (minimum 0.1 days to avoid division by zero)
-    prior_time = prior_analysis.timestamp or (current_timestamp - datetime.timedelta(days=14))
-    elapsed_seconds = max(3600.0, (current_timestamp - prior_time).total_seconds())
+    t_curr = current_timestamp.replace(tzinfo=None) if hasattr(current_timestamp, "tzinfo") and current_timestamp.tzinfo else current_timestamp
+    prior_time = prior_analysis.timestamp or (t_curr - datetime.timedelta(days=14))
+    t_prior = prior_time.replace(tzinfo=None) if hasattr(prior_time, "tzinfo") and prior_time.tzinfo else prior_time
+    elapsed_seconds = max(3600.0, (t_curr - t_prior).total_seconds())
     elapsed_days = round(elapsed_seconds / 86400.0, 1)
 
     delta_area = round(current_area_mm2 - prior_area, 2)
@@ -207,7 +209,7 @@ def fetch_patient_serial_trajectory(
             "uncertainty": record.uncertainty,
             "lesion_site": record.lesion_site,
             "triage_tier": record.triage_tier,
-            "delta": delta.dict(),
+            "delta": delta.model_dump() if hasattr(delta, "model_dump") else delta.dict(),
             "telemetry": telem
         })
 

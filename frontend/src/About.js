@@ -1,6 +1,5 @@
 import React from 'react';
-import { motion } from 'framer-motion';
-import { Database, Stethoscope, Award, CheckCircle2 } from 'lucide-react';
+import { Database, Stethoscope } from 'lucide-react';
 import team1 from './images/5.webp';
 import team2 from './images/7.webp';
 import team3 from './images/8.jpg';

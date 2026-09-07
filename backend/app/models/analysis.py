@@ -25,5 +25,14 @@ class Analysis(Base):
     image_filename = Column(String, nullable=False)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
     
-    owner = relationship("User", back_populates="analyses")
+    # Milestone 3: Active Learning & Clinician-in-the-Loop Ground Truth Verification
+    biopsy_proven = Column(Boolean, default=False, nullable=False)
+    ground_truth_dx = Column(String(64), nullable=True)     # Histopathological Ground Truth
+    histology_grade = Column(String(32), nullable=True)     # Differentiation grade
+    clinician_feedback_notes = Column(Text, nullable=True) # Specialist comments
+    annotated_contour = Column(Text, nullable=True)        # Clinician corrected contour coordinates (JSON)
+    verified_at = Column(DateTime, nullable=True)
+    verified_by_user_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+    
+    owner = relationship("User", back_populates="analyses", foreign_keys=[user_id])
 

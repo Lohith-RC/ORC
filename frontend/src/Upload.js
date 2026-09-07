@@ -26,6 +26,7 @@ import { API_BASE_URL } from './api';
 import OralCavityMap, { ORAL_SITES } from './OralCavityMap';
 import LesionSegmentationViewer from './LesionSegmentationViewer';
 import LongitudinalProgressionCard from './LongitudinalProgressionCard';
+import ClinicianVerificationModal from './ClinicianVerificationModal';
 
 // --- Analog Uncertainty Caliper Visualizer ---
 const UncertaintyCaliper = ({ confidence, uncertainty, prediction }) => {
@@ -130,6 +131,8 @@ const Upload = ({ token }) => {
         const rand = Math.random().toString(36).substring(2, 7).toUpperCase();
         setSpecimenId(`SPC-${new Date().getFullYear()}-${rand}`);
     }, []);
+
+    const [isVerificationOpen, setIsVerificationOpen] = useState(false);
 
     // Clinical risk factors
     const [riskForm, setRiskForm] = useState({ 
@@ -555,6 +558,18 @@ const Upload = ({ token }) => {
                                         <div className="font-bold text-stone-900 dark:text-stone-100 text-sm">{specimenId}</div>
                                     </div>
                                     <div className="flex items-center gap-2">
+                                        <button
+                                            type="button"
+                                            onClick={() => setIsVerificationOpen(true)}
+                                            className={`px-3 py-1.5 border text-xs font-mono flex items-center gap-1.5 transition-colors ${
+                                                result.biopsy_proven
+                                                    ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 font-semibold'
+                                                    : 'border-clinical-teal bg-teal-50 dark:bg-teal-950/40 text-clinical-teal hover:bg-teal-100 dark:hover:bg-teal-900/40 font-semibold'
+                                            }`}
+                                        >
+                                            <Microscope className="w-3.5 h-3.5" />
+                                            <span>{result.biopsy_proven ? 'BIOPSY VERIFIED' : 'VERIFY GROUND TRUTH'}</span>
+                                        </button>
                                         <button 
                                             onClick={handleDownload}
                                             className="px-3 py-1.5 border border-stone-300 dark:border-stone-700 hover:bg-stone-100 dark:hover:bg-stone-800 text-stone-700 dark:text-stone-300 text-xs font-mono flex items-center gap-1.5 transition-colors"
@@ -766,6 +781,22 @@ const Upload = ({ token }) => {
                     </div>
                 </div>
             </div>
+
+            {/* Clinician Ground Truth Verification Modal */}
+            <ClinicianVerificationModal
+                isOpen={isVerificationOpen}
+                onClose={() => setIsVerificationOpen(false)}
+                analysis={result}
+                onVerificationSuccess={(updatedAnalysis) => {
+                    setResult(prev => ({
+                        ...prev,
+                        biopsy_proven: updatedAnalysis.biopsy_proven,
+                        ground_truth_dx: updatedAnalysis.ground_truth_dx,
+                        histology_grade: updatedAnalysis.histology_grade,
+                        clinician_feedback_notes: updatedAnalysis.clinician_feedback_notes,
+                    }));
+                }}
+            />
         </div>
     );
 };

@@ -19,5 +19,5 @@ class User(Base):
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
     
     # Immutable historical records: never cascade delete patient records or HIPAA audit logs
-    analyses = relationship("Analysis", back_populates="owner")
+    analyses = relationship("Analysis", back_populates="owner", foreign_keys="Analysis.user_id")
     audit_logs = relationship("AuditLog", back_populates="user")

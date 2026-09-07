@@ -28,4 +28,22 @@ axios.interceptors.response.use(
     }
 );
 
+// Authenticated fetch wrapper for REST APIs
+export const authFetch = async (endpoint, options = {}) => {
+    const token = localStorage.getItem('token');
+    const url = endpoint.startsWith('http') ? endpoint : `${API_BASE_URL}${endpoint.startsWith('/') ? '' : '/'}${endpoint}`;
+    const headers = {
+        ...(options.headers || {}),
+        ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+    };
+    const res = await fetch(url, { ...options, headers });
+    if (res.status === 401) {
+        localStorage.removeItem('token');
+        if (typeof window !== 'undefined' && !window.location.pathname.includes('/login')) {
+            window.location.href = '/login?expired=1';
+        }
+    }
+    return res;
+};
+
 export default API_BASE_URL;

@@ -71,6 +71,27 @@ def run_safe_migrations():
         if "telemetry_data" not in analysis_cols:
             conn.execute(text("ALTER TABLE analyses ADD COLUMN telemetry_data TEXT"))
             logger.info("Database migration: added 'telemetry_data' column to analyses")
+        if "biopsy_proven" not in analysis_cols:
+            conn.execute(text("ALTER TABLE analyses ADD COLUMN biopsy_proven BOOLEAN DEFAULT FALSE"))
+            logger.info("Database migration: added 'biopsy_proven' column to analyses")
+        if "ground_truth_dx" not in analysis_cols:
+            conn.execute(text("ALTER TABLE analyses ADD COLUMN ground_truth_dx VARCHAR(64)"))
+            logger.info("Database migration: added 'ground_truth_dx' column to analyses")
+        if "histology_grade" not in analysis_cols:
+            conn.execute(text("ALTER TABLE analyses ADD COLUMN histology_grade VARCHAR(32)"))
+            logger.info("Database migration: added 'histology_grade' column to analyses")
+        if "clinician_feedback_notes" not in analysis_cols:
+            conn.execute(text("ALTER TABLE analyses ADD COLUMN clinician_feedback_notes TEXT"))
+            logger.info("Database migration: added 'clinician_feedback_notes' column to analyses")
+        if "annotated_contour" not in analysis_cols:
+            conn.execute(text("ALTER TABLE analyses ADD COLUMN annotated_contour TEXT"))
+            logger.info("Database migration: added 'annotated_contour' column to analyses")
+        if "verified_at" not in analysis_cols:
+            conn.execute(text("ALTER TABLE analyses ADD COLUMN verified_at TIMESTAMP"))
+            logger.info("Database migration: added 'verified_at' column to analyses")
+        if "verified_by_user_id" not in analysis_cols:
+            conn.execute(text("ALTER TABLE analyses ADD COLUMN verified_by_user_id INTEGER"))
+            logger.info("Database migration: added 'verified_by_user_id' column to analyses")
 
         # 3. Composite performance index migration
         analysis_indexes = {idx["name"] for idx in inspector.get_indexes("analyses")}

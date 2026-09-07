@@ -28,8 +28,9 @@ import {
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
-import { API_BASE_URL } from './api';
+import { API_BASE_URL, authFetch } from './api';
 import defaultProfileImage from './images/7.webp';
+import ClinicianVerificationModal from './ClinicianVerificationModal';
 
 const Profile = ({ token }) => {
     const [user, setUser] = useState(null);
@@ -49,8 +50,34 @@ const Profile = ({ token }) => {
     const [loading, setLoading] = useState(true);
     const [historyFilter, setHistoryFilter] = useState('all');
     const [searchQuery, setSearchQuery] = useState('');
+    const [verifyingAnalysis, setVerifyingAnalysis] = useState(null);
+    const [activeLearningQueue, setActiveLearningQueue] = useState([]);
+    const [flywheelMetrics, setFlywheelMetrics] = useState(null);
+    const [queueLoading, setQueueLoading] = useState(false);
 
     const fileInputRef = useRef(null);
+
+    const fetchActiveLearningData = async () => {
+        try {
+            setQueueLoading(true);
+            const [queueRes, metricsRes] = await Promise.all([
+                authFetch('/analyses/active-learning/queue'),
+                authFetch('/analyses/active-learning/metrics')
+            ]);
+            if (queueRes.ok) {
+                const qdata = await queueRes.json();
+                setActiveLearningQueue(qdata);
+            }
+            if (metricsRes.ok) {
+                const mdata = await metricsRes.json();
+                setFlywheelMetrics(mdata);
+            }
+        } catch (err) {
+            console.error('Failed to load active learning data:', err);
+        } finally {
+            setQueueLoading(false);
+        }
+    };
 
     useEffect(() => {
         const fetchData = async () => {
@@ -63,6 +90,7 @@ const Profile = ({ token }) => {
                 const historyPromise = axios.get(`${API_BASE_URL}/me/analyses`, { headers: { Authorization: `Bearer ${token}` } });
                 
                 const [userResponse, historyResponse] = await Promise.all([userPromise, historyPromise]);
+                fetchActiveLearningData();
 
                 const userData = userResponse.data;
                 setUser(userData);
@@ -521,6 +549,35 @@ const Profile = ({ token }) => {
                     </div>
                 </div>
 
+                {/* Active Learning Flywheel Metrics Strip */}
+                {flywheelMetrics && (
+                    <div className="border border-clinical-teal/30 bg-teal-50/40 dark:bg-teal-950/20 p-4 font-mono text-xs flex flex-wrap items-center justify-between gap-4">
+                        <div className="flex items-center gap-2">
+                            <Microscope className="w-4 h-4 text-clinical-teal flex-shrink-0" />
+                            <span className="font-semibold text-stone-800 dark:text-stone-200 uppercase">
+                                Active Learning Flywheel:
+                            </span>
+                            <span className="text-stone-600 dark:text-stone-400">
+                                {flywheelMetrics.verified_count} Verified ({flywheelMetrics.biopsy_proven_count} Biopsy-Proven) • {flywheelMetrics.unverified_queue_count} in Prioritized Queue
+                            </span>
+                        </div>
+                        <div className="flex items-center gap-4">
+                            <div>
+                                <span className="text-stone-400 text-[10px] block">CONCORDANCE</span>
+                                <span className="font-bold text-clinical-teal">
+                                    {(flywheelMetrics.concordance_rate * 100).toFixed(1)}%
+                                </span>
+                            </div>
+                            <div>
+                                <span className="text-stone-400 text-[10px] block">MATURATION</span>
+                                <span className="font-bold text-stone-800 dark:text-stone-200">
+                                    {flywheelMetrics.flywheel_maturation_pct}%
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
                 {/* ============================================================ */}
                 {/* SECTION 3: ACTIVE MODEL & DIAGNOSTIC PROTOCOL SPECS          */}
                 {/* ============================================================ */}
@@ -607,11 +664,17 @@ const Profile = ({ token }) => {
                                 { id: 'cancer', label: 'Malignant' },
                                 { id: 'benign', label: 'Non-Malignant' },
                                 { id: 'uncertain', label: 'Uncertain' },
-                                { id: 'cohorts', label: 'Patient Cohorts' }
+                                { id: 'cohorts', label: 'Patient Cohorts' },
+                                { id: 'active_learning', label: 'Active Learning Queue' }
                             ].map(tab => (
                                 <button
                                     key={tab.id}
-                                    onClick={() => setHistoryFilter(tab.id)}
+                                    onClick={() => {
+                                        setHistoryFilter(tab.id);
+                                        if (tab.id === 'active_learning') {
+                                            fetchActiveLearningData();
+                                        }
+                                    }}
                                     className={`px-2.5 py-1 whitespace-nowrap transition-colors ${
                                         historyFilter === tab.id 
                                             ? 'bg-white dark:bg-stone-900 font-semibold text-clinical-teal dark:text-teal-300 shadow-xs' 
@@ -639,7 +702,87 @@ const Profile = ({ token }) => {
                     {/* Specimen Rows */}
                     {filteredHistory.length > 0 ? (
                         <div className="space-y-3">
-                            {historyFilter === 'cohorts' ? (
+                            {historyFilter === 'active_learning' ? (
+                                <div className="space-y-3">
+                                    <div className="p-3 bg-stone-100 dark:bg-stone-900 border border-stone-300 dark:border-stone-800 font-mono text-xs flex items-center justify-between">
+                                        <span className="text-stone-600 dark:text-stone-300">
+                                            ACTIVE LEARNING ACQUISITION QUEUE // PRIORITIZED BY BAYESIAN UNCERTAINTY & DISCORDANCE
+                                        </span>
+                                        <button
+                                            type="button"
+                                            onClick={fetchActiveLearningData}
+                                            className="text-clinical-teal hover:underline flex items-center gap-1"
+                                        >
+                                            <RefreshCw className={`w-3 h-3 ${queueLoading ? 'animate-spin' : ''}`} />
+                                            <span>Refresh Queue</span>
+                                        </button>
+                                    </div>
+
+                                    {activeLearningQueue.length === 0 ? (
+                                        <div className="text-center py-12 font-mono text-xs text-stone-500 border border-dashed border-stone-300 dark:border-stone-800 p-6">
+                                            <CheckCircle2 className="w-8 h-8 mx-auto text-clinical-teal mb-2" />
+                                            <p className="font-semibold text-stone-800 dark:text-stone-200">No ambiguous or high-uncertainty specimens pending review.</p>
+                                            <p className="text-[11px] text-stone-400 mt-1">Data flywheel fully calibrated. All unverified scans have stable confidence metrics.</p>
+                                        </div>
+                                    ) : (
+                                        activeLearningQueue.map((qItem, idx) => (
+                                            <div
+                                                key={qItem.analysis_id}
+                                                className="border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-950 p-4 transition-all hover:border-clinical-teal flex flex-col sm:flex-row justify-between sm:items-center gap-4"
+                                            >
+                                                <div className="flex items-start gap-3">
+                                                    <div className="w-7 h-7 flex-shrink-0 flex items-center justify-center font-mono text-xs font-bold bg-stone-900 text-white dark:bg-stone-100 dark:text-stone-900">
+                                                        #{idx + 1}
+                                                    </div>
+                                                    <div>
+                                                        <div className="flex flex-wrap items-center gap-2">
+                                                            <span className="font-mono text-xs font-bold px-2 py-0.5 bg-rose-500/10 border border-rose-500/30 text-rose-600">
+                                                                PRIORITY: {(qItem.priority_score * 100).toFixed(1)}%
+                                                            </span>
+                                                            <span className="font-mono text-[9px] px-1.5 py-0.5 border border-stone-300 dark:border-stone-700 text-stone-600 dark:text-stone-400">
+                                                                PT: {qItem.patient_identifier}
+                                                            </span>
+                                                            <span className="font-mono text-[9px] px-1.5 py-0.5 border border-clinical-teal/40 text-clinical-teal uppercase">
+                                                                {qItem.lesion_site.replace(/_/g, ' ')}
+                                                            </span>
+                                                            {qItem.triage_tier && (
+                                                                <span className="font-mono text-[9px] px-1.5 py-0.5 border border-amber-500/40 text-amber-600">
+                                                                    {qItem.triage_tier.split(' ')[0]}
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                        <div className="font-sans text-xs text-stone-700 dark:text-stone-300 mt-1.5">
+                                                            <strong>{qItem.priority_reason}</strong>
+                                                        </div>
+                                                        <div className="font-mono text-[10px] text-stone-400 flex flex-wrap items-center gap-x-3 gap-y-0.5 mt-1">
+                                                            <span>PRED: <strong className={qItem.prediction === 'cancer' ? 'text-rose-500' : 'text-teal-400'}>{qItem.prediction.toUpperCase()} ({(qItem.confidence * 100).toFixed(1)}%)</strong></span>
+                                                            <span>• σ²: <strong className="text-stone-700 dark:text-stone-300">{qItem.uncertainty}</strong></span>
+                                                            <span>• RISK: <strong className="text-stone-700 dark:text-stone-300">{qItem.risk_score}</strong></span>
+                                                            <span>• DATE: {new Date(qItem.timestamp).toLocaleDateString()}</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setVerifyingAnalysis({
+                                                        id: qItem.analysis_id,
+                                                        patient_identifier: qItem.patient_identifier,
+                                                        lesion_site: qItem.lesion_site,
+                                                        prediction: qItem.prediction,
+                                                        confidence: qItem.confidence,
+                                                        uncertainty: qItem.uncertainty
+                                                    })}
+                                                    className="px-3.5 py-1.5 bg-clinical-teal hover:bg-teal-600 text-white font-mono text-xs font-semibold flex items-center gap-1.5 transition-all shadow-xs flex-shrink-0"
+                                                >
+                                                    <Microscope className="w-3.5 h-3.5" />
+                                                    <span>VERIFY PATHOLOGY</span>
+                                                </button>
+                                            </div>
+                                        ))
+                                    )}
+                                </div>
+                            ) : historyFilter === 'cohorts' ? (
                                 // Patient Cohorts Grouping View
                                 (() => {
                                     const cohorts = {};
@@ -767,9 +910,23 @@ const Profile = ({ token }) => {
                                             </div>
                                         </div>
 
-                                        <div className="font-mono text-xs text-stone-500 text-left sm:text-right flex-shrink-0 border-t sm:border-t-0 pt-2 sm:pt-0 border-stone-100 dark:border-stone-900">
+                                        <div className="font-mono text-xs text-stone-500 text-left sm:text-right flex-shrink-0 border-t sm:border-t-0 pt-2 sm:pt-0 border-stone-100 dark:border-stone-900 flex flex-col sm:items-end gap-1.5">
                                             <div>{new Date(item.timestamp).toLocaleDateString()}</div>
                                             <div className="text-[10px] text-stone-400">{new Date(item.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</div>
+                                            <button
+                                                type="button"
+                                                onClick={() => setVerifyingAnalysis(item)}
+                                                className={`mt-1 px-2.5 py-0.5 border text-[10px] font-mono flex items-center gap-1 transition-colors ${
+                                                    item.biopsy_proven
+                                                        ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-300 font-semibold'
+                                                        : item.ground_truth_dx
+                                                            ? 'border-teal-500 bg-teal-50 dark:bg-teal-950/30 text-teal-600 dark:text-teal-300'
+                                                            : 'border-stone-300 dark:border-stone-700 hover:border-clinical-teal text-stone-600 dark:text-stone-300'
+                                                }`}
+                                            >
+                                                <Microscope className="w-3 h-3" />
+                                                <span>{item.biopsy_proven ? 'BIOPSY PROVEN' : item.ground_truth_dx ? 'VERIFIED' : 'VERIFY / ANNOTATE'}</span>
+                                            </button>
                                         </div>
                                     </div>
                                 );
@@ -793,8 +950,19 @@ const Profile = ({ token }) => {
                         </div>
                     )}
                 </div>
-
             </div>
+
+            {/* Clinician Ground Truth Verification Modal */}
+            <ClinicianVerificationModal
+                isOpen={!!verifyingAnalysis}
+                onClose={() => setVerifyingAnalysis(null)}
+                analysis={verifyingAnalysis}
+                onVerificationSuccess={(updatedAnalysis) => {
+                    setHistory(prev => prev.map(h => h.id === updatedAnalysis.id ? { ...h, ...updatedAnalysis } : h));
+                    setActiveLearningQueue(prev => prev.filter(q => q.analysis_id !== updatedAnalysis.id));
+                    fetchActiveLearningData();
+                }}
+            />
         </div>
     );
 };

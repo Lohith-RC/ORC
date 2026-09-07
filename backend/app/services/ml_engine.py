@@ -81,6 +81,31 @@ class_names = ["cancer", "non_cancer"]
 
 # Singleton Model Loader
 _ai_model = None
+_ort_session = None
+
+def get_ort_session():
+    global _ort_session
+    if _ort_session is not None:
+        return _ort_session
+        
+    onnx_int8_path = settings.BASE_DIR / "merged_model_int8.onnx"
+    onnx_fp32_path = settings.BASE_DIR / "merged_model.onnx"
+    target_path = onnx_int8_path if onnx_int8_path.exists() else (onnx_fp32_path if onnx_fp32_path.exists() else None)
+    
+    if target_path is None:
+        return None
+        
+    try:
+        import onnxruntime as ort
+        session_options = ort.SessionOptions()
+        session_options.intra_op_num_threads = 1
+        session_options.execution_mode = ort.ExecutionMode.ORT_SEQUENTIAL
+        _ort_session = ort.InferenceSession(str(target_path), session_options, providers=["CPUExecutionProvider"])
+        logger.info(f"Initialized high-efficiency ONNX Runtime Engine from {target_path.name}")
+        return _ort_session
+    except Exception as e:
+        logger.warning(f"Could not load ONNX Runtime Engine: {e}. Defaulting to PyTorch.")
+        return None
 
 def get_model() -> MergedNet:
     global _ai_model
@@ -118,13 +143,21 @@ def get_model() -> MergedNet:
     return _ai_model
 
 def warmup_model() -> None:
-    """Execute a dry run forward pass to preheat PyTorch kernels and eliminate cold-start latency."""
+    """Execute a dry run forward pass to preheat kernels and eliminate cold-start latency."""
     try:
+        ort_session = get_ort_session()
+        if ort_session is not None:
+            dummy_np = np.zeros((1, 3, 224, 224), dtype=np.float32)
+            input_name = ort_session.get_inputs()[0].name
+            _ = ort_session.run(None, {input_name: dummy_np})
+            logger.info("ONNX Runtime Engine preheat warmup completed successfully.")
+            return
+
         model = get_model()
         dummy_input = torch.zeros((1, 3, 224, 224), device=device)
         with torch.inference_mode():
             _ = model(dummy_input)
-        logger.info("AI Model preheat warmup completed successfully.")
+        logger.info("AI Model PyTorch preheat warmup completed successfully.")
     except Exception as e:
         logger.warning(f"Model warmup notice: {e}")
 
@@ -140,24 +173,49 @@ def run_inference_pipeline(image: Image.Image) -> Tuple[str, float, float, float
     """
     Executes full clinical deep learning pipeline:
       1. Image quality analysis (sharpness via Laplacian variance)
-      2. Test-Time Augmentation (8 passes)
-      3. Monte Carlo Dropout (15 stochastic forward passes)
-      4. Epistemic uncertainty computation
+      2. High-speed ONNX INT8 or PyTorch TTA + Epistemic Uncertainty Estimation
+      3. Quality and uncertainty gating
     """
-    model = get_model()
     img_array = np.array(image)
     quality_score = compute_image_quality(img_array)
 
+    ort_session = get_ort_session()
+    if ort_session is not None:
+        # High-performance ONNX Runtime Path (resident memory < 50MB)
+        base_tensor = inference_transform(image).unsqueeze(0).numpy().astype(np.float32)
+        input_name = ort_session.get_inputs()[0].name
+        with _inference_lock:
+            primary_logits = ort_session.run(None, {input_name: base_tensor})[0]
+            aug_tensors = [t(image).numpy() for t in tta_transforms[:2]]
+            aug_batch = np.stack(aug_tensors, axis=0).astype(np.float32)
+            aug_logits = ort_session.run(None, {input_name: aug_batch})[0]
+
+        all_logits = np.concatenate([primary_logits, aug_logits], axis=0)
+        exp_logits = np.exp(all_logits - np.max(all_logits, axis=1, keepdims=True))
+        probs = exp_logits / np.sum(exp_logits, axis=1, keepdims=True)
+
+        mean_probs = np.mean(probs, axis=0)
+        tta_var = np.var(probs, axis=0)
+        pred_idx = int(np.argmax(mean_probs))
+        pred_class = class_names[pred_idx]
+        confidence_score = float(mean_probs[pred_idx])
+        uncertainty = float(np.max(tta_var))
+
+        if uncertainty > settings.UNCERTAINTY_THRESHOLD:
+            pred_class = "uncertain"
+
+        return pred_class, confidence_score, uncertainty, quality_score
+
+    # PyTorch Fallback Path (MC-Dropout + Batched TTA)
+    model = get_model()
     with _inference_lock:
         model.eval()
-        # 1. Batched TTA (Single forward pass with batch size 8 instead of 8 serial passes!)
         with torch.inference_mode():
             tta_batch = torch.stack([t(image) for t in tta_transforms]).to(device)
             tta_out = model(tta_batch)
             tta_probs = torch.nn.functional.softmax(tta_out, dim=1)
             tta_mean = tta_probs.mean(dim=0, keepdim=True)
 
-        # 2. Batched Monte Carlo Dropout (Single forward pass with batch size 15!)
         _enable_dropout_only(model)
         with torch.no_grad():
             base_tensor = inference_transform(image).unsqueeze(0).to(device)
@@ -169,15 +227,13 @@ def run_inference_pipeline(image: Image.Image) -> Tuple[str, float, float, float
     mcd_mean = mcd_probs.mean(dim=0, keepdim=True)
     mcd_var = mcd_probs.var(dim=0, keepdim=True)
 
-    # 3. Fuse TTA and MCD probabilities
     final_probs = 0.5 * tta_mean + 0.5 * mcd_mean
     confidence, pred_idx = torch.max(final_probs, 1)
-    
+
     pred_class = class_names[pred_idx.item()]
     confidence_score = float(confidence.item())
     uncertainty = float(mcd_var.max().item())
 
-    # Uncertainty gating
     if uncertainty > settings.UNCERTAINTY_THRESHOLD:
         pred_class = "uncertain"
 

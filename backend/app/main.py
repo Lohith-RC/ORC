@@ -62,6 +62,15 @@ def run_safe_migrations():
             conn.execute(text("ALTER TABLE analyses ADD COLUMN image_quality_score REAL"))
         if "tta_used" not in analysis_cols:
             conn.execute(text("ALTER TABLE analyses ADD COLUMN tta_used INTEGER DEFAULT 0"))
+        if "patient_identifier" not in analysis_cols:
+            conn.execute(text("ALTER TABLE analyses ADD COLUMN patient_identifier VARCHAR(64) DEFAULT 'ANON-001'"))
+            logger.info("Database migration: added 'patient_identifier' column to analyses")
+        if "triage_tier" not in analysis_cols:
+            conn.execute(text("ALTER TABLE analyses ADD COLUMN triage_tier VARCHAR(64)"))
+            logger.info("Database migration: added 'triage_tier' column to analyses")
+        if "telemetry_data" not in analysis_cols:
+            conn.execute(text("ALTER TABLE analyses ADD COLUMN telemetry_data TEXT"))
+            logger.info("Database migration: added 'telemetry_data' column to analyses")
 
         # 3. Composite performance index migration
         analysis_indexes = {idx["name"] for idx in inspector.get_indexes("analyses")}
@@ -71,6 +80,13 @@ def run_safe_migrations():
                 logger.info("Database migration: created composite index idx_analyses_user_timestamp")
             except Exception as e:
                 logger.warning(f"Index migration note: {e}")
+        if "idx_analyses_patient_site" not in analysis_indexes:
+            try:
+                conn.execute(text("CREATE INDEX idx_analyses_patient_site ON analyses (user_id, patient_identifier, lesion_site)"))
+                logger.info("Database migration: created composite index idx_analyses_patient_site")
+            except Exception as e:
+                logger.warning(f"Index migration note: {e}")
+
 
 def create_application() -> FastAPI:
     application = FastAPI(

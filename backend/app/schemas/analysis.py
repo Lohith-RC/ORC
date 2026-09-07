@@ -8,7 +8,12 @@ class AnalysisBase(BaseModel):
     uncertainty: Optional[float] = None
     risk_score: Optional[float] = None
     image_quality_score: Optional[float] = None
+    lesion_site: Optional[str] = "buccal_mucosa"
+    patient_identifier: Optional[str] = "ANON-001"
+    triage_tier: Optional[str] = None
+    telemetry_data: Optional[str] = None
     image_filename: str
+
 
 class AnalysisInfo(AnalysisBase):
     id: int

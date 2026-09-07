@@ -25,6 +25,7 @@ import axios from 'axios';
 import { API_BASE_URL } from './api';
 import OralCavityMap, { ORAL_SITES } from './OralCavityMap';
 import LesionSegmentationViewer from './LesionSegmentationViewer';
+import LongitudinalProgressionCard from './LongitudinalProgressionCard';
 
 // --- Analog Uncertainty Caliper Visualizer ---
 const UncertaintyCaliper = ({ confidence, uncertainty, prediction }) => {
@@ -111,6 +112,7 @@ const Upload = ({ token }) => {
     const [preview, setPreview] = useState(null);
     const [vitalFile, setVitalFile] = useState(null);
     const [vitalPreview, setVitalPreview] = useState(null);
+    const [patientId, setPatientId] = useState('PT-1001');
     const [crossPolarized, setCrossPolarized] = useState(false);
     const [distanceMm, setDistanceMm] = useState(50.0);
     const [result, setResult] = useState(null);
@@ -204,6 +206,7 @@ const Upload = ({ token }) => {
             formData.append('vital_stain_file', vitalFile);
         }
         // PHI Protection: transmit clinical risk factors and optical telemetry in multipart body
+        formData.append('patient_identifier', patientId.trim() || 'ANON-001');
         formData.append('lesion_site', selectedSite);
         formData.append('cross_polarized', crossPolarized);
         formData.append('distance_mm', distanceMm);
@@ -336,6 +339,26 @@ const Upload = ({ token }) => {
                                     </div>
                                 )}
                             </AnimatePresence>
+                        </div>
+
+                        {/* Patient Identifier & Serial Record Link */}
+                        <div className="border border-stone-300 dark:border-stone-800 bg-stone-50 dark:bg-stone-900 p-4">
+                            <div className="flex items-center justify-between font-mono text-[10px] text-stone-500 uppercase mb-2 border-b border-stone-200 dark:border-stone-800 pb-1.5">
+                                <span>PATIENT IDENTIFIER // SERIAL TRACKING</span>
+                                <span>MRN / RECORD ID</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <input
+                                    type="text"
+                                    value={patientId}
+                                    onChange={(e) => setPatientId(e.target.value)}
+                                    placeholder="e.g. PT-1001"
+                                    className="w-full bg-white dark:bg-stone-950 border border-stone-300 dark:border-stone-700 px-3 py-2 font-mono text-xs text-stone-900 dark:text-stone-100 focus:outline-none focus:border-clinical-teal"
+                                />
+                                <div className="text-[10px] font-mono text-stone-400 whitespace-nowrap">
+                                    Calibrates Δ velocity
+                                </div>
+                            </div>
                         </div>
 
                         {/* Anatomical Lesion Site Targeting Map */}
@@ -632,6 +655,11 @@ const Upload = ({ token }) => {
                                         telemetry={result.telemetry} 
                                         stagingReport={result.clinical_staging} 
                                     />
+                                )}
+
+                                {/* Longitudinal Lesion Growth & Progression Trajectory */}
+                                {result.longitudinal_trajectory && (
+                                    <LongitudinalProgressionCard trajectory={result.longitudinal_trajectory} />
                                 )}
 
                                 {/* AJCC 8th Edition Clinical Staging & Decision Support */}

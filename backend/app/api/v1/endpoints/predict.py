@@ -1,7 +1,10 @@
 import io
+import json
 import logging
+import datetime
 import anyio
 from PIL import Image
+
 from fastapi import APIRouter, Depends, HTTPException, status, File, UploadFile, Request, Form
 from sqlalchemy.orm import Session
 
@@ -16,6 +19,7 @@ from typing import Optional
 from app.services.clinical_risk import compute_clinical_risk_score
 from app.services.vision_pipeline import execute_dual_stage_pipeline
 from app.services.clinical_staging import evaluate_ajcc_staging
+from app.services.longitudinal_tracker import compute_longitudinal_delta
 
 logger = logging.getLogger(__name__)
 
@@ -38,6 +42,7 @@ async def predict(
     request: Request,
     file: UploadFile = File(...),
     vital_stain_file: Optional[UploadFile] = File(None),
+    patient_identifier: str = Form("ANON-001"),
     lesion_site: str = Form("buccal_mucosa"),
     cross_polarized: bool = Form(False),
     distance_mm: float = Form(50.0),
@@ -49,6 +54,7 @@ async def predict(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
+
     """
     Production AI Diagnostic Screening Endpoint:
       - Accepts clinical risk factors in multipart FormData body (Zero PHI URL Query Leakage)
@@ -161,9 +167,39 @@ async def predict(
     # Resolve anatomical metadata
     site_info = ANATOMICAL_SITE_METADATA.get(lesion_site, ANATOMICAL_SITE_METADATA["buccal_mucosa"])
 
-    # 8. Persist to Relational Database
+    # 8. Longitudinal Patient Tracking & Delta Calibration
+    prior_analysis = db.query(Analysis).filter(
+        Analysis.user_id == current_user.id,
+        Analysis.patient_identifier == patient_identifier,
+        Analysis.lesion_site == lesion_site
+    ).order_by(Analysis.timestamp.desc()).first()
+
+    current_timestamp = datetime.datetime.utcnow()
+    longitudinal_delta = compute_longitudinal_delta(
+        current_area_mm2=telemetry.surface_area_mm2,
+        current_diameter_mm=telemetry.diameter_mm,
+        current_irregularity=telemetry.border_irregularity_score,
+        current_contour=telemetry.contour_points,
+        current_timestamp=current_timestamp,
+        prior_analysis=prior_analysis
+    )
+
+    telemetry_dict = {
+        "mask_detected": telemetry.mask_detected,
+        "center_pct": telemetry.center_pct,
+        "diameter_mm": telemetry.diameter_mm,
+        "surface_area_mm2": telemetry.surface_area_mm2,
+        "border_irregularity_score": telemetry.border_irregularity_score,
+        "contour_points": telemetry.contour_points,
+        "optical_cross_polarized": telemetry.optical_cross_polarized,
+        "vital_stain_present": telemetry.vital_stain_present,
+        "vital_stain_abnormal": telemetry.vital_stain_abnormal,
+    }
+
+    # 9. Persist to Relational Database
     new_analysis = Analysis(
         user_id=current_user.id,
+        patient_identifier=patient_identifier,
         prediction=pred_class,
         confidence=confidence_score,
         uncertainty=round(uncertainty, 5),
@@ -171,23 +207,26 @@ async def predict(
         image_quality_score=round(quality_score, 2),
         tta_used=True,
         lesion_site=lesion_site,
+        triage_tier=staging_report.triage_tier.value,
+        telemetry_data=json.dumps(telemetry_dict),
         image_filename=file.filename or "upload.jpg",
     )
     db.add(new_analysis)
     db.commit()
     db.refresh(new_analysis)
 
-    # 9. Audit Trail
+    # 10. Audit Trail
     log_audit_action(
         db,
         action="RUN_PREDICTION",
         user_id=current_user.id,
         ip_address=get_client_ip(request),
-        details=f"Analysis #{new_analysis.id}: {pred_class} (site={lesion_site}, conf={confidence_score:.3f}, risk={clinical_risk_score:.3f})"
+        details=f"Analysis #{new_analysis.id}: {pred_class} (patient={patient_identifier}, site={lesion_site}, conf={confidence_score:.3f}, risk={clinical_risk_score:.3f})"
     )
 
     return {
         "id": new_analysis.id,
+        "patient_identifier": patient_identifier,
         "prediction": pred_class,
         "confidence": round(confidence_score, 4),
         "uncertainty": round(uncertainty, 5),
@@ -201,16 +240,8 @@ async def predict(
         "tta_passes": settings.TTA_PASSES,
         "mc_dropout_passes": settings.MC_DROPOUT_PASSES,
         "timestamp": new_analysis.timestamp,
-        "telemetry": {
-            "mask_detected": telemetry.mask_detected,
-            "center_pct": telemetry.center_pct,
-            "diameter_mm": telemetry.diameter_mm,
-            "surface_area_mm2": telemetry.surface_area_mm2,
-            "border_irregularity_score": telemetry.border_irregularity_score,
-            "contour_points": telemetry.contour_points,
-            "optical_cross_polarized": telemetry.optical_cross_polarized,
-            "vital_stain_present": telemetry.vital_stain_present,
-            "vital_stain_abnormal": telemetry.vital_stain_abnormal,
-        },
+        "telemetry": telemetry_dict,
         "clinical_staging": staging_report.dict(),
+        "longitudinal_trajectory": longitudinal_delta.dict(),
     }
+

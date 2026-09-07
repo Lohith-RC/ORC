@@ -188,6 +188,8 @@ const Profile = ({ token }) => {
         const matchesSearch = searchQuery === '' || 
             item.image_filename?.toLowerCase().includes(searchQuery.toLowerCase()) ||
             item.id.toString().includes(searchQuery) ||
+            item.patient_identifier?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            item.lesion_site?.toLowerCase().includes(searchQuery.toLowerCase()) ||
             pred.includes(searchQuery.toLowerCase());
 
         return matchesFilter && matchesSearch;
@@ -599,17 +601,18 @@ const Profile = ({ token }) => {
                     {/* Filter and Search Bar */}
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6 font-mono text-xs">
                         {/* Filter Tabs */}
-                        <div className="flex items-center gap-1 bg-stone-200/60 dark:bg-stone-800/80 p-1 rounded-none border border-stone-300/60 dark:border-stone-700">
+                        <div className="flex items-center gap-1 bg-stone-200/60 dark:bg-stone-800/80 p-1 rounded-none border border-stone-300/60 dark:border-stone-700 overflow-x-auto">
                             {[
                                 { id: 'all', label: 'All Records' },
                                 { id: 'cancer', label: 'Malignant' },
                                 { id: 'benign', label: 'Non-Malignant' },
-                                { id: 'uncertain', label: 'Uncertain' }
+                                { id: 'uncertain', label: 'Uncertain' },
+                                { id: 'cohorts', label: 'Patient Cohorts' }
                             ].map(tab => (
                                 <button
                                     key={tab.id}
                                     onClick={() => setHistoryFilter(tab.id)}
-                                    className={`px-2.5 py-1 transition-colors ${
+                                    className={`px-2.5 py-1 whitespace-nowrap transition-colors ${
                                         historyFilter === tab.id 
                                             ? 'bg-white dark:bg-stone-900 font-semibold text-clinical-teal dark:text-teal-300 shadow-xs' 
                                             : 'text-stone-500 hover:text-stone-800 dark:hover:text-stone-200'
@@ -627,8 +630,8 @@ const Profile = ({ token }) => {
                                 type="text"
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
-                                placeholder="Search by filename or ID..."
-                                className="pl-8 pr-3 py-1.5 bg-white dark:bg-stone-950 border border-stone-300 dark:border-stone-700 text-xs font-sans text-stone-800 dark:text-stone-200 focus:outline-none focus:border-clinical-teal w-full sm:w-60"
+                                placeholder="Search by patient ID, site, file..."
+                                className="pl-8 pr-3 py-1.5 bg-white dark:bg-stone-950 border border-stone-300 dark:border-stone-700 text-xs font-sans text-stone-800 dark:text-stone-200 focus:outline-none focus:border-clinical-teal w-full sm:w-64"
                             />
                         </div>
                     </div>
@@ -636,7 +639,74 @@ const Profile = ({ token }) => {
                     {/* Specimen Rows */}
                     {filteredHistory.length > 0 ? (
                         <div className="space-y-3">
-                            {filteredHistory.map(item => {
+                            {historyFilter === 'cohorts' ? (
+                                // Patient Cohorts Grouping View
+                                (() => {
+                                    const cohorts = {};
+                                    filteredHistory.forEach(item => {
+                                        const pid = item.patient_identifier || 'ANON-001';
+                                        if (!cohorts[pid]) cohorts[pid] = [];
+                                        cohorts[pid].push(item);
+                                    });
+
+                                    return Object.entries(cohorts).map(([pid, records]) => {
+                                        const latest = records[0];
+                                        const oldest = records[records.length - 1];
+                                        const hasMultiple = records.length > 1;
+
+                                        return (
+                                            <div key={pid} className="border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-950 p-4 transition-all hover:border-stone-400">
+                                                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b border-stone-100 dark:border-stone-900">
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="font-mono text-xs px-2 py-0.5 bg-clinical-teal/10 border border-clinical-teal/40 text-clinical-teal font-bold">
+                                                            {pid}
+                                                        </span>
+                                                        <span className="font-serif text-base text-stone-900 dark:text-stone-100 font-medium">
+                                                            Cohort Tracking // {records.length} {records.length === 1 ? 'Encounter' : 'Serial Encounters'}
+                                                        </span>
+                                                        {hasMultiple && (
+                                                            <span className="font-mono text-[9px] px-1.5 py-0.5 bg-amber-500/10 border border-amber-500/30 text-amber-600 font-semibold">
+                                                                SERIAL TRACKED
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                    <div className="font-mono text-[11px] text-stone-400">
+                                                        Latest: {new Date(latest.timestamp).toLocaleDateString()}
+                                                    </div>
+                                                </div>
+
+                                                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-3 font-mono text-xs">
+                                                    <div className="p-2 border border-stone-100 dark:border-stone-900 bg-stone-50/50 dark:bg-stone-900/30">
+                                                        <span className="text-[9px] text-stone-400 block">PRIMARY SITE</span>
+                                                        <span className="font-semibold text-stone-800 dark:text-stone-200">
+                                                            {(latest.lesion_site || 'buccal_mucosa').replace(/_/g, ' ')}
+                                                        </span>
+                                                    </div>
+                                                    <div className="p-2 border border-stone-100 dark:border-stone-900 bg-stone-50/50 dark:bg-stone-900/30">
+                                                        <span className="text-[9px] text-stone-400 block">LATEST VERDICT</span>
+                                                        <span className={`font-semibold ${latest.prediction === 'cancer' ? 'text-rose-600' : 'text-teal-600'}`}>
+                                                            {latest.prediction?.toUpperCase()}
+                                                        </span>
+                                                    </div>
+                                                    <div className="p-2 border border-stone-100 dark:border-stone-900 bg-stone-50/50 dark:bg-stone-900/30">
+                                                        <span className="text-[9px] text-stone-400 block">TRIAGE TIER</span>
+                                                        <span className="font-semibold text-stone-800 dark:text-stone-200">
+                                                            {latest.triage_tier ? latest.triage_tier.split('_')[1] : 'TIER 1'}
+                                                        </span>
+                                                    </div>
+                                                    <div className="p-2 border border-stone-100 dark:border-stone-900 bg-stone-50/50 dark:bg-stone-900/30">
+                                                        <span className="text-[9px] text-stone-400 block">INTERVAL RANGE</span>
+                                                        <span className="text-stone-800 dark:text-stone-200">
+                                                            {records.length > 1 ? `${Math.round((new Date(latest.timestamp) - new Date(oldest.timestamp)) / 86400000)} Days` : 'Index Visit'}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        );
+                                    });
+                                })()
+                            ) : (
+                                filteredHistory.map(item => {
                                 const isCancer = item.prediction?.toLowerCase() === 'cancer';
                                 const isUncertain = item.prediction?.toLowerCase() === 'uncertain';
 
@@ -661,15 +731,34 @@ const Profile = ({ token }) => {
                                             )}
 
                                             <div>
-                                                <div className="flex items-center gap-2">
+                                                <div className="flex flex-wrap items-center gap-2">
                                                     <span className="font-serif text-base font-normal text-stone-900 dark:text-stone-100">
                                                         {isCancer ? 'Presumptive OSCC Malignancy' : isUncertain ? 'Uncertain Epistemic Variance' : 'Non-Malignant Mucosa'}
                                                     </span>
                                                     <span className="font-mono text-[9px] px-1.5 py-0.5 border border-stone-200 dark:border-stone-800 text-stone-500 uppercase">
                                                         REC-#{item.id.toString().padStart(4, '0')}
                                                     </span>
+                                                    <span className="font-mono text-[9px] px-1.5 py-0.5 bg-stone-100 dark:bg-stone-900 border border-stone-300 dark:border-stone-700 text-stone-700 dark:text-stone-300">
+                                                        PT: {item.patient_identifier || 'ANON-001'}
+                                                    </span>
+                                                    {item.lesion_site && (
+                                                        <span className="font-mono text-[9px] px-1.5 py-0.5 border border-clinical-teal/40 text-clinical-teal uppercase">
+                                                            {item.lesion_site.replace(/_/g, ' ')}
+                                                        </span>
+                                                    )}
+                                                    {item.triage_tier && (
+                                                        <span className={`font-mono text-[9px] px-1.5 py-0.5 border font-semibold ${
+                                                            item.triage_tier.includes('TIER_3') 
+                                                                ? 'bg-rose-500/15 border-rose-500/40 text-rose-600' 
+                                                                : item.triage_tier.includes('TIER_2')
+                                                                    ? 'bg-amber-500/15 border-amber-500/40 text-amber-600'
+                                                                    : 'bg-teal-500/15 border-teal-500/40 text-teal-600'
+                                                        }`}>
+                                                            {item.triage_tier.includes('TIER_3') ? 'TIER 3' : item.triage_tier.includes('TIER_2') ? 'TIER 2' : 'TIER 1'}
+                                                        </span>
+                                                    )}
                                                 </div>
-                                                <div className="font-mono text-[10px] text-stone-400 flex flex-wrap items-center gap-x-3 gap-y-0.5 mt-0.5">
+                                                <div className="font-mono text-[10px] text-stone-400 flex flex-wrap items-center gap-x-3 gap-y-0.5 mt-1">
                                                     <span>CONF: <strong className="text-stone-700 dark:text-stone-300">{(item.confidence * 100).toFixed(1)}%</strong></span>
                                                     {item.uncertainty !== null && <span>• σ²: <strong className="text-stone-700 dark:text-stone-300">{item.uncertainty}</strong></span>}
                                                     {item.risk_score !== null && <span>• RISK: <strong className="text-stone-700 dark:text-stone-300">{item.risk_score}</strong></span>}
@@ -684,7 +773,7 @@ const Profile = ({ token }) => {
                                         </div>
                                     </div>
                                 );
-                            })}
+                            }))}
                         </div>
                     ) : (
                         <div className="text-center py-16 font-mono text-xs text-stone-400 border border-dashed border-stone-300 dark:border-stone-800 p-8">

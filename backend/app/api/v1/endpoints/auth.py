@@ -1,5 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Request
 from fastapi.security import OAuth2PasswordRequestForm
+from sqlalchemy import func
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.core.security import verify_password, get_password_hash, create_access_token
@@ -33,9 +35,13 @@ def register(request: Request, user: UserCreate, db: Session = Depends(get_db)):
         role=user.role or "clinician",
         is_active=True
     )
-    db.add(new_user)
-    db.commit()
-    db.refresh(new_user)
+    try:
+        db.add(new_user)
+        db.commit()
+        db.refresh(new_user)
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(status_code=400, detail="Username or email already registered")
     
     log_audit_action(
         db, action="REGISTER_USER", user_id=new_user.id,
@@ -47,17 +53,18 @@ def register(request: Request, user: UserCreate, db: Session = Depends(get_db)):
 @limiter.limit("10/minute")
 def login(request: Request, form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
     """Authenticate clinician or patient and issue cryptographically signed JWT token."""
-    username = form_data.username
-    user = db.query(User).filter(User.username == username).first()
-    if not user:
-        user = db.query(User).filter(User.username.ilike(username)).first()
-    if not user:
-        user = db.query(User).filter(User.email == username).first()
+    raw_user = form_data.username.strip()
+    # Exact case match first, then exact case-folded match (eliminates ILIKE wildcard injection)
+    user = (
+        db.query(User).filter(User.username == raw_user).first()
+        or db.query(User).filter(func.lower(User.username) == raw_user.lower()).first()
+        or db.query(User).filter(func.lower(User.email) == raw_user.lower()).first()
+    )
         
     if not user or not verify_password(form_data.password, user.hashed_password):
         log_audit_action(
             db, action="FAILED_LOGIN",
-            ip_address=get_client_ip(request), details=f"Failed login attempt for: {username}"
+            ip_address=get_client_ip(request), details=f"Failed login attempt for: {raw_user}"
         )
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,

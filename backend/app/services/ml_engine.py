@@ -1,5 +1,6 @@
 import gc
 import logging
+import threading
 from typing import Tuple
 import numpy as np
 from PIL import Image
@@ -105,6 +106,14 @@ def get_model() -> MergedNet:
     _ai_model = model
     return _ai_model
 
+_inference_lock = threading.Lock()
+
+def _enable_dropout_only(module: nn.Module):
+    """Enable only Dropout modules while keeping BatchNorm frozen in eval mode."""
+    for m in module.modules():
+        if isinstance(m, (nn.Dropout, nn.Dropout2d, nn.Dropout3d)):
+            m.train()
+
 def run_inference_pipeline(image: Image.Image) -> Tuple[str, float, float, float]:
     """
     Executes full clinical deep learning pipeline:
@@ -117,24 +126,26 @@ def run_inference_pipeline(image: Image.Image) -> Tuple[str, float, float, float
     img_array = np.array(image)
     quality_score = compute_image_quality(img_array)
 
-    # 1. TTA passes
-    tta_probs = []
-    with torch.no_grad():
-        for t in tta_transforms:
-            tensor = t(image).unsqueeze(0).to(device)
-            out = model(tensor)
-            tta_probs.append(torch.nn.functional.softmax(out, dim=1))
-    tta_mean = torch.stack(tta_probs).mean(dim=0)
+    with _inference_lock:
+        model.eval()
+        # 1. TTA passes
+        tta_probs = []
+        with torch.no_grad():
+            for t in tta_transforms:
+                tensor = t(image).unsqueeze(0).to(device)
+                out = model(tensor)
+                tta_probs.append(torch.nn.functional.softmax(out, dim=1))
+        tta_mean = torch.stack(tta_probs).mean(dim=0)
 
-    # 2. Monte Carlo Dropout passes
-    model.train()  # Enable stochastic dropout
-    mcd_preds = []
-    with torch.no_grad():
-        base_tensor = inference_transform(image).unsqueeze(0).to(device)
-        for _ in range(settings.MC_DROPOUT_PASSES):
-            out = model(base_tensor)
-            mcd_preds.append(torch.nn.functional.softmax(out, dim=1))
-    model.eval()   # Restore evaluation mode
+        # 2. Monte Carlo Dropout passes (Keep BatchNorm in eval mode)
+        _enable_dropout_only(model)
+        mcd_preds = []
+        with torch.no_grad():
+            base_tensor = inference_transform(image).unsqueeze(0).to(device)
+            for _ in range(settings.MC_DROPOUT_PASSES):
+                out = model(base_tensor)
+                mcd_preds.append(torch.nn.functional.softmax(out, dim=1))
+        model.eval()
 
     mcd_stack = torch.stack(mcd_preds)
     mcd_mean = mcd_stack.mean(dim=0)

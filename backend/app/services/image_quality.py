@@ -9,12 +9,16 @@ def compute_image_quality(img_array: np.ndarray) -> float:
     if img_array is None or img_array.size == 0:
         return 0.0
         
-    gray = np.mean(img_array, axis=2) if img_array.ndim == 3 else img_array
+    # Ignore alpha channel if present, average RGB channels to grayscale
+    gray = np.mean(img_array[..., :3], axis=2) if img_array.ndim == 3 else img_array
     gray = gray.astype(np.float32)
     
-    # 2D discrete Laplacian finite difference
+    if gray.shape[0] < 3 or gray.shape[1] < 3:
+        return 0.0
+
+    # 2D discrete Laplacian finite difference strictly on interior pixels (eliminates toroidal edge wrap)
     laplacian = (
-        np.roll(gray, -1, 0) + np.roll(gray, 1, 0) +
-        np.roll(gray, -1, 1) + np.roll(gray, 1, 1) - 4 * gray
+        gray[:-2, 1:-1] + gray[2:, 1:-1] +
+        gray[1:-1, :-2] + gray[1:-1, 2:] - 4 * gray[1:-1, 1:-1]
     )
     return float(np.var(laplacian))

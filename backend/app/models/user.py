@@ -18,5 +18,6 @@ class User(Base):
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
     
-    analyses = relationship("Analysis", back_populates="owner", cascade="all, delete-orphan")
-    audit_logs = relationship("AuditLog", back_populates="user", cascade="all, delete-orphan")
+    # Immutable historical records: never cascade delete patient records or HIPAA audit logs
+    analyses = relationship("Analysis", back_populates="owner")
+    audit_logs = relationship("AuditLog", back_populates="user")

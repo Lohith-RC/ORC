@@ -13,14 +13,20 @@ router = APIRouter()
 
 @router.get("/me/analyses", response_model=List[AnalysisInfo])
 def get_my_analyses(
+    limit: int = 50,
+    offset: int = 0,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """Retrieve all patient screenings conducted by the authenticated clinician."""
+    """Retrieve patient screenings conducted by the authenticated clinician (paginated)."""
+    # ponytail: cap at 100 max to prevent OOM
+    safe_limit = min(max(1, limit), 100)
     return (
         db.query(Analysis)
         .filter(Analysis.user_id == current_user.id)
         .order_by(Analysis.timestamp.desc())
+        .offset(max(0, offset))
+        .limit(safe_limit)
         .all()
     )
 

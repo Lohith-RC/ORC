@@ -15,11 +15,16 @@ import {
     HelpCircle,
     FileText,
     ArrowRight,
-    MapPin
+    MapPin,
+    Sliders,
+    Stethoscope,
+    CheckSquare,
+    Layers
 } from 'lucide-react';
 import axios from 'axios';
 import { API_BASE_URL } from './api';
 import OralCavityMap, { ORAL_SITES } from './OralCavityMap';
+import LesionSegmentationViewer from './LesionSegmentationViewer';
 
 // --- Analog Uncertainty Caliper Visualizer ---
 const UncertaintyCaliper = ({ confidence, uncertainty, prediction }) => {
@@ -104,6 +109,10 @@ const RiskFactorToggle = ({ label, weight, active, onChange, note }) => {
 const Upload = ({ token }) => {
     const [file, setFile] = useState(null);
     const [preview, setPreview] = useState(null);
+    const [vitalFile, setVitalFile] = useState(null);
+    const [vitalPreview, setVitalPreview] = useState(null);
+    const [crossPolarized, setCrossPolarized] = useState(false);
+    const [distanceMm, setDistanceMm] = useState(50.0);
     const [result, setResult] = useState(null);
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
@@ -178,18 +187,26 @@ const Upload = ({ token }) => {
         phaseTimersRef.current = [];
 
         // Simulated laboratory sequencer phases for genuine clinical feel
-        setLoadingPhase('Verifying image resolution & Laplacian blur variance...');
+        setLoadingPhase('Executing Stage I Lesion Segmentation & Spatial Morphology...');
         phaseTimersRef.current.push(setTimeout(() => {
             setLoadingPhase('Executing 8-fold Test-Time Augmentation (TTA)...');
-        }, 800));
+        }, 700));
         phaseTimersRef.current.push(setTimeout(() => {
             setLoadingPhase('Computing Monte Carlo dropout variational passes (15 runs)...');
-        }, 1600));
+        }, 1400));
+        phaseTimersRef.current.push(setTimeout(() => {
+            setLoadingPhase('Synthesizing AJCC 8th Edition cTNM Clinical Decision Directives...');
+        }, 2100));
 
         const formData = new FormData();
         formData.append('file', file);
-        // PHI Protection: transmit clinical risk factors in multipart body, not plaintext URL query string
+        if (vitalFile) {
+            formData.append('vital_stain_file', vitalFile);
+        }
+        // PHI Protection: transmit clinical risk factors and optical telemetry in multipart body
         formData.append('lesion_site', selectedSite);
+        formData.append('cross_polarized', crossPolarized);
+        formData.append('distance_mm', distanceMm);
         formData.append('age', riskForm.age);
         formData.append('tobacco_use', riskForm.tobacco_use);
         formData.append('alcohol_use', riskForm.alcohol_use);
@@ -217,8 +234,20 @@ const Upload = ({ token }) => {
     const removeFile = () => {
         setFile(null);
         setPreview(null);
+        setVitalFile(null);
+        setVitalPreview(null);
         setResult(null);
         setError('');
+    };
+
+    const handleVitalFileChange = (e) => {
+        const selFile = e.target.files?.[0];
+        if (selFile) {
+            setVitalFile(selFile);
+            const reader = new FileReader();
+            reader.onload = () => setVitalPreview(reader.result);
+            reader.readAsDataURL(selFile);
+        }
     };
 
     // ponytail: native print covers PDF dossier export without 400KB html2canvas/jspdf bloat
@@ -374,6 +403,97 @@ const Upload = ({ token }) => {
                             </div>
                         </div>
 
+                        {/* Optical Acquisition & Vital Dye Protocol */}
+                        <div className="border border-stone-300 dark:border-stone-800 bg-stone-50 dark:bg-stone-900 p-6">
+                            <div className="flex items-center justify-between font-mono text-[10px] text-stone-500 uppercase mb-4 border-b border-stone-200 dark:border-stone-800 pb-2">
+                                <span>04 // OPTICAL PROTOCOL & MULTIMODAL DYE</span>
+                                <span>STAGE I TELEMETRY</span>
+                            </div>
+
+                            <div className="space-y-4">
+                                {/* Cross polarization toggle */}
+                                <div 
+                                    onClick={() => setCrossPolarized(!crossPolarized)}
+                                    className={`cursor-pointer select-none border p-3 flex items-center justify-between transition-all ${
+                                        crossPolarized 
+                                            ? 'border-indigo-500 bg-indigo-50/50 dark:bg-indigo-950/20 dark:border-indigo-700' 
+                                            : 'border-stone-200 dark:border-stone-800 bg-stone-50/50 dark:bg-stone-900/30'
+                                    }`}
+                                >
+                                    <div className="flex flex-col">
+                                        <span className="text-xs font-mono font-medium text-stone-900 dark:text-stone-100 flex items-center gap-1.5">
+                                            <Layers className="w-3.5 h-3.5 text-indigo-500" />
+                                            Cross-Polarized Lens Ingestion
+                                        </span>
+                                        <span className="text-[10px] text-stone-400 font-mono mt-0.5">
+                                            Suppresses surface glare & specular artifacts
+                                        </span>
+                                    </div>
+                                    <div className={`w-9 h-5 rounded-full p-0.5 transition-colors ${crossPolarized ? 'bg-indigo-600' : 'bg-stone-300 dark:bg-stone-700'}`}>
+                                        <div className={`w-4 h-4 rounded-full bg-white transition-transform ${crossPolarized ? 'translate-x-4' : 'translate-x-0'}`}></div>
+                                    </div>
+                                </div>
+
+                                {/* Calibrated Distance Slider */}
+                                <div className="border border-stone-200 dark:border-stone-800 p-3 bg-stone-50/50 dark:bg-stone-900/30">
+                                    <div className="flex justify-between items-center mb-1 font-mono text-xs">
+                                        <span className="text-stone-700 dark:text-stone-300 flex items-center gap-1.5">
+                                            <Sliders className="w-3.5 h-3.5 text-clinical-teal" />
+                                            FOCAL DISTANCE:
+                                        </span>
+                                        <span className="font-bold text-stone-900 dark:text-stone-100">{distanceMm} MM</span>
+                                    </div>
+                                    <input 
+                                        type="range" 
+                                        min="30" 
+                                        max="100" 
+                                        step="5"
+                                        value={distanceMm}
+                                        onChange={e => setDistanceMm(parseFloat(e.target.value))}
+                                        className="w-full accent-clinical-teal cursor-pointer"
+                                    />
+                                    <span className="font-mono text-[9px] text-stone-400 block mt-1">Calibrates spatial pixel-to-millimeter scaling ratio</span>
+                                </div>
+
+                                {/* Vital Stain / Autofluorescence Ingestion */}
+                                <div className="border border-stone-200 dark:border-stone-800 p-3 bg-stone-50/50 dark:bg-stone-900/30">
+                                    <div className="font-mono text-xs font-medium text-stone-800 dark:text-stone-200 mb-1 flex items-center justify-between">
+                                        <span>SECONDARY DYE CHANNEL (OPTIONAL):</span>
+                                        {vitalFile && (
+                                            <button 
+                                                onClick={() => { setVitalFile(null); setVitalPreview(null); }}
+                                                className="text-[10px] text-red-500 font-mono hover:underline"
+                                            >
+                                                Clear
+                                            </button>
+                                        )}
+                                    </div>
+                                    <p className="text-[10px] text-stone-400 font-mono mb-2">
+                                        Upload Toluidine Blue or VELscope autofluorescence image
+                                    </p>
+                                    
+                                    {!vitalPreview ? (
+                                        <label className="block p-3 border border-dashed border-stone-300 dark:border-stone-700 text-center cursor-pointer hover:border-clinical-teal transition-colors">
+                                            <input 
+                                                type="file" 
+                                                accept="image/*" 
+                                                className="hidden" 
+                                                onChange={handleVitalFileChange} 
+                                            />
+                                            <span className="font-mono text-[10px] text-clinical-teal uppercase">
+                                                + Attach Vital Stain Specimen
+                                            </span>
+                                        </label>
+                                    ) : (
+                                        <div className="flex items-center gap-2 p-2 border border-teal-500/40 bg-teal-500/10 font-mono text-[10px] text-teal-700 dark:text-teal-300">
+                                            <span className="w-2 h-2 bg-teal-500 rounded-full"></span>
+                                            <span>Attached: {vitalFile?.name}</span>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+
                         {/* Submit Action */}
                         {file && !loading && (
                             <button
@@ -504,6 +624,58 @@ const Upload = ({ token }) => {
                                         </span>
                                     </div>
                                 </div>
+
+                                {/* Stage I: Lesion Spatial Segmentation & Morphology */}
+                                {result.telemetry && (
+                                    <LesionSegmentationViewer 
+                                        imageSrc={preview} 
+                                        telemetry={result.telemetry} 
+                                        stagingReport={result.clinical_staging} 
+                                    />
+                                )}
+
+                                {/* AJCC 8th Edition Clinical Staging & Decision Support */}
+                                {result.clinical_staging && (
+                                    <div className="border border-stone-300 dark:border-stone-800 bg-stone-50 dark:bg-stone-950/60 p-6 my-5">
+                                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-stone-200 dark:border-stone-800">
+                                            <div>
+                                                <div className="text-[10px] font-mono text-stone-400 uppercase">AJCC 8TH EDITION CLINICAL TRIAGE</div>
+                                                <div className="font-serif text-lg font-medium text-stone-900 dark:text-stone-100">
+                                                    {result.clinical_staging.triage_tier_display}
+                                                </div>
+                                            </div>
+                                            <div className="font-mono text-xs px-3 py-1.5 bg-stone-900 dark:bg-stone-100 text-stone-100 dark:text-stone-900 font-bold tracking-wider">
+                                                {result.clinical_staging.cTNM_estimate}
+                                            </div>
+                                        </div>
+
+                                        <p className="font-sans text-xs text-stone-700 dark:text-stone-300 my-4 leading-relaxed">
+                                            {result.clinical_staging.triage_summary}
+                                        </p>
+
+                                        {result.clinical_staging.recommended_biopsy_type && (
+                                            <div className="p-3 mb-4 bg-teal-50/70 dark:bg-teal-950/30 border border-clinical-teal/40 font-mono text-xs text-stone-800 dark:text-stone-200 flex items-start gap-2.5">
+                                                <Stethoscope className="w-4 h-4 text-clinical-teal flex-shrink-0 mt-0.5" />
+                                                <div>
+                                                    <span className="font-bold text-clinical-teal uppercase block text-[10px]">Diagnostic Biopsy Directives:</span>
+                                                    <span>{result.clinical_staging.recommended_biopsy_type}</span>
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        <div className="mt-4">
+                                            <div className="text-[10px] font-mono text-stone-400 uppercase mb-2">CLINICAL ACTION CHECKLIST</div>
+                                            <div className="space-y-2">
+                                                {result.clinical_staging.action_checklist.map((item, idx) => (
+                                                    <div key={idx} className="flex items-start gap-2.5 p-2.5 bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 font-sans text-xs text-stone-800 dark:text-stone-200">
+                                                        <CheckSquare className="w-4 h-4 text-clinical-teal flex-shrink-0 mt-0.5" />
+                                                        <span>{item}</span>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
 
                                 {/* Analog Caliper Display */}
                                 <UncertaintyCaliper 

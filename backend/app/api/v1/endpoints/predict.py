@@ -12,8 +12,10 @@ from app.models.user import User
 from app.models.analysis import Analysis
 from app.schemas.clinical import ClinicalRiskForm
 from app.api.deps import get_current_user, log_audit_action
+from typing import Optional
 from app.services.clinical_risk import compute_clinical_risk_score
-from app.services.ml_engine import run_inference_pipeline
+from app.services.vision_pipeline import execute_dual_stage_pipeline
+from app.services.clinical_staging import evaluate_ajcc_staging
 
 logger = logging.getLogger(__name__)
 
@@ -35,7 +37,10 @@ ANATOMICAL_SITE_METADATA = {
 async def predict(
     request: Request,
     file: UploadFile = File(...),
+    vital_stain_file: Optional[UploadFile] = File(None),
     lesion_site: str = Form("buccal_mucosa"),
+    cross_polarized: bool = Form(False),
+    distance_mm: float = Form(50.0),
     age: int = Form(30),
     tobacco_use: bool = Form(False),
     alcohol_use: bool = Form(False),
@@ -79,6 +84,27 @@ async def predict(
     except Exception:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid or corrupt image payload.")
 
+    # 3b. Decode optional vital stain / autofluorescence specimen
+    vital_img = None
+    if vital_stain_file and vital_stain_file.filename:
+        if vital_stain_file.content_type not in settings.ALLOWED_CONTENT_TYPES:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Invalid vital stain file type '{vital_stain_file.content_type}'. Supported: JPEG, PNG, WEBP."
+            )
+        vital_bytes = bytearray()
+        while chunk := await vital_stain_file.read(65536):
+            vital_bytes.extend(chunk)
+            if len(vital_bytes) > max_bytes:
+                raise HTTPException(
+                    status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+                    detail=f"Vital stain file exceeds maximum limit of {settings.MAX_IMAGE_SIZE_MB}MB."
+                )
+        try:
+            vital_img = Image.open(io.BytesIO(vital_bytes)).convert("RGB")
+        except Exception:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid or corrupt vital stain image.")
+
     # 4. Clinical risk factors
     try:
         risk_form = ClinicalRiskForm(
@@ -93,10 +119,10 @@ async def predict(
 
     clinical_risk_score = compute_clinical_risk_score(risk_form)
 
-    # 5. ASYNCHRONOUS INFERENCE (Unblocks Event Loop!)
+    # 5. ASYNCHRONOUS DUAL-STAGE INFERENCE (Unblocks Event Loop!)
     try:
-        pred_class, confidence_score, uncertainty, quality_score = await anyio.to_thread.run_sync(
-            run_inference_pipeline, image
+        pred_class, confidence_score, uncertainty, quality_score, telemetry = await anyio.to_thread.run_sync(
+            execute_dual_stage_pipeline, image, vital_img, distance_mm, cross_polarized
         )
     except Exception as e:
         logger.error(f"Inference failure for clinician {current_user.username}: {e}", exc_info=True)
@@ -113,7 +139,19 @@ async def predict(
             "Please review carefully or recapture."
         )
 
-    # 7. Clinical alert logic
+    # 7. AJCC 8th Edition Clinical Staging & Triage Evaluation
+    staging_report = evaluate_ajcc_staging(
+        prediction=pred_class,
+        confidence=confidence_score,
+        lesion_site=lesion_site,
+        diameter_mm=telemetry.diameter_mm,
+        clinical_risk_score=clinical_risk_score,
+        vital_stain_abnormal=telemetry.vital_stain_abnormal,
+        is_cross_polarized=cross_polarized,
+        border_irregularity=telemetry.border_irregularity_score
+    )
+
+    # Clinical alert logic
     clinical_alert = None
     if pred_class == "cancer" and clinical_risk_score > 0.60:
         clinical_alert = "CRITICAL: High AI confidence for malignant lesion combined with high clinical risk profile. Urgent specialist referral strongly recommended."
@@ -163,4 +201,16 @@ async def predict(
         "tta_passes": settings.TTA_PASSES,
         "mc_dropout_passes": settings.MC_DROPOUT_PASSES,
         "timestamp": new_analysis.timestamp,
+        "telemetry": {
+            "mask_detected": telemetry.mask_detected,
+            "center_pct": telemetry.center_pct,
+            "diameter_mm": telemetry.diameter_mm,
+            "surface_area_mm2": telemetry.surface_area_mm2,
+            "border_irregularity_score": telemetry.border_irregularity_score,
+            "contour_points": telemetry.contour_points,
+            "optical_cross_polarized": telemetry.optical_cross_polarized,
+            "vital_stain_present": telemetry.vital_stain_present,
+            "vital_stain_abnormal": telemetry.vital_stain_abnormal,
+        },
+        "clinical_staging": staging_report.dict(),
     }

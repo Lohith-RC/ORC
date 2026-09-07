@@ -10,3 +10,5 @@ python-jose[cryptography]
 Pillow
 python-multipart
 slowapi
+psycopg2-binary
+python-dotenv

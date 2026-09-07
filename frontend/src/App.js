@@ -9,6 +9,7 @@ import Login from './Login';
 import Register from './Register';
 import Upload from './Upload';
 import Profile from './Profile';
+import ErrorBoundary from './ErrorBoundary';
 
 const App = () => {
     const [token, setToken] = useState(null);
@@ -35,30 +36,32 @@ const App = () => {
     };
 
     return (
-        <Router>
-            <div className="bg-white dark:bg-gray-900 transition-colors duration-300">
-                <Navbar loggedIn={!!token} onLogout={handleLogout} />
-                <AnimatePresence mode="wait">
-                    <Routes>
-                        <Route path="/" element={<Home />} />
-                        <Route path="/about" element={<About />} />
-                        <Route path="/contact" element={<Contact />} />
-                        <Route path="/login" element={<Login onLogin={handleLogin} />} />
-                        <Route path="/register" element={<Register onLogin={handleLogin} />} />
-                        <Route path="/upload" element={
-                            <PrivateRoute>
-                                <Upload token={token} />
-                            </PrivateRoute>
-                        } />
-                         <Route path="/profile" element={
-                            <PrivateRoute>
-                                <Profile token={token} />
-                            </PrivateRoute>
-                        } />
-                    </Routes>
-                </AnimatePresence>
-            </div>
-        </Router>
+        <ErrorBoundary>
+            <Router>
+                <div className="bg-white dark:bg-gray-900 transition-colors duration-300 min-h-screen">
+                    <Navbar loggedIn={!!token} onLogout={handleLogout} />
+                    <AnimatePresence mode="wait">
+                        <Routes>
+                            <Route path="/" element={<Home />} />
+                            <Route path="/about" element={<About />} />
+                            <Route path="/contact" element={<Contact />} />
+                            <Route path="/login" element={<Login onLogin={handleLogin} />} />
+                            <Route path="/register" element={<Register onLogin={handleLogin} />} />
+                            <Route path="/upload" element={
+                                <PrivateRoute>
+                                    <Upload token={token} />
+                                </PrivateRoute>
+                            } />
+                            <Route path="/profile" element={
+                                <PrivateRoute>
+                                    <Profile token={token} />
+                                </PrivateRoute>
+                            } />
+                        </Routes>
+                    </AnimatePresence>
+                </div>
+            </Router>
+        </ErrorBoundary>
     );
 };
 

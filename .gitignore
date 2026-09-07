@@ -8,6 +8,8 @@ __pycache__/
 .Python
 results_merged/
 .ipynb_checkpoints/
+cloudflared.exe
+*.db
 
 # Virtual Environments
 venv/

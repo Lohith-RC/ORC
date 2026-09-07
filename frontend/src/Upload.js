@@ -19,8 +19,6 @@ import {
 } from 'lucide-react';
 import axios from 'axios';
 import { API_BASE_URL } from './api';
-import jsPDF from 'jspdf';
-import html2canvas from 'html2canvas';
 import OralCavityMap, { ORAL_SITES } from './OralCavityMap';
 
 // --- Analog Uncertainty Caliper Visualizer ---
@@ -223,19 +221,8 @@ const Upload = ({ token }) => {
         setError('');
     };
 
-    const handleDownload = () => {
-        const input = reportRef.current;
-        if (input) {
-            html2canvas(input, { scale: 2, useCORS: true }).then((canvas) => {
-                const imgData = canvas.toDataURL('image/png');
-                const pdf = new jsPDF('p', 'mm', 'a4');
-                const pdfWidth = pdf.internal.pageSize.getWidth();
-                const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-                pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-                pdf.save(`OralCancer_Triage_${specimenId}.pdf`);
-            });
-        }
-    };
+    // ponytail: native print covers PDF dossier export without 400KB html2canvas/jspdf bloat
+    const handleDownload = () => window.print();
 
     return (
         <div className="bg-parchment-100 dark:bg-ink-950 min-h-screen py-10 px-4 sm:px-6 lg:px-8 font-sans text-stone-800 dark:text-stone-200">

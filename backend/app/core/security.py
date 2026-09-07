@@ -19,28 +19,18 @@ from app.core.config import settings
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/login")
 
-class UserRole(str, Enum):
-    ADMIN = "admin"
-    CLINICIAN = "clinician"
-    PATIENT = "patient"
-
 def get_password_hash(password: str) -> str:
-    """PBKDF2-SHA256 hashing — 390,000 iterations."""
+    # ponytail: stdlib hashlib + secrets avoids broken passlib-bcrypt 4.0 bindings
     salt = secrets.token_bytes(16)
-    iterations = 390000
-    dk = hashlib.pbkdf2_hmac("sha256", password.encode("utf-8"), salt, iterations)
-    return f"pbkdf2_sha256${iterations}${base64.b64encode(salt).decode()}${base64.b64encode(dk).decode()}"
+    dk = hashlib.pbkdf2_hmac("sha256", password.encode("utf-8"), salt, 390000)
+    return f"pbkdf2_sha256$390000${base64.b64encode(salt).decode()}${base64.b64encode(dk).decode()}"
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     if hashed_password.startswith("pbkdf2_sha256$"):
         try:
-            _, iterations, salt_b64, hash_b64 = hashed_password.split("$", 3)
-            salt = base64.b64decode(salt_b64)
-            expected = base64.b64decode(hash_b64)
-            candidate = hashlib.pbkdf2_hmac(
-                "sha256", plain_password.encode("utf-8"), salt, int(iterations)
-            )
-            return hmac.compare_digest(candidate, expected)
+            _, iters, s, exp = hashed_password.split("$", 3)
+            cand = hashlib.pbkdf2_hmac("sha256", plain_password.encode("utf-8"), base64.b64decode(s), int(iters))
+            return hmac.compare_digest(cand, base64.b64decode(exp))
         except Exception:
             return False
     try:

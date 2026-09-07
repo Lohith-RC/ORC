@@ -31,6 +31,7 @@ import axios from 'axios';
 import { API_BASE_URL, authFetch } from './api';
 import defaultProfileImage from './images/7.webp';
 import ClinicianVerificationModal from './ClinicianVerificationModal';
+import SpecialistReferralModal from './SpecialistReferralModal';
 
 const Profile = ({ token }) => {
     const [user, setUser] = useState(null);
@@ -54,6 +55,7 @@ const Profile = ({ token }) => {
     const [activeLearningQueue, setActiveLearningQueue] = useState([]);
     const [flywheelMetrics, setFlywheelMetrics] = useState(null);
     const [queueLoading, setQueueLoading] = useState(false);
+    const [referralAnalysisId, setReferralAnalysisId] = useState(null);
 
     const fileInputRef = useRef(null);
 
@@ -913,20 +915,31 @@ const Profile = ({ token }) => {
                                         <div className="font-mono text-xs text-stone-500 text-left sm:text-right flex-shrink-0 border-t sm:border-t-0 pt-2 sm:pt-0 border-stone-100 dark:border-stone-900 flex flex-col sm:items-end gap-1.5">
                                             <div>{new Date(item.timestamp).toLocaleDateString()}</div>
                                             <div className="text-[10px] text-stone-400">{new Date(item.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</div>
-                                            <button
-                                                type="button"
-                                                onClick={() => setVerifyingAnalysis(item)}
-                                                className={`mt-1 px-2.5 py-0.5 border text-[10px] font-mono flex items-center gap-1 transition-colors ${
-                                                    item.biopsy_proven
-                                                        ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-300 font-semibold'
-                                                        : item.ground_truth_dx
-                                                            ? 'border-teal-500 bg-teal-50 dark:bg-teal-950/30 text-teal-600 dark:text-teal-300'
-                                                            : 'border-stone-300 dark:border-stone-700 hover:border-clinical-teal text-stone-600 dark:text-stone-300'
-                                                }`}
-                                            >
-                                                <Microscope className="w-3 h-3" />
-                                                <span>{item.biopsy_proven ? 'BIOPSY PROVEN' : item.ground_truth_dx ? 'VERIFIED' : 'VERIFY / ANNOTATE'}</span>
-                                            </button>
+                                            <div className="flex items-center gap-1.5 mt-1">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setReferralAnalysisId(item.id)}
+                                                    className="px-2 py-0.5 border border-stone-300 dark:border-stone-700 hover:border-clinical-teal text-[10px] font-mono flex items-center gap-1 text-stone-600 dark:text-stone-300 transition-colors"
+                                                    title="View Oncology Referral Letter & Export HL7 FHIR r4 Bundle"
+                                                >
+                                                    <FileText className="w-3 h-3" />
+                                                    <span>REFERRAL & FHIR</span>
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setVerifyingAnalysis(item)}
+                                                    className={`px-2 py-0.5 border text-[10px] font-mono flex items-center gap-1 transition-colors ${
+                                                        item.biopsy_proven
+                                                            ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-300 font-semibold'
+                                                            : item.ground_truth_dx
+                                                                ? 'border-teal-500 bg-teal-50 dark:bg-teal-950/30 text-teal-600 dark:text-teal-300'
+                                                                : 'border-stone-300 dark:border-stone-700 hover:border-clinical-teal text-stone-600 dark:text-stone-300'
+                                                    }`}
+                                                >
+                                                    <Microscope className="w-3 h-3" />
+                                                    <span>{item.biopsy_proven ? 'BIOPSY PROVEN' : item.ground_truth_dx ? 'VERIFIED' : 'VERIFY'}</span>
+                                                </button>
+                                            </div>
                                         </div>
                                     </div>
                                 );
@@ -962,6 +975,13 @@ const Profile = ({ token }) => {
                     setActiveLearningQueue(prev => prev.filter(q => q.analysis_id !== updatedAnalysis.id));
                     fetchActiveLearningData();
                 }}
+            />
+
+            {/* Specialist Referral Letter & HL7 FHIR r4 Export Modal */}
+            <SpecialistReferralModal
+                isOpen={!!referralAnalysisId}
+                onClose={() => setReferralAnalysisId(null)}
+                analysisId={referralAnalysisId}
             />
         </div>
     );

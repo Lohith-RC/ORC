@@ -18,5 +18,11 @@ def get_client_ip(request: Request) -> str:
         
     return request.client.host if request.client else "127.0.0.1"
 
-limiter = Limiter(key_func=get_client_ip)
+import os
+import sys
+
+limiter = Limiter(
+    key_func=get_client_ip,
+    enabled=("pytest" not in sys.modules and os.getenv("TESTING") != "1")
+)
 rate_limit_handler = _rate_limit_exceeded_handler

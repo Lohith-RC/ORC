@@ -27,6 +27,7 @@ import OralCavityMap, { ORAL_SITES } from './OralCavityMap';
 import LesionSegmentationViewer from './LesionSegmentationViewer';
 import LongitudinalProgressionCard from './LongitudinalProgressionCard';
 import ClinicianVerificationModal from './ClinicianVerificationModal';
+import SpecialistReferralModal from './SpecialistReferralModal';
 
 // --- Analog Uncertainty Caliper Visualizer ---
 const UncertaintyCaliper = ({ confidence, uncertainty, prediction }) => {
@@ -133,6 +134,7 @@ const Upload = ({ token }) => {
     }, []);
 
     const [isVerificationOpen, setIsVerificationOpen] = useState(false);
+    const [isReferralOpen, setIsReferralOpen] = useState(false);
 
     // Clinical risk factors
     const [riskForm, setRiskForm] = useState({ 
@@ -575,7 +577,15 @@ const Upload = ({ token }) => {
                                             className="px-3 py-1.5 border border-stone-300 dark:border-stone-700 hover:bg-stone-100 dark:hover:bg-stone-800 text-stone-700 dark:text-stone-300 text-xs font-mono flex items-center gap-1.5 transition-colors"
                                         >
                                             <Download className="w-3.5 h-3.5" />
-                                            <span>EXPORT PDF DOSSIER</span>
+                                            <span>EXPORT PDF</span>
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => setIsReferralOpen(true)}
+                                            className="px-3 py-1.5 border border-stone-800 dark:border-stone-200 bg-stone-900 dark:bg-stone-100 text-white dark:text-stone-900 text-xs font-mono font-semibold flex items-center gap-1.5 hover:bg-clinical-teal dark:hover:bg-clinical-teal dark:hover:text-white transition-colors"
+                                        >
+                                            <FileText className="w-3.5 h-3.5" />
+                                            <span>REFERRAL & FHIR</span>
                                         </button>
                                     </div>
                                 </div>
@@ -797,6 +807,15 @@ const Upload = ({ token }) => {
                     }));
                 }}
             />
+
+            {/* Specialist Referral & HL7 FHIR r4 Export Modal */}
+            {result && (
+                <SpecialistReferralModal
+                    isOpen={isReferralOpen}
+                    onClose={() => setIsReferralOpen(false)}
+                    analysisId={result.id}
+                />
+            )}
         </div>
     );
 };

@@ -110,6 +110,7 @@ const Upload = ({ token }) => {
     const [loadingPhase, setLoadingPhase] = useState('');
     const [user, setUser] = useState(null);
     const reportRef = useRef();
+    const phaseTimersRef = useRef([]);
 
     // Specimen ID generated for clinical authenticity
     const [specimenId, setSpecimenId] = useState('');
@@ -169,27 +170,30 @@ const Upload = ({ token }) => {
         setError('');
         setResult(null);
 
+        // Clear previous timers if any
+        phaseTimersRef.current.forEach(clearTimeout);
+        phaseTimersRef.current = [];
+
         // Simulated laboratory sequencer phases for genuine clinical feel
         setLoadingPhase('Verifying image resolution & Laplacian blur variance...');
-        setTimeout(() => {
+        phaseTimersRef.current.push(setTimeout(() => {
             setLoadingPhase('Executing 8-fold Test-Time Augmentation (TTA)...');
-        }, 800);
-        setTimeout(() => {
+        }, 800));
+        phaseTimersRef.current.push(setTimeout(() => {
             setLoadingPhase('Computing Monte Carlo dropout variational passes (15 runs)...');
-        }, 1600);
+        }, 1600));
 
         const formData = new FormData();
         formData.append('file', file);
-        const params = new URLSearchParams({
-            age: riskForm.age,
-            tobacco_use: riskForm.tobacco_use,
-            alcohol_use: riskForm.alcohol_use,
-            betel_nut: riskForm.betel_nut,
-            prior_lesions: riskForm.prior_lesions,
-        });
+        // PHI Protection: transmit clinical risk factors in multipart body, not plaintext URL query string
+        formData.append('age', riskForm.age);
+        formData.append('tobacco_use', riskForm.tobacco_use);
+        formData.append('alcohol_use', riskForm.alcohol_use);
+        formData.append('betel_nut', riskForm.betel_nut);
+        formData.append('prior_lesions', riskForm.prior_lesions);
 
         try {
-            const response = await axios.post(`${API_BASE_URL}/predict?${params.toString()}`, formData, {
+            const response = await axios.post(`${API_BASE_URL}/predict`, formData, {
                 headers: {
                     'Content-Type': 'multipart/form-data',
                     'Authorization': `Bearer ${token}`
@@ -199,6 +203,8 @@ const Upload = ({ token }) => {
         } catch (err) {
             setError(err.response?.data?.detail || err.response?.data?.error || 'A laboratory inference failure occurred. Please verify server connection.');
         } finally {
+            phaseTimersRef.current.forEach(clearTimeout);
+            phaseTimersRef.current = [];
             setLoading(false);
             setLoadingPhase('');
         }

@@ -1,3 +1,4 @@
+import json
 import logging
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -11,15 +12,32 @@ from app.db.session import engine, Base
 import app.models  # Ensures all models (User, Analysis, AuditLog) are registered with Base
 from app.api.v1.router import api_router
 
-# Configure Structured Logging
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s [%(levelname)s] [%(name)s] %(message)s",
-)
+# Configure Structured JSON Logging
+class JSONLogFormatter(logging.Formatter):
+    def format(self, record):
+        log_obj = {
+            "timestamp": self.formatTime(record, "%Y-%m-%dT%H:%M:%SZ"),
+            "level": record.levelname,
+            "logger": record.name,
+            "message": record.getMessage(),
+        }
+        if hasattr(record, "request_id"):
+            log_obj["request_id"] = record.request_id
+        if record.exc_info:
+            log_obj["exception"] = self.formatException(record.exc_info)
+        return json.dumps(log_obj)
+
+log_handler = logging.StreamHandler()
+log_handler.setFormatter(JSONLogFormatter())
+root_logger = logging.getLogger()
+root_logger.setLevel(logging.INFO)
+# Replace default handlers with JSON handler
+root_logger.handlers = [log_handler]
+
 logger = logging.getLogger("app.main")
 
 def run_safe_migrations():
-    """Idempotent schema evolution ensuring columns exist across SQLite and PostgreSQL."""
+    """Idempotent schema evolution ensuring columns and indexes exist across SQLite and PostgreSQL."""
     inspector = inspect(engine)
     with engine.begin() as conn:
         # 1. users table migrations
@@ -44,6 +62,15 @@ def run_safe_migrations():
             conn.execute(text("ALTER TABLE analyses ADD COLUMN image_quality_score REAL"))
         if "tta_used" not in analysis_cols:
             conn.execute(text("ALTER TABLE analyses ADD COLUMN tta_used INTEGER DEFAULT 0"))
+
+        # 3. Composite performance index migration
+        analysis_indexes = {idx["name"] for idx in inspector.get_indexes("analyses")}
+        if "idx_analyses_user_timestamp" not in analysis_indexes:
+            try:
+                conn.execute(text("CREATE INDEX idx_analyses_user_timestamp ON analyses (user_id, timestamp)"))
+                logger.info("Database migration: created composite index idx_analyses_user_timestamp")
+            except Exception as e:
+                logger.warning(f"Index migration note: {e}")
 
 def create_application() -> FastAPI:
     application = FastAPI(

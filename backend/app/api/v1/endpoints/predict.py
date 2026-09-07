@@ -2,7 +2,7 @@ import io
 import logging
 import anyio
 from PIL import Image
-from fastapi import APIRouter, Depends, HTTPException, status, File, UploadFile, Request
+from fastapi import APIRouter, Depends, HTTPException, status, File, UploadFile, Request, Form
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
@@ -24,18 +24,20 @@ router = APIRouter()
 async def predict(
     request: Request,
     file: UploadFile = File(...),
-    age: int = 30,
-    tobacco_use: bool = False,
-    alcohol_use: bool = False,
-    betel_nut: bool = False,
-    prior_lesions: bool = False,
+    age: int = Form(30),
+    tobacco_use: bool = Form(False),
+    alcohol_use: bool = Form(False),
+    betel_nut: bool = Form(False),
+    prior_lesions: bool = Form(False),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
     """
     Production AI Diagnostic Screening Endpoint:
-      - Validates MIME type and file payload boundary (<= 10MB)
-      - Executes CPU/GPU forward passes asynchronously via anyio.to_thread.run_sync (Zero Event-Loop Blocking)
+      - Accepts clinical risk factors in multipart FormData body (Zero PHI URL Query Leakage)
+      - Validates MIME type
+      - Enforces streaming 64KB chunk early-exit memory guard against payload exhaustion (<= 10MB)
+      - Executes forward passes asynchronously via anyio.to_thread.run_sync (Zero Event-Loop Blocking)
       - Computes epistemic uncertainty via Monte Carlo Dropout
       - Calculates multimodal epidemiological risk score
       - Records clinical audit trail in PostgreSQL
@@ -47,14 +49,17 @@ async def predict(
             detail=f"Invalid file type '{file.content_type}'. Supported: JPEG, PNG, WEBP."
         )
 
-    # 2. File size boundary validation
-    image_bytes = await file.read()
-    size_mb = len(image_bytes) / (1024 * 1024)
-    if size_mb > settings.MAX_IMAGE_SIZE_MB:
-        raise HTTPException(
-            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
-            detail=f"File exceeds maximum limit of {settings.MAX_IMAGE_SIZE_MB}MB (received {size_mb:.1f}MB)."
-        )
+    # 2. File size boundary validation with 64KB chunk-based early exit (prevents OOM on large payloads)
+    max_bytes = settings.MAX_IMAGE_SIZE_MB * 1024 * 1024
+    image_bytes = bytearray()
+    
+    while chunk := await file.read(65536):
+        image_bytes.extend(chunk)
+        if len(image_bytes) > max_bytes:
+            raise HTTPException(
+                status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+                detail=f"File exceeds maximum limit of {settings.MAX_IMAGE_SIZE_MB}MB."
+            )
 
     # 3. Decode image
     try:

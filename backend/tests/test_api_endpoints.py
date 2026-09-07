@@ -65,3 +65,40 @@ def test_login_flow():
     # Wrong password login
     res_fail = client.post("/login", data={"username": unique_user, "password": "WrongPassword"})
     assert res_fail.status_code == 401
+
+def test_predict_multipart_form_data_flow():
+    unique_user = f"clinician_{uuid.uuid4().hex[:8]}"
+    client.post("/register", json={
+        "username": unique_user,
+        "password": "ClinicianPassword123!",
+        "email": f"{unique_user}@hospital.org"
+    })
+    token = client.post("/login", data={"username": unique_user, "password": "ClinicianPassword123!"}).json()["access_token"]
+    
+    # Synthetic test image
+    import io
+    from PIL import Image
+    img = Image.new("RGB", (224, 224), color=(120, 80, 50))
+    buf = io.BytesIO()
+    img.save(buf, format="JPEG")
+    buf.seek(0)
+    
+    response = client.post(
+        "/predict",
+        headers={"Authorization": f"Bearer {token}"},
+        files={"file": ("specimen.jpg", buf, "image/jpeg")},
+        data={
+            "age": "55",
+            "tobacco_use": "true",
+            "alcohol_use": "true",
+            "betel_nut": "false",
+            "prior_lesions": "true"
+        }
+    )
+    assert response.status_code == 200
+    result = response.json()
+    assert "prediction" in result
+    assert "confidence" in result
+    assert "clinical_risk_score" in result
+    assert result["clinical_risk_score"] > 0.6  # High risk due to age+tobacco+alcohol+lesions
+    assert "uncertainty" in result

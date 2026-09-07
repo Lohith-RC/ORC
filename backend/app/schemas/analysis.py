@@ -1,6 +1,6 @@
 import datetime
 from typing import Optional
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 class AnalysisBase(BaseModel):
     prediction: str
@@ -14,8 +14,7 @@ class AnalysisInfo(AnalysisBase):
     id: int
     timestamp: datetime.datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 class PredictionResponse(AnalysisBase):
     id: int
@@ -23,5 +22,4 @@ class PredictionResponse(AnalysisBase):
     image_quality_flag: Optional[str] = None
     recommendation: str
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)

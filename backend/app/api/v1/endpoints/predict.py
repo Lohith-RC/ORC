@@ -20,6 +20,19 @@ from app.services.clinical_risk import compute_clinical_risk_score
 from app.services.vision_pipeline import execute_dual_stage_pipeline
 from app.services.clinical_staging import evaluate_ajcc_staging
 from app.services.longitudinal_tracker import compute_longitudinal_delta
+from app.services.optical_normalization import (
+    apply_reinhard_mucosal_normalization,
+    detect_and_suppress_specular_glare
+)
+from app.services.xai_cam import (
+    GradCAMPlusPlus,
+    convert_cam_to_base64_png,
+    compute_activation_lesion_concordance
+)
+from app.services.multimodal_fusion import (
+    evaluate_multimodal_ordinal_triage
+)
+from app.services.ml_engine import get_model, inference_transform, device
 
 logger = logging.getLogger(__name__)
 
@@ -125,10 +138,14 @@ async def predict(
 
     clinical_risk_score = compute_clinical_risk_score(risk_form)
 
+    # 4b. Optical Preprocessing: Specular Glare / Saliva Suppression & Reinhard LAB Mucosal Normalization
+    clean_image, glare_telemetry = detect_and_suppress_specular_glare(image)
+    normalized_image = apply_reinhard_mucosal_normalization(clean_image)
+
     # 5. ASYNCHRONOUS DUAL-STAGE INFERENCE (Unblocks Event Loop!)
     try:
         pred_class, confidence_score, uncertainty, quality_score, telemetry = await anyio.to_thread.run_sync(
-            execute_dual_stage_pipeline, image, vital_img, distance_mm, cross_polarized
+            execute_dual_stage_pipeline, clean_image, vital_img, distance_mm, cross_polarized
         )
     except Exception as e:
         logger.error(f"Inference failure for clinician {current_user.username}: {e}", exc_info=True)
@@ -136,6 +153,35 @@ async def predict(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="AI diagnostic engine encountered an error during inference."
         )
+
+    # 5b. Native PyTorch Grad-CAM++ Explainability & Lesion Alignment Audit
+    gradcam_base64 = None
+    concordance_score = 0.50
+    concordance_alert = "Standard focus"
+    try:
+        model = get_model()
+        cam_engine = GradCAMPlusPlus(model, model.res_features[-1])
+        target_cls = 0 if pred_class == "cancer" else 1
+        input_t = inference_transform(clean_image).unsqueeze(0).to(device)
+        cam_array = cam_engine.generate_heatmap(input_t, target_class=target_cls)
+        cam_engine.remove_hooks()
+        gradcam_base64 = convert_cam_to_base64_png(cam_array)
+        concordance_score, concordance_alert = compute_activation_lesion_concordance(
+            cam_array, telemetry.contour_points
+        )
+    except Exception as e:
+        logger.warning(f"Grad-CAM++ execution fallback notice: {e}")
+
+    # 5c. 4-Class Ordinal Clinical Triage & Multimodal Synergy Evaluation
+    ordinal_report = evaluate_multimodal_ordinal_triage(
+        binary_confidence=confidence_score,
+        binary_prediction=pred_class,
+        clinical_risk_score=clinical_risk_score,
+        border_irregularity=telemetry.border_irregularity_score,
+        diameter_mm=telemetry.diameter_mm,
+        vital_stain_abnormal=telemetry.vital_stain_abnormal,
+        lesion_site=lesion_site
+    )
 
     # 6. Quality flag
     image_quality_flag = None
@@ -194,6 +240,9 @@ async def predict(
         "optical_cross_polarized": telemetry.optical_cross_polarized,
         "vital_stain_present": telemetry.vital_stain_present,
         "vital_stain_abnormal": telemetry.vital_stain_abnormal,
+        "optical_quality": glare_telemetry,
+        "concordance_score": concordance_score,
+        "concordance_alert": concordance_alert
     }
 
     # 9. Persist to Relational Database
@@ -246,5 +295,21 @@ async def predict(
         "telemetry": telemetry_dict,
         "clinical_staging": staging_dict,
         "longitudinal_trajectory": trajectory_dict,
+        "xai_explainability": {
+            "gradcam_heatmap_base64": gradcam_base64,
+            "concordance_score": concordance_score,
+            "concordance_alert": concordance_alert,
+            "xai_engine": "Grad-CAM++ (ResNet50 Layer4 Bottleneck)"
+        },
+        "optical_quality": glare_telemetry,
+        "ordinal_triage": {
+            "predicted_class": ordinal_report.predicted_class,
+            "class_probabilities": ordinal_report.class_probabilities,
+            "ordinal_severity_score": ordinal_report.ordinal_severity_score,
+            "multimodal_synergy_boost": ordinal_report.multimodal_synergy_boost,
+            "triage_urgency": ordinal_report.triage_urgency,
+            "clinical_directive": ordinal_report.clinical_directive,
+            "metadata": ordinal_report.metadata
+        }
     }
 

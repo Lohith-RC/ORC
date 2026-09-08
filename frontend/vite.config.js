@@ -8,6 +8,9 @@ export default defineConfig({
       include: '**/*.{jsx,js}',
     }),
   ],
+  define: {
+    'process.env': {},
+  },
   esbuild: {
     loader: 'jsx',
     include: /src\/.*\.jsx?$/,

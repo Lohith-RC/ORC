@@ -796,12 +796,96 @@ const Upload = ({ token }) => {
                                     </div>
                                 </div>
 
-                                {/* Stage I: Lesion Spatial Segmentation & Morphology */}
+                                {/* 4-Class Ordinal Pathology Spectrum & Clinical Triage */}
+                                {result.ordinal_triage && (
+                                    <div className="my-5 border border-stone-300 dark:border-stone-800 bg-white dark:bg-stone-900/90 p-5 shadow-sm">
+                                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-stone-200 dark:border-stone-800">
+                                            <div>
+                                                <span className="font-mono text-[10px] text-rose-500 uppercase tracking-widest font-semibold block">
+                                                    WHO PATHOLOGICAL SPECTRUM // 4-CLASS ORDINAL TRIAGE
+                                                </span>
+                                                <h3 className="font-serif text-lg font-medium text-stone-900 dark:text-stone-100">
+                                                    {result.ordinal_triage.metadata?.label || result.ordinal_triage.predicted_class.toUpperCase()}
+                                                </h3>
+                                            </div>
+                                            <div className="flex items-center gap-2">
+                                                <span className={`px-2.5 py-1 text-[10px] font-mono font-bold uppercase tracking-wider border ${
+                                                    result.ordinal_triage.triage_urgency === 'CRITICAL'
+                                                        ? 'bg-rose-500/15 border-rose-500/40 text-rose-600 dark:text-rose-400'
+                                                        : result.ordinal_triage.triage_urgency === 'ELEVATED'
+                                                        ? 'bg-amber-500/15 border-amber-500/40 text-amber-600 dark:text-amber-400'
+                                                        : 'bg-teal-500/15 border-teal-500/40 text-teal-600 dark:text-teal-400'
+                                                }`}>
+                                                    URGENCY: {result.ordinal_triage.triage_urgency}
+                                                </span>
+                                            </div>
+                                        </div>
+
+                                        {/* Severity Gauge Slider */}
+                                        <div className="my-4">
+                                            <div className="flex justify-between items-center text-[10px] font-mono text-stone-500 mb-1.5">
+                                                <span>ORDINAL SEVERITY CONTINUUM:</span>
+                                                <span className="font-bold text-stone-800 dark:text-stone-200">
+                                                    Score: {result.ordinal_triage.ordinal_severity_score} / 3.0
+                                                </span>
+                                            </div>
+                                            <div className="h-2 w-full bg-stone-200 dark:bg-stone-800 overflow-hidden flex">
+                                                <div 
+                                                    style={{ width: `${(result.ordinal_triage.ordinal_severity_score / 3.0) * 100}%` }}
+                                                    className={`h-full transition-all duration-500 ${
+                                                        result.ordinal_triage.ordinal_severity_score > 2.0 
+                                                            ? 'bg-rose-500' 
+                                                            : result.ordinal_triage.ordinal_severity_score > 1.2 
+                                                            ? 'bg-amber-500' 
+                                                            : 'bg-clinical-teal'
+                                                    }`}
+                                                />
+                                            </div>
+                                            <div className="flex justify-between text-[9px] font-mono text-stone-400 mt-1">
+                                                <span>0.0 (Normal)</span>
+                                                <span>1.0 (Benign)</span>
+                                                <span>2.0 (OPMD Pre-Malignant)</span>
+                                                <span>3.0 (OSCC Malignant)</span>
+                                            </div>
+                                        </div>
+
+                                        {/* 4-Class Probability Breakdown Grid */}
+                                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 my-3 font-mono text-xs">
+                                            {Object.entries(result.ordinal_triage.class_probabilities || {}).map(([cName, prob]) => {
+                                                const isHighest = cName === result.ordinal_triage.predicted_class;
+                                                return (
+                                                    <div key={cName} className={`p-2.5 border ${
+                                                        isHighest 
+                                                            ? 'border-stone-800 dark:border-stone-200 bg-stone-100 dark:bg-stone-800' 
+                                                            : 'border-stone-200 dark:border-stone-800/80 bg-stone-50/60 dark:bg-stone-950/40'
+                                                    }`}>
+                                                        <div className="text-[9px] text-stone-500 uppercase tracking-wider">{cName}</div>
+                                                        <div className="text-sm font-bold text-stone-900 dark:text-stone-100 mt-0.5">
+                                                            {(prob * 100).toFixed(1)}%
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+
+                                        {/* Specific Clinical Recall Directive */}
+                                        <div className="p-3 mt-3 bg-stone-100/70 dark:bg-stone-950/80 border-l-2 border-rose-500 font-mono text-[11px] text-stone-700 dark:text-stone-300">
+                                            <span className="font-bold text-rose-600 dark:text-rose-400 uppercase block text-[10px]">
+                                                CLINICAL ACTION DIRECTIVE:
+                                            </span>
+                                            <span>{result.ordinal_triage.clinical_directive}</span>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Stage I: Lesion Spatial Segmentation & Native Grad-CAM++ */}
                                 {result.telemetry && (
                                     <LesionSegmentationViewer 
                                         imageSrc={preview} 
                                         telemetry={result.telemetry} 
                                         stagingReport={result.clinical_staging} 
+                                        xaiExplainability={result.xai_explainability}
+                                        opticalQuality={result.optical_quality}
                                     />
                                 )}
 

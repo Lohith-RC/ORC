@@ -3,32 +3,23 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { 
     User, 
     Mail, 
-    Calendar, 
     Edit3, 
-    Save, 
-    X, 
-    BarChart3, 
-    AlertTriangle, 
-    Clock, 
-    ShieldCheck, 
-    ShieldAlert, 
     FileText, 
     Camera, 
-    Building2, 
-    Award, 
-    Activity, 
     PlusCircle, 
     Download, 
     CheckCircle2,
     Microscope,
-    Sliders,
     Search,
-    Filter,
-    RefreshCw
+    AlertTriangle,
+    ShieldAlert,
+    ShieldCheck,
+    Calendar,
+    Clock
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
-import { API_BASE_URL, authFetch } from './api';
+import { API_BASE_URL } from './api';
 import defaultProfileImage from './images/7.webp';
 import ClinicianVerificationModal from './ClinicianVerificationModal';
 import SpecialistReferralModal from './SpecialistReferralModal';
@@ -39,11 +30,7 @@ const Profile = ({ token }) => {
     const [isEditing, setIsEditing] = useState(false);
     const [formData, setFormData] = useState({ 
         full_name: '', 
-        email: '',
-        department: 'Oral & Maxillofacial Oncology',
-        license_no: 'DCI-KA-2024-8842',
-        institution: 'Regional Cancer Care & Screening Center',
-        specialization: 'Oral Cancer Early Triage & Dysplasia Screening'
+        email: ''
     });
     const [avatarUrl, setAvatarUrl] = useState(null);
     const [error, setError] = useState('');
@@ -52,34 +39,9 @@ const Profile = ({ token }) => {
     const [historyFilter, setHistoryFilter] = useState('all');
     const [searchQuery, setSearchQuery] = useState('');
     const [verifyingAnalysis, setVerifyingAnalysis] = useState(null);
-    const [activeLearningQueue, setActiveLearningQueue] = useState([]);
-    const [flywheelMetrics, setFlywheelMetrics] = useState(null);
-    const [queueLoading, setQueueLoading] = useState(false);
     const [referralAnalysisId, setReferralAnalysisId] = useState(null);
 
     const fileInputRef = useRef(null);
-
-    const fetchActiveLearningData = async () => {
-        try {
-            setQueueLoading(true);
-            const [queueRes, metricsRes] = await Promise.all([
-                authFetch('/analyses/active-learning/queue'),
-                authFetch('/analyses/active-learning/metrics')
-            ]);
-            if (queueRes.ok) {
-                const qdata = await queueRes.json();
-                setActiveLearningQueue(qdata);
-            }
-            if (metricsRes.ok) {
-                const mdata = await metricsRes.json();
-                setFlywheelMetrics(mdata);
-            }
-        } catch (err) {
-            console.error('Failed to load active learning data:', err);
-        } finally {
-            setQueueLoading(false);
-        }
-    };
 
     useEffect(() => {
         const fetchData = async () => {
@@ -92,23 +54,13 @@ const Profile = ({ token }) => {
                 const historyPromise = axios.get(`${API_BASE_URL}/me/analyses`, { headers: { Authorization: `Bearer ${token}` } });
                 
                 const [userResponse, historyResponse] = await Promise.all([userPromise, historyPromise]);
-                fetchActiveLearningData();
 
                 const userData = userResponse.data;
                 setUser(userData);
 
-                // Load custom practitioner metadata from localStorage if saved previously
-                const savedMetaKey = `practitioner_meta_${userData.username || userData.id}`;
-                const savedMeta = localStorage.getItem(savedMetaKey);
-                const parsedMeta = savedMeta ? JSON.parse(savedMeta) : {};
-
                 setFormData({
                     full_name: userData.full_name || '',
-                    email: userData.email || '',
-                    department: parsedMeta.department || 'Oral & Maxillofacial Oncology',
-                    license_no: parsedMeta.license_no || 'DCI-KA-2024-8842',
-                    institution: parsedMeta.institution || 'Regional Cancer Care & Screening Center',
-                    specialization: parsedMeta.specialization || 'Oral Cancer Early Triage & Dysplasia Screening'
+                    email: userData.email || ''
                 });
 
                 // Load custom avatar from localStorage if available
@@ -119,7 +71,7 @@ const Profile = ({ token }) => {
 
                 setHistory(historyResponse.data || []);
             } catch (err) {
-                setError('Could not retrieve practitioner dossier. Please verify network connection.');
+                setError('Could not load profile. Please check your connection.');
             } finally {
                 setLoading(false);
             }
@@ -141,7 +93,7 @@ const Profile = ({ token }) => {
         const file = e.target.files?.[0];
         if (file) {
             if (file.size > 5 * 1024 * 1024) {
-                setError('Image size exceeds 5MB limit.');
+                setError('Image size should be under 5MB.');
                 return;
             }
             const reader = new FileReader();
@@ -151,7 +103,7 @@ const Profile = ({ token }) => {
                 if (user) {
                     localStorage.setItem(`profile_avatar_${user.username || user.id}`, base64Data);
                 }
-                setMessage('Profile photo updated successfully!');
+                setMessage('Profile picture updated.');
             };
             reader.readAsDataURL(file);
         }
@@ -163,7 +115,7 @@ const Profile = ({ token }) => {
         if (user) {
             localStorage.removeItem(`profile_avatar_${user.username || user.id}`);
         }
-        setMessage('Reset to default practitioner avatar.');
+        setMessage('Reset to default picture.');
     };
 
     const handleSave = async (e) => {
@@ -178,35 +130,23 @@ const Profile = ({ token }) => {
                 headers: { Authorization: `Bearer ${token}` }
             });
             setUser(response.data);
-
-            // Persist clinical practitioner extended metadata in localStorage
-            if (user) {
-                const savedMetaKey = `practitioner_meta_${user.username || user.id}`;
-                localStorage.setItem(savedMetaKey, JSON.stringify({
-                    department: formData.department,
-                    license_no: formData.license_no,
-                    institution: formData.institution,
-                    specialization: formData.specialization
-                }));
-            }
-
-            setMessage('Practitioner dossier and credentials updated successfully.');
+            setMessage('Profile updated successfully.');
             setIsEditing(false);
         } catch (err) {
-            setError('Failed to persist profile modifications.');
+            setError('Failed to update profile.');
         }
     };
 
-    // Calculate live clinical statistics
+    // Calculate simple stats
     const totalAnalyses = history.length;
     const cancerCases = history.filter(h => h.prediction?.toLowerCase() === 'cancer').length;
     const benignCases = history.filter(h => h.prediction?.toLowerCase() === 'non-cancer' || h.prediction?.toLowerCase() === 'non_cancer').length;
     const uncertainCases = history.filter(h => h.prediction?.toLowerCase() === 'uncertain').length;
     const avgConfidence = totalAnalyses > 0 
-        ? ((history.reduce((acc, curr) => acc + (curr.confidence || 0), 0) / totalAnalyses) * 100).toFixed(1)
-        : '0.0';
+        ? ((history.reduce((acc, curr) => acc + (curr.confidence || 0), 0) / totalAnalyses) * 100).toFixed(0)
+        : '0';
 
-    // Filter historical records
+    // Simple history filter
     const filteredHistory = history.filter(item => {
         const pred = item.prediction?.toLowerCase() || '';
         const matchesFilter = 
@@ -218,8 +158,6 @@ const Profile = ({ token }) => {
         const matchesSearch = searchQuery === '' || 
             item.image_filename?.toLowerCase().includes(searchQuery.toLowerCase()) ||
             item.id.toString().includes(searchQuery) ||
-            item.patient_identifier?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            item.lesion_site?.toLowerCase().includes(searchQuery.toLowerCase()) ||
             pred.includes(searchQuery.toLowerCase());
 
         return matchesFilter && matchesSearch;
@@ -227,31 +165,31 @@ const Profile = ({ token }) => {
 
     const exportAuditCSV = () => {
         if (history.length === 0) return;
-        const headers = "ID,Prediction,Confidence,Uncertainty_Variance,Risk_Score,Quality_Score,Timestamp\n";
+        const headers = "Scan_ID,Result,Confidence,Date\n";
         const rows = history.map(h => 
-            `${h.id},${h.prediction},${(h.confidence * 100).toFixed(2)}%,${h.uncertainty || 'N/A'},${h.risk_score || 'N/A'},${h.image_quality_score || 'N/A'},"${new Date(h.timestamp).toISOString()}"`
+            `${h.id},${h.prediction},${(h.confidence * 100).toFixed(1)}%,"${new Date(h.timestamp).toLocaleDateString()}"`
         ).join("\n");
         
         const blob = new Blob([headers + rows], { type: 'text/csv' });
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `OSCC_Clinical_Audit_${user?.username || 'dossier'}.csv`;
+        a.download = `scan_history_${user?.username || 'user'}.csv`;
         a.click();
     };
 
     if (loading) {
         return (
-            <div className="min-h-screen bg-parchment-100 dark:bg-ink-950 flex flex-col items-center justify-center font-mono text-xs text-stone-500 space-y-3">
-                <div className="w-8 h-8 border-2 border-clinical-teal border-t-transparent rounded-full animate-spin"></div>
-                <span>LOADING PRACTITIONER DOSSIER & ANALYTICS...</span>
+            <div className="min-h-screen bg-slate-50 dark:bg-[#080B10] flex flex-col items-center justify-center text-sm text-slate-500 space-y-3 font-sans">
+                <div className="w-8 h-8 border-2 border-teal-600 border-t-transparent rounded-full animate-spin"></div>
+                <span>Loading your profile...</span>
             </div>
         );
     }
 
     return (
-        <div className="bg-parchment-100 dark:bg-ink-950 min-h-screen py-10 px-4 sm:px-6 lg:px-8 font-sans text-stone-800 dark:text-stone-200">
-            <div className="max-w-6xl mx-auto space-y-8">
+        <div className="min-h-screen bg-slate-50 dark:bg-[#080B10] py-12 px-4 sm:px-6 lg:px-8 font-sans text-slate-800 dark:text-slate-200">
+            <div className="max-w-4xl mx-auto space-y-8">
                 
                 {/* Hidden File Input for Avatar Upload */}
                 <input 
@@ -262,244 +200,125 @@ const Profile = ({ token }) => {
                     onChange={handleAvatarChange}
                 />
 
-                {/* Top Telemetry Header */}
-                <div className="border-b border-stone-200 dark:border-stone-800 pb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-2 font-mono text-xs text-stone-500">
-                    <div className="flex items-center gap-3">
-                        <span className="w-2 h-2 bg-clinical-teal rounded-none inline-block"></span>
-                        <span className="uppercase tracking-wider font-semibold text-stone-800 dark:text-stone-200">
-                            PRACTITIONER DOSSIER & WORKSTATION ARCHIVE
-                        </span>
-                    </div>
-                    <div className="flex items-center gap-4 text-[11px]">
-                        <span>IDENTIFIER: <strong className="text-stone-800 dark:text-stone-200">USR-{(user?.id || 1).toString().padStart(4, '0')}</strong></span>
-                        <span>•</span>
-                        <span>SESSION: <strong className="text-emerald-600 dark:text-emerald-400">ENCRYPTED / ACTIVE</strong></span>
-                    </div>
+                {/* Page Title */}
+                <div>
+                    <h1 className="text-3xl font-serif text-slate-900 dark:text-white font-normal">
+                        My Profile
+                    </h1>
+                    <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+                        View your account details and previous oral scans.
+                    </p>
                 </div>
 
-                {/* Alerts */}
+                {/* Notification messages */}
                 <AnimatePresence>
                     {error && (
-                        <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="p-3 border border-red-300 dark:border-red-900 bg-red-50 dark:bg-red-950/20 text-red-700 dark:text-red-300 font-mono text-xs flex items-center gap-2">
+                        <motion.div initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="p-3.5 rounded-lg border border-red-200 dark:border-red-900/50 bg-red-50 dark:bg-red-950/20 text-red-700 dark:text-red-300 text-sm flex items-center gap-2">
                             <AlertTriangle className="w-4 h-4 flex-shrink-0" />
                             <span>{error}</span>
                         </motion.div>
                     )}
                     {message && (
-                        <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="p-3 border border-teal-300 dark:border-teal-900 bg-teal-50 dark:bg-teal-950/20 text-teal-800 dark:text-teal-300 font-mono text-xs flex items-center gap-2">
-                            <CheckCircle2 className="w-4 h-4 flex-shrink-0 text-clinical-teal" />
+                        <motion.div initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="p-3.5 rounded-lg border border-teal-200 dark:border-teal-900/50 bg-teal-50 dark:bg-teal-950/20 text-teal-800 dark:text-teal-300 text-sm flex items-center gap-2">
+                            <CheckCircle2 className="w-4 h-4 flex-shrink-0 text-teal-600" />
                             <span>{message}</span>
                         </motion.div>
                     )}
                 </AnimatePresence>
 
-                {/* ============================================================ */}
-                {/* SECTION 1: PRACTITIONER CREDENTIALS & PROFILE CARD           */}
-                {/* ============================================================ */}
-                <div className="border border-stone-300 dark:border-stone-800 bg-stone-50 dark:bg-stone-900 p-6 sm:p-8 relative shadow-sm">
-                    <span className="absolute -top-1 -left-1 text-[10px] font-mono text-stone-400">+</span>
-                    <span className="absolute -top-1 -right-1 text-[10px] font-mono text-stone-400">+</span>
-                    <span className="absolute -bottom-1 -left-1 text-[10px] font-mono text-stone-400">+</span>
-                    <span className="absolute -bottom-1 -right-1 text-[10px] font-mono text-stone-400">+</span>
-
+                {/* User Info Card */}
+                <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/70 p-6 sm:p-8">
                     <form onSubmit={handleSave}>
-                        <div className="flex flex-col md:flex-row items-start gap-8">
+                        <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6">
                             
-                            {/* Interactive Avatar Container with Photo Upload Support */}
-                            <div className="flex flex-col items-center flex-shrink-0 mx-auto md:mx-0">
+                            {/* Profile Picture */}
+                            <div className="flex flex-col items-center flex-shrink-0">
                                 <div 
                                     onClick={handleAvatarClick}
-                                    className="relative w-36 h-36 border-2 border-stone-300 dark:border-stone-700 bg-stone-950 overflow-hidden cursor-pointer group shadow-md"
-                                    title="Click to change profile picture"
+                                    className="relative w-24 h-24 rounded-full overflow-hidden border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 cursor-pointer group"
+                                    title="Click to change photo"
                                 >
                                     <img 
                                         src={avatarUrl || defaultProfileImage} 
-                                        alt="Practitioner Avatar" 
-                                        className="w-full h-full object-cover filter contrast-[1.03] group-hover:opacity-75 transition-opacity" 
+                                        alt="Profile" 
+                                        className="w-full h-full object-cover group-hover:opacity-80 transition-opacity" 
                                     />
-                                    
-                                    {/* Hover Overlay */}
-                                    <div className="absolute inset-0 bg-stone-950/70 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center text-white transition-opacity font-mono text-[10px] p-2 text-center">
-                                        <Camera className="w-6 h-6 mb-1 text-teal-300" />
-                                        <span>CHANGE PHOTO</span>
-                                        <span className="text-[8px] text-stone-400">JPG • PNG • WEBP</span>
+                                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white transition-opacity">
+                                        <Camera className="w-5 h-5" />
                                     </div>
                                 </div>
 
-                                {/* Avatar Action Controls */}
-                                <div className="flex items-center gap-2 mt-3 font-mono text-[10px]">
-                                    <button
-                                        type="button"
-                                        onClick={handleAvatarClick}
-                                        className="text-clinical-teal dark:text-teal-400 hover:underline flex items-center gap-1"
-                                    >
-                                        <Camera className="w-3 h-3" />
-                                        <span>Upload Photo</span>
-                                    </button>
-                                    {avatarUrl && (
-                                        <>
-                                            <span className="text-stone-400">•</span>
-                                            <button
-                                                type="button"
-                                                onClick={handleRemoveAvatar}
-                                                className="text-stone-400 hover:text-red-500"
-                                            >
-                                                Reset
-                                            </button>
-                                        </>
-                                    )}
-                                </div>
+                                <button
+                                    type="button"
+                                    onClick={handleAvatarClick}
+                                    className="mt-2 text-xs text-teal-600 dark:text-teal-400 hover:underline"
+                                >
+                                    Change photo
+                                </button>
                             </div>
 
-                            {/* Credentials and Identity Details */}
-                            <div className="flex-grow w-full">
+                            {/* Details or Edit Form */}
+                            <div className="flex-grow w-full text-center sm:text-left">
                                 {isEditing ? (
-                                    <div className="space-y-4 font-mono text-xs">
-                                        <div className="border-b border-stone-200 dark:border-stone-800 pb-2 mb-3">
-                                            <span className="text-[10px] text-clinical-teal dark:text-teal-400 uppercase tracking-widest font-semibold">
-                                                EDIT PRACTITIONER DOSSIER
-                                            </span>
+                                    <div className="space-y-4 max-w-md">
+                                        <div>
+                                            <label className="block text-xs font-medium text-slate-500 uppercase mb-1">Full Name</label>
+                                            <input 
+                                                type="text"
+                                                name="full_name"
+                                                value={formData.full_name}
+                                                onChange={handleFormChange}
+                                                placeholder="Your Name"
+                                                className="w-full px-3 py-2 rounded-lg bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-sm focus:outline-none focus:border-teal-600"
+                                                required
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-medium text-slate-500 uppercase mb-1">Email</label>
+                                            <input 
+                                                type="email"
+                                                name="email"
+                                                value={formData.email}
+                                                onChange={handleFormChange}
+                                                placeholder="email@example.com"
+                                                className="w-full px-3 py-2 rounded-lg bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-sm focus:outline-none focus:border-teal-600"
+                                                required
+                                            />
                                         </div>
 
-                                        <div className="grid sm:grid-cols-2 gap-4">
-                                            <div>
-                                                <label className="block text-[10px] text-stone-500 uppercase mb-1">Full Name & Title</label>
-                                                <input 
-                                                    type="text"
-                                                    name="full_name"
-                                                    value={formData.full_name}
-                                                    onChange={handleFormChange}
-                                                    placeholder="Dr. Samantha Rao, MD"
-                                                    className="w-full px-3 py-2 bg-white dark:bg-stone-950 border border-stone-300 dark:border-stone-700 text-sm font-sans focus:outline-none focus:border-clinical-teal"
-                                                    required
-                                                />
-                                            </div>
-                                            <div>
-                                                <label className="block text-[10px] text-stone-500 uppercase mb-1">Email Address</label>
-                                                <input 
-                                                    type="email"
-                                                    name="email"
-                                                    value={formData.email}
-                                                    onChange={handleFormChange}
-                                                    placeholder="samantha@hospital.org"
-                                                    className="w-full px-3 py-2 bg-white dark:bg-stone-950 border border-stone-300 dark:border-stone-700 text-sm font-sans focus:outline-none focus:border-clinical-teal"
-                                                    required
-                                                />
-                                            </div>
-                                            <div>
-                                                <label className="block text-[10px] text-stone-500 uppercase mb-1">Department / Division</label>
-                                                <input 
-                                                    type="text"
-                                                    name="department"
-                                                    value={formData.department}
-                                                    onChange={handleFormChange}
-                                                    placeholder="Oral & Maxillofacial Oncology"
-                                                    className="w-full px-3 py-2 bg-white dark:bg-stone-950 border border-stone-300 dark:border-stone-700 text-sm font-sans focus:outline-none focus:border-clinical-teal"
-                                                />
-                                            </div>
-                                            <div>
-                                                <label className="block text-[10px] text-stone-500 uppercase mb-1">Clinical License / Registration</label>
-                                                <input 
-                                                    type="text"
-                                                    name="license_no"
-                                                    value={formData.license_no}
-                                                    onChange={handleFormChange}
-                                                    placeholder="DCI-KA-2024-8842"
-                                                    className="w-full px-3 py-2 bg-white dark:bg-stone-950 border border-stone-300 dark:border-stone-700 text-sm font-sans focus:outline-none focus:border-clinical-teal"
-                                                />
-                                            </div>
-                                        </div>
-
-                                        <div className="grid sm:grid-cols-2 gap-4">
-                                            <div>
-                                                <label className="block text-[10px] text-stone-500 uppercase mb-1">Institution / Healthcare Center</label>
-                                                <input 
-                                                    type="text"
-                                                    name="institution"
-                                                    value={formData.institution}
-                                                    onChange={handleFormChange}
-                                                    placeholder="Regional Cancer Care Hospital"
-                                                    className="w-full px-3 py-2 bg-white dark:bg-stone-950 border border-stone-300 dark:border-stone-700 text-sm font-sans focus:outline-none focus:border-clinical-teal"
-                                                />
-                                            </div>
-                                            <div>
-                                                <label className="block text-[10px] text-stone-500 uppercase mb-1">Specialization Focus</label>
-                                                <input 
-                                                    type="text"
-                                                    name="specialization"
-                                                    value={formData.specialization}
-                                                    onChange={handleFormChange}
-                                                    placeholder="Oral Dysplasia & OSCC Screening"
-                                                    className="w-full px-3 py-2 bg-white dark:bg-stone-950 border border-stone-300 dark:border-stone-700 text-sm font-sans focus:outline-none focus:border-clinical-teal"
-                                                />
-                                            </div>
-                                        </div>
-
-                                        <div className="flex items-center gap-3 pt-3 border-t border-stone-200 dark:border-stone-800">
-                                            <button type="submit" className="px-5 py-2 bg-stone-900 dark:bg-stone-100 text-white dark:text-stone-900 text-xs font-mono uppercase font-semibold hover:bg-clinical-teal dark:hover:bg-clinical-teal dark:hover:text-white transition-colors">
-                                                Save Modifications
+                                        <div className="flex items-center gap-2 pt-2">
+                                            <button type="submit" className="px-4 py-2 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-lg text-xs font-medium hover:bg-teal-600 dark:hover:bg-teal-600 dark:hover:text-white transition-colors">
+                                                Save
                                             </button>
-                                            <button type="button" onClick={() => setIsEditing(false)} className="px-4 py-2 border border-stone-300 dark:border-stone-700 text-xs font-mono uppercase text-stone-600 dark:text-stone-400 hover:bg-stone-100 dark:hover:bg-stone-800">
+                                            <button type="button" onClick={() => setIsEditing(false)} className="px-4 py-2 border border-slate-300 dark:border-slate-700 rounded-lg text-xs text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800">
                                                 Cancel
                                             </button>
                                         </div>
                                     </div>
                                 ) : (
-                                    <div className="space-y-4">
-                                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-stone-200 dark:border-stone-800 pb-3">
+                                    <div className="space-y-3">
+                                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                                             <div>
-                                                <span className="font-mono text-[10px] text-clinical-teal dark:text-teal-400 uppercase tracking-widest block mb-0.5">
-                                                    CLINICAL PRACTITIONER & INVESTIGATOR
-                                                </span>
-                                                <h1 className="font-serif text-3xl font-normal text-stone-900 dark:text-stone-100">
+                                                <h2 className="text-2xl font-serif font-normal text-slate-900 dark:text-white">
                                                     {user?.full_name || user?.username}
-                                                </h1>
+                                                </h2>
+                                                <p className="text-sm text-slate-500 dark:text-slate-400">
+                                                    @{user?.username}
+                                                </p>
                                             </div>
                                             <button 
                                                 type="button"
                                                 onClick={() => setIsEditing(true)}
-                                                className="self-start sm:self-center inline-flex items-center gap-1.5 px-3 py-1.5 border border-stone-300 dark:border-stone-700 text-xs font-mono text-stone-700 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors"
+                                                className="inline-flex items-center gap-1.5 self-center sm:self-start px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 text-xs text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
                                             >
-                                                <Edit3 className="w-3.5 h-3.5 text-clinical-teal" />
-                                                <span>EDIT CREDENTIALS</span>
+                                                <Edit3 className="w-3.5 h-3.5 text-teal-600" />
+                                                <span>Edit Profile</span>
                                             </button>
                                         </div>
 
-                                        {/* Informative 4-Block Metadata Matrix */}
-                                        <div className="grid sm:grid-cols-2 gap-y-3 gap-x-6 font-mono text-xs">
-                                            <div className="space-y-1">
-                                                <span className="text-[9px] text-stone-400 uppercase block">Institutional Department</span>
-                                                <div className="text-stone-800 dark:text-stone-200 font-sans font-medium flex items-center gap-1.5">
-                                                    <Building2 className="w-3.5 h-3.5 text-clinical-teal flex-shrink-0" />
-                                                    <span>{formData.department}</span>
-                                                </div>
-                                                <div className="text-[11px] text-stone-500">{formData.institution}</div>
-                                            </div>
-
-                                            <div className="space-y-1">
-                                                <span className="text-[9px] text-stone-400 uppercase block">Clinical License & Role</span>
-                                                <div className="text-stone-800 dark:text-stone-200 font-medium flex items-center gap-1.5">
-                                                    <Award className="w-3.5 h-3.5 text-clinical-teal flex-shrink-0" />
-                                                    <span>{formData.license_no}</span>
-                                                </div>
-                                                <div className="text-[11px] text-stone-500">Role: Tier-1 Triage Examiner</div>
-                                            </div>
-
-                                            <div className="space-y-1">
-                                                <span className="text-[9px] text-stone-400 uppercase block">System Account & Email</span>
-                                                <div className="text-stone-800 dark:text-stone-200 flex items-center gap-1.5">
-                                                    <Mail className="w-3.5 h-3.5 text-stone-400 flex-shrink-0" />
-                                                    <span>{user?.email || 'No email registered'}</span>
-                                                </div>
-                                                <div className="text-[11px] text-stone-500">Handle: @{user?.username}</div>
-                                            </div>
-
-                                            <div className="space-y-1">
-                                                <span className="text-[9px] text-stone-400 uppercase block">Clinical Focus & Specialization</span>
-                                                <div className="text-stone-800 dark:text-stone-200 font-sans text-xs">
-                                                    {formData.specialization}
-                                                </div>
-                                            </div>
+                                        <div className="pt-2 text-sm text-slate-600 dark:text-slate-300 flex items-center justify-center sm:justify-start gap-2">
+                                            <Mail className="w-4 h-4 text-slate-400" />
+                                            <span>{user?.email || 'No email registered'}</span>
                                         </div>
                                     </div>
                                 )}
@@ -508,179 +327,87 @@ const Profile = ({ token }) => {
                     </form>
                 </div>
 
-                {/* ============================================================ */}
-                {/* SECTION 2: CLINICAL WORKSTATION TRIAGE STATISTICS            */}
-                {/* ============================================================ */}
-                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 font-mono">
-                    <div className="border border-stone-300 dark:border-stone-800 bg-stone-50 dark:bg-stone-900 p-5">
-                        <span className="text-[10px] text-stone-400 uppercase tracking-wider block mb-1">Total Specimens Evaluated</span>
-                        <div className="font-serif text-3xl text-stone-900 dark:text-stone-100 font-normal">
+                {/* Simple 4-Box Summary Stats */}
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                    <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/70 p-5">
+                        <span className="text-xs text-slate-500 uppercase tracking-wider block mb-1">Total Scans</span>
+                        <div className="font-serif text-3xl text-slate-900 dark:text-white font-normal">
                             {totalAnalyses}
                         </div>
-                        <span className="text-[10px] text-stone-500 block mt-1">Completed AI Triage Cycles</span>
                     </div>
 
-                    <div className="border border-stone-300 dark:border-stone-800 bg-stone-50 dark:bg-stone-900 p-5">
-                        <span className="text-[10px] text-stone-400 uppercase tracking-wider block mb-1">Presumptive Malignancies</span>
-                        <div className="font-serif text-3xl text-clinical-terracotta font-normal">
+                    <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/70 p-5">
+                        <span className="text-xs text-slate-500 uppercase tracking-wider block mb-1">Potential Cancer</span>
+                        <div className="font-serif text-3xl text-rose-600 font-normal">
                             {cancerCases}
                         </div>
-                        <span className="text-[10px] text-stone-500 block mt-1">
-                            {totalAnalyses > 0 ? `${((cancerCases / totalAnalyses) * 100).toFixed(1)}% Positivity Rate` : '0.0% Rate'}
-                        </span>
                     </div>
 
-                    <div className="border border-stone-300 dark:border-stone-800 bg-stone-50 dark:bg-stone-900 p-5">
-                        <span className="text-[10px] text-stone-400 uppercase tracking-wider block mb-1">Non-Malignant Mucosa</span>
-                        <div className="font-serif text-3xl text-clinical-teal dark:text-teal-400 font-normal">
+                    <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/70 p-5">
+                        <span className="text-xs text-slate-500 uppercase tracking-wider block mb-1">Healthy / Benign</span>
+                        <div className="font-serif text-3xl text-teal-600 font-normal">
                             {benignCases}
                         </div>
-                        <span className="text-[10px] text-stone-500 block mt-1">
-                            {totalAnalyses > 0 ? `${((benignCases / totalAnalyses) * 100).toFixed(1)}% Negative Rate` : '0.0% Rate'}
-                        </span>
                     </div>
 
-                    <div className="border border-stone-300 dark:border-stone-800 bg-stone-50 dark:bg-stone-900 p-5">
-                        <span className="text-[10px] text-stone-400 uppercase tracking-wider block mb-1">Mean Ensemble Confidence</span>
-                        <div className="font-serif text-3xl text-stone-900 dark:text-stone-100 font-normal">
+                    <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/70 p-5">
+                        <span className="text-xs text-slate-500 uppercase tracking-wider block mb-1">Average Confidence</span>
+                        <div className="font-serif text-3xl text-slate-900 dark:text-white font-normal">
                             {avgConfidence}%
                         </div>
-                        <span className="text-[10px] text-stone-500 block mt-1">
-                            {uncertainCases} High-Variance Reviews
-                        </span>
                     </div>
                 </div>
 
-                {/* Active Learning Flywheel Metrics Strip */}
-                {flywheelMetrics && (
-                    <div className="border border-clinical-teal/30 bg-teal-50/40 dark:bg-teal-950/20 p-4 font-mono text-xs flex flex-wrap items-center justify-between gap-4">
-                        <div className="flex items-center gap-2">
-                            <Microscope className="w-4 h-4 text-clinical-teal flex-shrink-0" />
-                            <span className="font-semibold text-stone-800 dark:text-stone-200 uppercase">
-                                Active Learning Flywheel:
-                            </span>
-                            <span className="text-stone-600 dark:text-stone-400">
-                                {flywheelMetrics.verified_count} Verified ({flywheelMetrics.biopsy_proven_count} Biopsy-Proven) • {flywheelMetrics.unverified_queue_count} in Prioritized Queue
-                            </span>
-                        </div>
-                        <div className="flex items-center gap-4">
-                            <div>
-                                <span className="text-stone-400 text-[10px] block">CONCORDANCE</span>
-                                <span className="font-bold text-clinical-teal">
-                                    {(flywheelMetrics.concordance_rate * 100).toFixed(1)}%
-                                </span>
-                            </div>
-                            <div>
-                                <span className="text-stone-400 text-[10px] block">MATURATION</span>
-                                <span className="font-bold text-stone-800 dark:text-stone-200">
-                                    {flywheelMetrics.flywheel_maturation_pct}%
-                                </span>
-                            </div>
-                        </div>
-                    </div>
-                )}
-
-                {/* ============================================================ */}
-                {/* SECTION 3: ACTIVE MODEL & DIAGNOSTIC PROTOCOL SPECS          */}
-                {/* ============================================================ */}
-                <div className="border border-stone-300 dark:border-stone-800 bg-stone-50 dark:bg-stone-900 p-6">
-                    <div className="flex items-center justify-between border-b border-stone-200 dark:border-stone-800 pb-3 mb-4 font-mono text-xs">
-                        <div className="flex items-center gap-2 text-stone-800 dark:text-stone-200">
-                            <Microscope className="w-4 h-4 text-clinical-teal" />
-                            <span className="uppercase font-semibold">Active AI Triage Engine Telemetry</span>
-                        </div>
-                        <span className="text-clinical-teal dark:text-teal-400">ENGINE v2.4 OPERATIONAL</span>
-                    </div>
-
-                    <div className="grid sm:grid-cols-2 md:grid-cols-4 gap-4 font-mono text-xs text-stone-600 dark:text-stone-400">
-                        <div className="p-3 border border-stone-200 dark:border-stone-800 bg-white/50 dark:bg-stone-950/50">
-                            <span className="text-[9px] text-stone-400 uppercase block mb-0.5">Ensemble Composition</span>
-                            <span className="text-stone-900 dark:text-stone-100 font-semibold block">4 CNN Backbone</span>
-                            <span className="text-[10px] text-stone-500">VGG16 • ResNet50 • EfficientNet • MobileNet</span>
-                        </div>
-
-                        <div className="p-3 border border-stone-200 dark:border-stone-800 bg-white/50 dark:bg-stone-950/50">
-                            <span className="text-[9px] text-stone-400 uppercase block mb-0.5">Epistemic Uncertainty</span>
-                            <span className="text-stone-900 dark:text-stone-100 font-semibold block">Monte Carlo Dropout</span>
-                            <span className="text-[10px] text-stone-500">15 Variational Passes (σ² ≤ 0.015)</span>
-                        </div>
-
-                        <div className="p-3 border border-stone-200 dark:border-stone-800 bg-white/50 dark:bg-stone-950/50">
-                            <span className="text-[9px] text-stone-400 uppercase block mb-0.5">Test-Time Augmentation</span>
-                            <span className="text-stone-900 dark:text-stone-100 font-semibold block">8-Fold Transform</span>
-                            <span className="text-[10px] text-stone-500">Rotation, Flip & Illumination Invariance</span>
-                        </div>
-
-                        <div className="p-3 border border-stone-200 dark:border-stone-800 bg-white/50 dark:bg-stone-950/50">
-                            <span className="text-[9px] text-stone-400 uppercase block mb-0.5">Multimodal Integration</span>
-                            <span className="text-stone-900 dark:text-stone-100 font-semibold block">Bayesian Risk Prior</span>
-                            <span className="text-[10px] text-stone-500">Tobacco, Betel Nut & Age Weighting</span>
-                        </div>
-                    </div>
-                </div>
-
-                {/* ============================================================ */}
-                {/* SECTION 4: HISTORICAL SPECIMEN TRIAGE LOG & AUDIT CONTROLS   */}
-                {/* ============================================================ */}
-                <div className="border border-stone-300 dark:border-stone-800 bg-stone-50 dark:bg-stone-900 p-6 sm:p-8">
-                    {/* Header Strip with Controls */}
-                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-stone-200 dark:border-stone-800 pb-4 mb-6">
+                {/* Previous Scans Section */}
+                <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/70 p-6 sm:p-8">
+                    {/* Header Strip */}
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-4 mb-6">
                         <div>
-                            <div className="flex items-center gap-2">
-                                <FileText className="w-4 h-4 text-clinical-teal" />
-                                <h2 className="font-serif text-2xl text-stone-900 dark:text-stone-100 font-normal">
-                                    Historical Specimen Triage Archive
-                                </h2>
-                            </div>
-                            <span className="font-mono text-xs text-stone-400">
-                                {filteredHistory.length} of {history.length} specimen records shown
-                            </span>
+                            <h2 className="font-serif text-2xl text-slate-900 dark:text-white font-normal">
+                                Scan History
+                            </h2>
+                            <p className="text-xs text-slate-500 mt-0.5">
+                                {filteredHistory.length} of {history.length} scans
+                            </p>
                         </div>
 
-                        {/* Actions: Ingest New Specimen & Export CSV */}
-                        <div className="flex flex-wrap items-center gap-3 font-mono text-xs">
+                        {/* Actions */}
+                        <div className="flex items-center gap-3">
                             <Link to="/upload">
-                                <button className="px-3.5 py-1.5 bg-stone-900 dark:bg-stone-100 text-white dark:text-stone-900 font-semibold flex items-center gap-1.5 hover:bg-clinical-teal dark:hover:bg-clinical-teal dark:hover:text-white transition-colors">
+                                <button className="px-3.5 py-1.5 rounded-lg bg-teal-600 hover:bg-teal-700 text-white text-xs font-medium flex items-center gap-1.5 transition-colors shadow-sm">
                                     <PlusCircle className="w-3.5 h-3.5" />
-                                    <span>New Examination</span>
+                                    <span>New Scan</span>
                                 </button>
                             </Link>
                             {history.length > 0 && (
                                 <button 
                                     onClick={exportAuditCSV}
-                                    className="px-3 py-1.5 border border-stone-300 dark:border-stone-700 text-stone-700 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-800 flex items-center gap-1.5 transition-colors"
+                                    className="px-3.5 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs flex items-center gap-1.5 transition-colors"
                                 >
                                     <Download className="w-3.5 h-3.5" />
-                                    <span>Export CSV Audit</span>
+                                    <span>Export CSV</span>
                                 </button>
                             )}
                         </div>
                     </div>
 
                     {/* Filter and Search Bar */}
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6 font-mono text-xs">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
                         {/* Filter Tabs */}
-                        <div className="flex items-center gap-1 bg-stone-200/60 dark:bg-stone-800/80 p-1 rounded-none border border-stone-300/60 dark:border-stone-700 overflow-x-auto">
+                        <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 p-1 rounded-lg">
                             {[
-                                { id: 'all', label: 'All Records' },
-                                { id: 'cancer', label: 'Malignant' },
-                                { id: 'benign', label: 'Non-Malignant' },
-                                { id: 'uncertain', label: 'Uncertain' },
-                                { id: 'cohorts', label: 'Patient Cohorts' },
-                                { id: 'active_learning', label: 'Active Learning Queue' }
+                                { id: 'all', label: 'All' },
+                                { id: 'cancer', label: 'Cancer Likely' },
+                                { id: 'benign', label: 'Healthy' },
+                                { id: 'uncertain', label: 'Needs Review' }
                             ].map(tab => (
                                 <button
                                     key={tab.id}
-                                    onClick={() => {
-                                        setHistoryFilter(tab.id);
-                                        if (tab.id === 'active_learning') {
-                                            fetchActiveLearningData();
-                                        }
-                                    }}
-                                    className={`px-2.5 py-1 whitespace-nowrap transition-colors ${
+                                    onClick={() => setHistoryFilter(tab.id)}
+                                    className={`px-3 py-1 rounded-md text-xs transition-colors ${
                                         historyFilter === tab.id 
-                                            ? 'bg-white dark:bg-stone-900 font-semibold text-clinical-teal dark:text-teal-300 shadow-xs' 
-                                            : 'text-stone-500 hover:text-stone-800 dark:hover:text-stone-200'
+                                            ? 'bg-white dark:bg-slate-900 font-medium text-slate-900 dark:text-white shadow-xs' 
+                                            : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'
                                     }`}
                                 >
                                     {tab.label}
@@ -690,274 +417,111 @@ const Profile = ({ token }) => {
 
                         {/* Search Input */}
                         <div className="relative">
-                            <Search className="w-3.5 h-3.5 text-stone-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
+                            <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
                             <input 
                                 type="text"
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
-                                placeholder="Search by patient ID, site, file..."
-                                className="pl-8 pr-3 py-1.5 bg-white dark:bg-stone-950 border border-stone-300 dark:border-stone-700 text-xs font-sans text-stone-800 dark:text-stone-200 focus:outline-none focus:border-clinical-teal w-full sm:w-64"
+                                placeholder="Search scans..."
+                                className="pl-8 pr-3 py-1.5 rounded-lg bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-xs text-slate-800 dark:text-slate-200 focus:outline-none focus:border-teal-600 w-full sm:w-56"
                             />
                         </div>
                     </div>
 
-                    {/* Specimen Rows */}
+                    {/* Scans List */}
                     {filteredHistory.length > 0 ? (
                         <div className="space-y-3">
-                            {historyFilter === 'active_learning' ? (
-                                <div className="space-y-3">
-                                    <div className="p-3 bg-stone-100 dark:bg-stone-900 border border-stone-300 dark:border-stone-800 font-mono text-xs flex items-center justify-between">
-                                        <span className="text-stone-600 dark:text-stone-300">
-                                            ACTIVE LEARNING ACQUISITION QUEUE // PRIORITIZED BY BAYESIAN UNCERTAINTY & DISCORDANCE
-                                        </span>
-                                        <button
-                                            type="button"
-                                            onClick={fetchActiveLearningData}
-                                            className="text-clinical-teal hover:underline flex items-center gap-1"
-                                        >
-                                            <RefreshCw className={`w-3 h-3 ${queueLoading ? 'animate-spin' : ''}`} />
-                                            <span>Refresh Queue</span>
-                                        </button>
-                                    </div>
-
-                                    {activeLearningQueue.length === 0 ? (
-                                        <div className="text-center py-12 font-mono text-xs text-stone-500 border border-dashed border-stone-300 dark:border-stone-800 p-6">
-                                            <CheckCircle2 className="w-8 h-8 mx-auto text-clinical-teal mb-2" />
-                                            <p className="font-semibold text-stone-800 dark:text-stone-200">No ambiguous or high-uncertainty specimens pending review.</p>
-                                            <p className="text-[11px] text-stone-400 mt-1">Data flywheel fully calibrated. All unverified scans have stable confidence metrics.</p>
-                                        </div>
-                                    ) : (
-                                        activeLearningQueue.map((qItem, idx) => (
-                                            <div
-                                                key={qItem.analysis_id}
-                                                className="border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-950 p-4 transition-all hover:border-clinical-teal flex flex-col sm:flex-row justify-between sm:items-center gap-4"
-                                            >
-                                                <div className="flex items-start gap-3">
-                                                    <div className="w-7 h-7 flex-shrink-0 flex items-center justify-center font-mono text-xs font-bold bg-stone-900 text-white dark:bg-stone-100 dark:text-stone-900">
-                                                        #{idx + 1}
-                                                    </div>
-                                                    <div>
-                                                        <div className="flex flex-wrap items-center gap-2">
-                                                            <span className="font-mono text-xs font-bold px-2 py-0.5 bg-rose-500/10 border border-rose-500/30 text-rose-600">
-                                                                PRIORITY: {(qItem.priority_score * 100).toFixed(1)}%
-                                                            </span>
-                                                            <span className="font-mono text-[9px] px-1.5 py-0.5 border border-stone-300 dark:border-stone-700 text-stone-600 dark:text-stone-400">
-                                                                PT: {qItem.patient_identifier}
-                                                            </span>
-                                                            <span className="font-mono text-[9px] px-1.5 py-0.5 border border-clinical-teal/40 text-clinical-teal uppercase">
-                                                                {qItem.lesion_site.replace(/_/g, ' ')}
-                                                            </span>
-                                                            {qItem.triage_tier && (
-                                                                <span className="font-mono text-[9px] px-1.5 py-0.5 border border-amber-500/40 text-amber-600">
-                                                                    {qItem.triage_tier.split(' ')[0]}
-                                                                </span>
-                                                            )}
-                                                        </div>
-                                                        <div className="font-sans text-xs text-stone-700 dark:text-stone-300 mt-1.5">
-                                                            <strong>{qItem.priority_reason}</strong>
-                                                        </div>
-                                                        <div className="font-mono text-[10px] text-stone-400 flex flex-wrap items-center gap-x-3 gap-y-0.5 mt-1">
-                                                            <span>PRED: <strong className={qItem.prediction === 'cancer' ? 'text-rose-500' : 'text-teal-400'}>{qItem.prediction.toUpperCase()} ({(qItem.confidence * 100).toFixed(1)}%)</strong></span>
-                                                            <span>• σ²: <strong className="text-stone-700 dark:text-stone-300">{qItem.uncertainty}</strong></span>
-                                                            <span>• RISK: <strong className="text-stone-700 dark:text-stone-300">{qItem.risk_score}</strong></span>
-                                                            <span>• DATE: {new Date(qItem.timestamp).toLocaleDateString()}</span>
-                                                        </div>
-                                                    </div>
-                                                </div>
-
-                                                <button
-                                                    type="button"
-                                                    onClick={() => setVerifyingAnalysis({
-                                                        id: qItem.analysis_id,
-                                                        patient_identifier: qItem.patient_identifier,
-                                                        lesion_site: qItem.lesion_site,
-                                                        prediction: qItem.prediction,
-                                                        confidence: qItem.confidence,
-                                                        uncertainty: qItem.uncertainty
-                                                    })}
-                                                    className="px-3.5 py-1.5 bg-clinical-teal hover:bg-teal-600 text-white font-mono text-xs font-semibold flex items-center gap-1.5 transition-all shadow-xs flex-shrink-0"
-                                                >
-                                                    <Microscope className="w-3.5 h-3.5" />
-                                                    <span>VERIFY PATHOLOGY</span>
-                                                </button>
-                                            </div>
-                                        ))
-                                    )}
-                                </div>
-                            ) : historyFilter === 'cohorts' ? (
-                                // Patient Cohorts Grouping View
-                                (() => {
-                                    const cohorts = {};
-                                    filteredHistory.forEach(item => {
-                                        const pid = item.patient_identifier || 'ANON-001';
-                                        if (!cohorts[pid]) cohorts[pid] = [];
-                                        cohorts[pid].push(item);
-                                    });
-
-                                    return Object.entries(cohorts).map(([pid, records]) => {
-                                        const latest = records[0];
-                                        const oldest = records[records.length - 1];
-                                        const hasMultiple = records.length > 1;
-
-                                        return (
-                                            <div key={pid} className="border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-950 p-4 transition-all hover:border-stone-400">
-                                                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b border-stone-100 dark:border-stone-900">
-                                                    <div className="flex items-center gap-2">
-                                                        <span className="font-mono text-xs px-2 py-0.5 bg-clinical-teal/10 border border-clinical-teal/40 text-clinical-teal font-bold">
-                                                            {pid}
-                                                        </span>
-                                                        <span className="font-serif text-base text-stone-900 dark:text-stone-100 font-medium">
-                                                            Cohort Tracking // {records.length} {records.length === 1 ? 'Encounter' : 'Serial Encounters'}
-                                                        </span>
-                                                        {hasMultiple && (
-                                                            <span className="font-mono text-[9px] px-1.5 py-0.5 bg-amber-500/10 border border-amber-500/30 text-amber-600 font-semibold">
-                                                                SERIAL TRACKED
-                                                            </span>
-                                                        )}
-                                                    </div>
-                                                    <div className="font-mono text-[11px] text-stone-400">
-                                                        Latest: {new Date(latest.timestamp).toLocaleDateString()}
-                                                    </div>
-                                                </div>
-
-                                                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-3 font-mono text-xs">
-                                                    <div className="p-2 border border-stone-100 dark:border-stone-900 bg-stone-50/50 dark:bg-stone-900/30">
-                                                        <span className="text-[9px] text-stone-400 block">PRIMARY SITE</span>
-                                                        <span className="font-semibold text-stone-800 dark:text-stone-200">
-                                                            {(latest.lesion_site || 'buccal_mucosa').replace(/_/g, ' ')}
-                                                        </span>
-                                                    </div>
-                                                    <div className="p-2 border border-stone-100 dark:border-stone-900 bg-stone-50/50 dark:bg-stone-900/30">
-                                                        <span className="text-[9px] text-stone-400 block">LATEST VERDICT</span>
-                                                        <span className={`font-semibold ${latest.prediction === 'cancer' ? 'text-rose-600' : 'text-teal-600'}`}>
-                                                            {latest.prediction?.toUpperCase()}
-                                                        </span>
-                                                    </div>
-                                                    <div className="p-2 border border-stone-100 dark:border-stone-900 bg-stone-50/50 dark:bg-stone-900/30">
-                                                        <span className="text-[9px] text-stone-400 block">TRIAGE TIER</span>
-                                                        <span className="font-semibold text-stone-800 dark:text-stone-200">
-                                                            {latest.triage_tier ? latest.triage_tier.split('_')[1] : 'TIER 1'}
-                                                        </span>
-                                                    </div>
-                                                    <div className="p-2 border border-stone-100 dark:border-stone-900 bg-stone-50/50 dark:bg-stone-900/30">
-                                                        <span className="text-[9px] text-stone-400 block">INTERVAL RANGE</span>
-                                                        <span className="text-stone-800 dark:text-stone-200">
-                                                            {records.length > 1 ? `${Math.round((new Date(latest.timestamp) - new Date(oldest.timestamp)) / 86400000)} Days` : 'Index Visit'}
-                                                        </span>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        );
-                                    });
-                                })()
-                            ) : (
-                                filteredHistory.map(item => {
+                            {filteredHistory.map(item => {
                                 const isCancer = item.prediction?.toLowerCase() === 'cancer';
                                 const isUncertain = item.prediction?.toLowerCase() === 'uncertain';
 
                                 return (
                                     <div 
                                         key={item.id} 
-                                        className="border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-950 p-4 flex flex-col sm:flex-row justify-between sm:items-center gap-4 transition-all hover:border-stone-400 dark:hover:border-stone-600"
+                                        className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/40 p-4 flex flex-col sm:flex-row justify-between sm:items-center gap-4 hover:border-slate-300 dark:hover:border-slate-700 transition-colors"
                                     >
-                                        <div className="flex items-start sm:items-center gap-3.5">
+                                        <div className="flex items-center gap-3.5">
                                             {isCancer ? (
-                                                <div className="p-2 border border-clinical-terracotta bg-red-50 dark:bg-red-950/20 text-clinical-terracotta flex-shrink-0 mt-1 sm:mt-0">
-                                                    <ShieldAlert className="w-4 h-4" />
+                                                <div className="p-2.5 rounded-xl bg-red-50 dark:bg-red-950/40 text-red-600 flex-shrink-0">
+                                                    <ShieldAlert className="w-5 h-5" />
                                                 </div>
                                             ) : isUncertain ? (
-                                                <div className="p-2 border border-clinical-ochre bg-amber-50 dark:bg-amber-950/20 text-clinical-ochre flex-shrink-0 mt-1 sm:mt-0">
-                                                    <AlertTriangle className="w-4 h-4" />
+                                                <div className="p-2.5 rounded-xl bg-amber-50 dark:bg-amber-950/40 text-amber-600 flex-shrink-0">
+                                                    <AlertTriangle className="w-5 h-5" />
                                                 </div>
                                             ) : (
-                                                <div className="p-2 border border-clinical-teal bg-teal-50 dark:bg-teal-950/20 text-clinical-teal flex-shrink-0 mt-1 sm:mt-0">
-                                                    <ShieldCheck className="w-4 h-4" />
+                                                <div className="p-2.5 rounded-xl bg-teal-50 dark:bg-teal-950/40 text-teal-600 flex-shrink-0">
+                                                    <ShieldCheck className="w-5 h-5" />
                                                 </div>
                                             )}
 
                                             <div>
-                                                <div className="flex flex-wrap items-center gap-2">
-                                                    <span className="font-serif text-base font-normal text-stone-900 dark:text-stone-100">
-                                                        {isCancer ? 'Presumptive OSCC Malignancy' : isUncertain ? 'Uncertain Epistemic Variance' : 'Non-Malignant Mucosa'}
+                                                <div className="flex items-center gap-2">
+                                                    <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+                                                        isCancer 
+                                                            ? 'bg-red-100 text-red-700 dark:bg-red-950/60 dark:text-red-300'
+                                                            : isUncertain
+                                                            ? 'bg-amber-100 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300'
+                                                            : 'bg-teal-100 text-teal-700 dark:bg-teal-950/60 dark:text-teal-300'
+                                                    }`}>
+                                                        {isCancer ? 'Cancer Detected' : isUncertain ? 'Needs Doctor Review' : 'Healthy / Normal'}
                                                     </span>
-                                                    <span className="font-mono text-[9px] px-1.5 py-0.5 border border-stone-200 dark:border-stone-800 text-stone-500 uppercase">
-                                                        REC-#{item.id.toString().padStart(4, '0')}
+
+                                                    <span className="text-xs text-slate-400">
+                                                        Scan #{item.id}
                                                     </span>
-                                                    <span className="font-mono text-[9px] px-1.5 py-0.5 bg-stone-100 dark:bg-stone-900 border border-stone-300 dark:border-stone-700 text-stone-700 dark:text-stone-300">
-                                                        PT: {item.patient_identifier || 'ANON-001'}
-                                                    </span>
-                                                    {item.lesion_site && (
-                                                        <span className="font-mono text-[9px] px-1.5 py-0.5 border border-clinical-teal/40 text-clinical-teal uppercase">
-                                                            {item.lesion_site.replace(/_/g, ' ')}
-                                                        </span>
-                                                    )}
-                                                    {item.triage_tier && (
-                                                        <span className={`font-mono text-[9px] px-1.5 py-0.5 border font-semibold ${
-                                                            item.triage_tier.includes('TIER_3') 
-                                                                ? 'bg-rose-500/15 border-rose-500/40 text-rose-600' 
-                                                                : item.triage_tier.includes('TIER_2')
-                                                                    ? 'bg-amber-500/15 border-amber-500/40 text-amber-600'
-                                                                    : 'bg-teal-500/15 border-teal-500/40 text-teal-600'
-                                                        }`}>
-                                                            {item.triage_tier.includes('TIER_3') ? 'TIER 3' : item.triage_tier.includes('TIER_2') ? 'TIER 2' : 'TIER 1'}
-                                                        </span>
-                                                    )}
                                                 </div>
-                                                <div className="font-mono text-[10px] text-stone-400 flex flex-wrap items-center gap-x-3 gap-y-0.5 mt-1">
-                                                    <span>CONF: <strong className="text-stone-700 dark:text-stone-300">{(item.confidence * 100).toFixed(1)}%</strong></span>
-                                                    {item.uncertainty !== null && <span>• σ²: <strong className="text-stone-700 dark:text-stone-300">{item.uncertainty}</strong></span>}
-                                                    {item.risk_score !== null && <span>• RISK: <strong className="text-stone-700 dark:text-stone-300">{item.risk_score}</strong></span>}
-                                                    {item.image_filename && <span>• FILE: {item.image_filename}</span>}
+
+                                                <div className="text-xs text-slate-500 dark:text-slate-400 mt-1 flex flex-wrap items-center gap-3">
+                                                    <span>Confidence: <strong className="text-slate-700 dark:text-slate-300">{(item.confidence * 100).toFixed(1)}%</strong></span>
+                                                    <span>•</span>
+                                                    <span>{new Date(item.timestamp).toLocaleDateString()} at {new Date(item.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+                                                    {item.image_filename && (
+                                                        <>
+                                                            <span>•</span>
+                                                            <span className="truncate max-w-[140px]">{item.image_filename}</span>
+                                                        </>
+                                                    )}
                                                 </div>
                                             </div>
                                         </div>
 
-                                        <div className="font-mono text-xs text-stone-500 text-left sm:text-right flex-shrink-0 border-t sm:border-t-0 pt-2 sm:pt-0 border-stone-100 dark:border-stone-900 flex flex-col sm:items-end gap-1.5">
-                                            <div>{new Date(item.timestamp).toLocaleDateString()}</div>
-                                            <div className="text-[10px] text-stone-400">{new Date(item.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</div>
-                                            <div className="flex items-center gap-1.5 mt-1">
-                                                <button
-                                                    type="button"
-                                                    onClick={() => setReferralAnalysisId(item.id)}
-                                                    className="px-2 py-0.5 border border-stone-300 dark:border-stone-700 hover:border-clinical-teal text-[10px] font-mono flex items-center gap-1 text-stone-600 dark:text-stone-300 transition-colors"
-                                                    title="View Oncology Referral Letter & Export HL7 FHIR r4 Bundle"
-                                                >
-                                                    <FileText className="w-3 h-3" />
-                                                    <span>REFERRAL & FHIR</span>
-                                                </button>
-                                                <button
-                                                    type="button"
-                                                    onClick={() => setVerifyingAnalysis(item)}
-                                                    className={`px-2 py-0.5 border text-[10px] font-mono flex items-center gap-1 transition-colors ${
-                                                        item.biopsy_proven
-                                                            ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-300 font-semibold'
-                                                            : item.ground_truth_dx
-                                                                ? 'border-teal-500 bg-teal-50 dark:bg-teal-950/30 text-teal-600 dark:text-teal-300'
-                                                                : 'border-stone-300 dark:border-stone-700 hover:border-clinical-teal text-stone-600 dark:text-stone-300'
-                                                    }`}
-                                                >
-                                                    <Microscope className="w-3 h-3" />
-                                                    <span>{item.biopsy_proven ? 'BIOPSY PROVEN' : item.ground_truth_dx ? 'VERIFIED' : 'VERIFY'}</span>
-                                                </button>
-                                            </div>
+                                        <div className="flex items-center gap-2 self-end sm:self-center">
+                                            <button
+                                                type="button"
+                                                onClick={() => setReferralAnalysisId(item.id)}
+                                                className="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 hover:border-teal-600 text-xs flex items-center gap-1.5 text-slate-700 dark:text-slate-300 transition-colors"
+                                            >
+                                                <FileText className="w-3.5 h-3.5 text-slate-400" />
+                                                <span>Report</span>
+                                            </button>
+
+                                            <button
+                                                type="button"
+                                                onClick={() => setVerifyingAnalysis(item)}
+                                                className={`px-3 py-1.5 rounded-lg text-xs flex items-center gap-1.5 transition-colors ${
+                                                    item.biopsy_proven || item.ground_truth_dx
+                                                        ? 'bg-teal-50 dark:bg-teal-950/50 text-teal-700 dark:text-teal-300 border border-teal-200 dark:border-teal-800'
+                                                        : 'border border-slate-200 dark:border-slate-700 hover:border-teal-600 text-slate-700 dark:text-slate-300'
+                                                }`}
+                                            >
+                                                <Microscope className="w-3.5 h-3.5 text-teal-600" />
+                                                <span>{item.biopsy_proven ? 'Verified' : item.ground_truth_dx ? 'Verified' : 'Verify'}</span>
+                                            </button>
                                         </div>
                                     </div>
                                 );
-                            }))}
+                            })}
                         </div>
                     ) : (
-                        <div className="text-center py-16 font-mono text-xs text-stone-400 border border-dashed border-stone-300 dark:border-stone-800 p-8">
-                            <Microscope className="w-10 h-10 mx-auto text-stone-300 dark:text-stone-700 mb-3" />
-                            <p className="text-stone-600 dark:text-stone-300 font-sans text-sm mb-1">
-                                {history.length === 0 ? "No recorded intake specimens in this dossier." : "No records match the current filter query."}
-                            </p>
-                            <p className="text-[11px] text-stone-400 mb-4">
-                                Run a clinical specimen evaluation to populate this repository archive.
+                        <div className="text-center py-12 text-sm text-slate-500 border border-dashed border-slate-200 dark:border-slate-800 rounded-xl p-8">
+                            <p className="mb-3">
+                                {history.length === 0 ? "You haven't run any scans yet." : "No scans match your search."}
                             </p>
                             <Link to="/upload">
-                                <button className="px-4 py-2 bg-stone-900 dark:bg-stone-100 text-white dark:text-stone-900 text-xs font-mono uppercase font-medium hover:bg-clinical-teal dark:hover:bg-clinical-teal dark:hover:text-white transition-colors inline-flex items-center gap-1.5">
+                                <button className="px-4 py-2 rounded-lg bg-teal-600 hover:bg-teal-700 text-white text-xs font-medium inline-flex items-center gap-1.5 transition-colors">
                                     <PlusCircle className="w-3.5 h-3.5" />
-                                    <span>Initialize Specimen Examination</span>
+                                    <span>Start a New Scan</span>
                                 </button>
                             </Link>
                         </div>
@@ -972,12 +536,10 @@ const Profile = ({ token }) => {
                 analysis={verifyingAnalysis}
                 onVerificationSuccess={(updatedAnalysis) => {
                     setHistory(prev => prev.map(h => h.id === updatedAnalysis.id ? { ...h, ...updatedAnalysis } : h));
-                    setActiveLearningQueue(prev => prev.filter(q => q.analysis_id !== updatedAnalysis.id));
-                    fetchActiveLearningData();
                 }}
             />
 
-            {/* Specialist Referral Letter & HL7 FHIR r4 Export Modal */}
+            {/* Specialist Referral Letter & Report Modal */}
             <SpecialistReferralModal
                 isOpen={!!referralAnalysisId}
                 onClose={() => setReferralAnalysisId(null)}

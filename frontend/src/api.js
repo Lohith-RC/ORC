@@ -2,12 +2,20 @@ import axios from 'axios';
 
 // Central API configuration
 const getApiBaseUrl = () => {
-    if (process.env.REACT_APP_API_URL) {
+    if (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_API_URL) {
+        return import.meta.env.VITE_API_URL.replace(/\/+$/, '');
+    }
+    if (typeof process !== 'undefined' && process.env && process.env.REACT_APP_API_URL) {
         return process.env.REACT_APP_API_URL.replace(/\/+$/, '');
     }
     // Production Render backend fallback on HTTPS, localhost on local dev
-    if (typeof window !== 'undefined' && window.location.protocol === 'https:') {
-        return 'https://oral-cancer-backend-fiwu.onrender.com';
+    if (typeof window !== 'undefined') {
+        if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+            return 'http://localhost:8000';
+        }
+        if (window.location.protocol === 'https:') {
+            return 'https://oral-cancer-backend-fiwu.onrender.com';
+        }
     }
     return 'http://localhost:8000';
 };

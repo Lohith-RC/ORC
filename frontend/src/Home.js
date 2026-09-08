@@ -17,6 +17,7 @@ import { Link } from 'react-router-dom';
 
 import heroImage from './images/1.jpg';
 import detailedFeatureImage from './images/8.webp';
+import ArchitecturalSpotlight from './components/ArchitecturalSpotlight';
 
 // --- Interactive Pathologist's Inspection Viewport with Magnifying Loupe ---
 const PathologistLoupeViewer = () => {
@@ -337,6 +338,11 @@ const Home = () => {
                     ))}
                 </div>
             </section>
+
+            {/* ============================================================ */}
+            {/* ARCHITECTURAL SPOTLIGHT: The Monolith & Physical Space       */}
+            {/* ============================================================ */}
+            <ArchitecturalSpotlight />
 
             {/* ============================================================ */}
             {/* SECTION 4: Dignified Call to Action                           */}

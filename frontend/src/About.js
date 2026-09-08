@@ -38,7 +38,7 @@ const About = () => {
                         {[
                             { name: "Keerthi A", role: "AI & ML Architecture", desc: "Ensemble training, TTA pipelines, and PyTorch optimization.", image: team1 },
                             { name: "Rakshith Y B", role: "Backend & Systems", desc: "FastAPI inference service, SQLite ORM, and rate limiting.", image: team2 },
-                            { name: "Lohith R C", role: "Frontend & UI/UX Design", desc: "Clinical pathology workstation and human-centric design.", image: team3 }
+                            { name: "Lohith R C", role: "Platform Architect & Lead UI/UX", desc: "Clinical pathology workstation, architectural systems, and human-centric design.", image: '/assets/lohith_portrait.jpg' }
                         ].map((member, i) => (
                             <div
                                 key={i}

@@ -78,8 +78,8 @@ function Navbar({ loggedIn, onLogout }) {
                     {/* Brand */}
                     <div className="flex-shrink-0 flex items-center gap-3">
                         <Link to="/" className="flex items-center gap-3 group">
-                            <div className="w-9 h-9 rounded border border-stone-300 dark:border-stone-700 flex items-center justify-center bg-stone-50 dark:bg-stone-900 group-hover:border-clinical-teal transition-colors">
-                                <Stethoscope className="w-4 h-4 text-clinical-teal dark:text-teal-400" />
+                            <div className="w-9 h-9 rounded border border-stone-300 dark:border-stone-700 flex items-center justify-center bg-stone-50 dark:bg-stone-900 group-hover:border-clinical-teal transition-colors overflow-hidden p-1 shadow-xs">
+                                <img src="/favicon.svg" alt="Visionary Diagnostics Favicon" className="w-full h-full object-contain group-hover:scale-110 transition-transform" />
                             </div>
                             <div className="flex flex-col">
                                 <span className="font-serif text-2xl tracking-tight font-normal text-stone-900 dark:text-stone-100 leading-none">

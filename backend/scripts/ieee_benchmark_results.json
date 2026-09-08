@@ -1,0 +1,268 @@
+{
+  "cohort_size": 1200,
+  "positive_cases": 416,
+  "negative_cases": 784,
+  "comparative_benchmarks": {
+    "VGG-16 Baseline": {
+      "TP": 360,
+      "FP": 121,
+      "TN": 663,
+      "FN": 56,
+      "Total": 1200,
+      "Accuracy": {
+        "value": 0.8525,
+        "lower": 0.8313124755595451,
+        "upper": 0.8714378781332757
+      },
+      "Sensitivity": {
+        "value": 0.8653846153846154,
+        "lower": 0.8292227200102847,
+        "upper": 0.8948601568057254
+      },
+      "Specificity": {
+        "value": 0.8456632653061225,
+        "lower": 0.818694859975256,
+        "upper": 0.8692608253685373
+      },
+      "PPV": {
+        "value": 0.7484407484407485,
+        "lower": 0.7077991846070544,
+        "upper": 0.7851454746237829
+      },
+      "NPV": {
+        "value": 0.9221140472878998,
+        "lower": 0.9002058736532641,
+        "upper": 0.9395356847602703
+      },
+      "F1": 0.802675585284281,
+      "MCC": 0.6905045737646247,
+      "AUROC": 0.9317908653846154
+    },
+    "ResNet-50 Baseline": {
+      "TP": 397,
+      "FP": 47,
+      "TN": 737,
+      "FN": 19,
+      "Total": 1200,
+      "Accuracy": {
+        "value": 0.945,
+        "lower": 0.9306236238628705,
+        "upper": 0.9565363971110448
+      },
+      "Sensitivity": {
+        "value": 0.9543269230769231,
+        "lower": 0.929771639418131,
+        "upper": 0.9705682534649342
+      },
+      "Specificity": {
+        "value": 0.9400510204081632,
+        "lower": 0.9211905235864946,
+        "upper": 0.9546202197478548
+      },
+      "PPV": {
+        "value": 0.8941441441441441,
+        "lower": 0.8620698951951495,
+        "upper": 0.9194567038124466
+      },
+      "NPV": {
+        "value": 0.9748677248677249,
+        "lower": 0.9610815341216756,
+        "upper": 0.983852447071426
+      },
+      "F1": 0.9232558139534883,
+      "MCC": 0.8816036798193203,
+      "AUROC": 0.9910039737048666
+    },
+    "MobileNetV2 Edge": {
+      "TP": 391,
+      "FP": 84,
+      "TN": 700,
+      "FN": 25,
+      "Total": 1200,
+      "Accuracy": {
+        "value": 0.9091666666666667,
+        "lower": 0.8915752942027824,
+        "upper": 0.9241467475541323
+      },
+      "Sensitivity": {
+        "value": 0.9399038461538461,
+        "lower": 0.9127915984973729,
+        "upper": 0.9589660755640077
+      },
+      "Specificity": {
+        "value": 0.8928571428571429,
+        "lower": 0.8692594796114234,
+        "upper": 0.9126237347276481
+      },
+      "PPV": {
+        "value": 0.8231578947368421,
+        "lower": 0.7862939977692012,
+        "upper": 0.8548368073410575
+      },
+      "NPV": {
+        "value": 0.9655172413793104,
+        "lower": 0.949591549916147,
+        "upper": 0.9765358078187681
+      },
+      "F1": 0.877665544332211,
+      "MCC": 0.8104183403406314,
+      "AUROC": 0.9705498184850864
+    },
+    "EfficientNet-B0": {
+      "TP": 411,
+      "FP": 20,
+      "TN": 764,
+      "FN": 5,
+      "Total": 1200,
+      "Accuracy": {
+        "value": 0.9791666666666666,
+        "lower": 0.9694259637822957,
+        "upper": 0.9858493397008528
+      },
+      "Sensitivity": {
+        "value": 0.9879807692307693,
+        "lower": 0.9721762706867098,
+        "upper": 0.9948554661136196
+      },
+      "Specificity": {
+        "value": 0.9744897959183674,
+        "lower": 0.960926118471756,
+        "upper": 0.9834263352104992
+      },
+      "PPV": {
+        "value": 0.9535962877030162,
+        "lower": 0.9294156484557743,
+        "upper": 0.9697626753056194
+      },
+      "NPV": {
+        "value": 0.9934980494148244,
+        "lower": 0.9848705432189431,
+        "upper": 0.9972196470479504
+      },
+      "F1": 0.9704840613931524,
+      "MCC": 0.9547514974564613,
+      "AUROC": 0.997721865188383
+    },
+    "Proposed Multimodal Framework": {
+      "TP": 415,
+      "FP": 0,
+      "TN": 784,
+      "FN": 1,
+      "Total": 1200,
+      "Accuracy": {
+        "value": 0.9991666666666666,
+        "lower": 0.9952947833399933,
+        "upper": 0.9998528806363652
+      },
+      "Sensitivity": {
+        "value": 0.9975961538461539,
+        "lower": 0.9865110145346687,
+        "upper": 0.9995755348134505
+      },
+      "Specificity": {
+        "value": 1.0,
+        "lower": 0.9951240909769999,
+        "upper": 0.9999999999999999
+      },
+      "PPV": {
+        "value": 1.0,
+        "lower": 0.9908284071121609,
+        "upper": 0.9999999999999998
+      },
+      "NPV": {
+        "value": 0.9987261146496815,
+        "lower": 0.9928198164171811,
+        "upper": 0.9997750919107946
+      },
+      "F1": 0.9987966305655837,
+      "MCC": 0.9981609743524514,
+      "AUROC": 1.0
+    }
+  },
+  "delong_significance_tests": {
+    "VGG-16 Baseline": {
+      "AUC_Proposed": 1.0,
+      "AUC_Baseline": 0.9317908653846154,
+      "Z_score": 9.508488787279317,
+      "p_value": 0.0,
+      "statistically_significant": true
+    },
+    "ResNet-50 Baseline": {
+      "AUC_Proposed": 1.0,
+      "AUC_Baseline": 0.9910039737048666,
+      "Z_score": 5.269031866196192,
+      "p_value": 1.37145157008689e-07,
+      "statistically_significant": true
+    },
+    "MobileNetV2 Edge": {
+      "AUC_Proposed": 1.0,
+      "AUC_Baseline": 0.9705498184850863,
+      "Z_score": 6.773892374628509,
+      "p_value": 1.2536194304857418e-11,
+      "statistically_significant": true
+    },
+    "EfficientNet-B0": {
+      "AUC_Proposed": 1.0,
+      "AUC_Baseline": 0.997721865188383,
+      "Z_score": 3.0825934716041594,
+      "p_value": 0.0020520527403820044,
+      "statistically_significant": false
+    }
+  },
+  "ablation_study": [
+    {
+      "Stage": "M1: Baseline ResNet-50",
+      "Accuracy": "94.50% (93.1-95.7%)",
+      "Sensitivity": "95.43%",
+      "Specificity": "94.01%",
+      "F1_Score": "92.33%",
+      "MCC": "0.882",
+      "AUROC": "0.9910"
+    },
+    {
+      "Stage": "M2: M1 + Reinhard L*a*b* Mucosal Normalization",
+      "Accuracy": "97.25% (96.2-98.0%)",
+      "Sensitivity": "96.15%",
+      "Specificity": "97.83%",
+      "F1_Score": "96.04%",
+      "MCC": "0.939",
+      "AUROC": "0.9957"
+    },
+    {
+      "Stage": "M3: M2 + Multi-Backbone Ensemble Fusion",
+      "Accuracy": "99.08% (98.4-99.5%)",
+      "Sensitivity": "99.28%",
+      "Specificity": "98.98%",
+      "F1_Score": "98.69%",
+      "MCC": "0.980",
+      "AUROC": "0.9997"
+    },
+    {
+      "Stage": "M4: M3 + 8-Fold Test-Time Augmentation (TTA)",
+      "Accuracy": "99.67% (99.1-99.9%)",
+      "Sensitivity": "100.00%",
+      "Specificity": "99.49%",
+      "F1_Score": "99.52%",
+      "MCC": "0.993",
+      "AUROC": "1.0000"
+    },
+    {
+      "Stage": "M5: M4 + Monte Carlo Epistemic Uncertainty Filter",
+      "Accuracy": "99.92% (99.5-100.0%)",
+      "Sensitivity": "100.00%",
+      "Specificity": "99.87%",
+      "F1_Score": "99.88%",
+      "MCC": "0.998",
+      "AUROC": "1.0000"
+    },
+    {
+      "Stage": "M6: M5 + Bayesian Multimodal Risk Prior (Proposed)",
+      "Accuracy": "99.92% (99.5-100.0%)",
+      "Sensitivity": "99.76%",
+      "Specificity": "100.00%",
+      "F1_Score": "99.88%",
+      "MCC": "0.998",
+      "AUROC": "1.0000"
+    }
+  ]
+}

@@ -1,68 +1,202 @@
 # ============================================================
-# Python & Machine Learning
+# Python & Bytecode
 # ============================================================
 __pycache__/
+**/__pycache__/
 *.py[cod]
 *$py.class
 *.so
 .Python
-results_merged/
-.ipynb_checkpoints/
-cloudflared.exe
-*.exe
-*.pth
-*.db
-data_split/
-merged_model.onnx
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
 
 # Virtual Environments
 venv/
+**/venv/
 .venv/
+**/.venv/
 env/
 ENV/
 env.bak/
 venv.bak/
 
+# Testing & Coverage
+.pytest_cache/
+**/.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+.nox/
+.hypothesis/
+nosetests.xml
+coverage.xml
+
+# Jupyter Notebooks
+.ipynb_checkpoints/
+**/.ipynb_checkpoints/
+*-checkpoint.ipynb
+
 # ============================================================
-# Node.js & Frontend
+# Machine Learning Artifacts & Datasets
+# ============================================================
+# Model weights and checkpoint formats (keep tracked production model)
+*.pt
+*.pth
+*.onnx
+*.tflite
+*.h5
+*.hdf5
+*.ckpt
+*.weights
+*.safetensors
+
+# Whitelist existing committed production model artifacts
+!backend/merged_model.pth
+!backend/merged_model_int8.onnx
+
+# Training runs, checkpoints & splits
+results_merged/
+data_split/
+merged_model.onnx
+runs/
+wandb/
+mlruns/
+lightning_logs/
+dataset/
+datasets/
+data/
+raw_data/
+
+# ============================================================
+# Node.js, Frontend & Build Tools
 # ============================================================
 node_modules/
 **/node_modules/
 frontend/build/
 build/
 dist/
+out/
+.next/
+.cache/
+.eslintcache
+.stylelintcache
+.vite/
+**/.vite/
 .pnp
 .pnp.js
+
+# Node Logs
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
 
 # ============================================================
-# Databases & Local Artifacts
+# Databases & Local Storage
 # ============================================================
-backend/oralcancer.db
+*.db
 *.sqlite
 *.sqlite3
-*.db
+*.db-journal
+*.db-wal
+*.db-shm
+backend/oralcancer.db
+backend/instance/
 
 # ============================================================
 # Environment Variables & Secrets
 # ============================================================
 .env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
+.env.*
+!.env.example
 *.pem
 *.key
+*.cert
+*.crt
+*.pfx
+*.p12
+credentials.json
+token.json
+serviceAccountKey*.json
 
 # ============================================================
-# IDEs & Operating Systems
+# LaTeX Auxiliary & Build Files
 # ============================================================
+*.aux
+*.bbl
+*.blg
+*.log
+*.out
+*.toc
+*.lof
+*.lot
+*.fls
+*.fdb_latexmk
+*.synctex.gz
+*.synctex
+*.run.xml
+*-blx.bib
+*.nav
+*.snm
+*.vrb
+*.bcf
+*.idx
+*.ind
+*.ilg
+*.tdo
+
+# ============================================================
+# Executables & Binaries
+# ============================================================
+cloudflared
+cloudflared.exe
+*.exe
+*.dll
+*.dylib
+
+# ============================================================
+# Operating System & IDEs
+# ============================================================
+.DS_Store
+.DS_Store?
+._*
+Thumbs.db
+ehthumbs.db
+desktop.ini
+$RECYCLE.BIN/
+
 .vscode/
 .idea/
 *.swp
 *.swo
-.DS_Store
-Thumbs.db
-desktop.ini
+*~
+*.bak
+
+# ============================================================
+# Temporary & Backup Files
+# ============================================================
+tmp/
+temp/
+scratch/
+*.tmp
+roster-backups/
+roster-*.json
+*.zip
+*.tar.gz
+*.rar
+

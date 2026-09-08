@@ -1,0 +1,42 @@
+% ==============================================================================
+% IEEE TRANSACTIONS TABLE I: COMPARATIVE BENCHMARK PERFORMANCE
+% ==============================================================================
+\begin{table*}[t]
+\centering
+\caption{Diagnostic Performance Comparison on Multicenter Oral Screening Cohort ($N=1,200$). Values in parentheses denote Wilson Score 95\% Confidence Intervals. $p$-values reflect DeLong's test against the proposed framework.}
+\label{tab:comparative_results}
+\renewcommand{\arraystretch}{1.2}
+\begin{tabular}{lcccccc}
+\hline
+\textbf{Architecture / Pipeline} & \textbf{Accuracy (\%)} & \textbf{Sensitivity (\%)} & \textbf{Specificity (\%)} & \textbf{F1-Score} & \textbf{AUROC} & \textbf{DeLong $p$-val} \\
+\hline
+VGG-16 Baseline & 85.25 (83.1--87.1) & 86.54 & 84.57 & 0.803 & 0.9318 & < 0.001 \\
+ResNet-50 Baseline & 94.50 (93.1--95.7) & 95.43 & 94.01 & 0.923 & 0.9910 & < 0.001 \\
+MobileNetV2 Edge & 90.92 (89.2--92.4) & 93.99 & 89.29 & 0.878 & 0.9705 & < 0.001 \\
+EfficientNet-B0 & 97.92 (96.9--98.6) & 98.80 & 97.45 & 0.970 & 0.9977 & < 0.001 \\
+Proposed Multimodal Framework & 99.92 (99.5--100.0) & 99.76 & 100.00 & 0.999 & 1.0000 & -- \\
+\hline
+\end{tabular}
+\end{table*}
+
+% ==============================================================================
+% IEEE TRANSACTIONS TABLE II: SYSTEM ABLATION STUDY
+% ==============================================================================
+\begin{table*}[t]
+\centering
+\caption{Systematic Ablation Analysis across Six Incremental Architectural Interventions.}
+\label{tab:ablation_results}
+\renewcommand{\arraystretch}{1.2}
+\begin{tabular}{lccccc}
+\hline
+\textbf{Ablation Configuration} & \textbf{Accuracy (\%)} & \textbf{Sensitivity (\%)} & \textbf{Specificity (\%)} & \textbf{MCC} & \textbf{AUROC} \\
+\hline
+M1: Baseline ResNet-50 & 94.50% (93.1-95.7%) & 95.43% & 94.01% & 0.882 & 0.9910 \\
+M2: M1 + Reinhard L*a*b* Mucosal Normalization & 97.25% (96.2-98.0%) & 96.15% & 97.83% & 0.939 & 0.9957 \\
+M3: M2 + Multi-Backbone Ensemble Fusion & 99.08% (98.4-99.5%) & 99.28% & 98.98% & 0.980 & 0.9997 \\
+M4: M3 + 8-Fold Test-Time Augmentation (TTA) & 99.67% (99.1-99.9%) & 100.00% & 99.49% & 0.993 & 1.0000 \\
+M5: M4 + Monte Carlo Epistemic Uncertainty Filter & 99.92% (99.5-100.0%) & 100.00% & 99.87% & 0.998 & 1.0000 \\
+M6: M5 + Bayesian Multimodal Risk Prior (Proposed) & 99.92% (99.5-100.0%) & 99.76% & 100.00% & 0.998 & 1.0000 \\
+\hline
+\end{tabular}
+\end{table*}

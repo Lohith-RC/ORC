@@ -9,6 +9,7 @@ from app.services.ml_engine import get_model, device
 router = APIRouter()
 
 @router.get("/health")
+@router.head("/health")
 def health_check(db: Session = Depends(get_db)):
     """
     Comprehensive Liveness Probe:

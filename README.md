@@ -1,10 +1,6 @@
 # 🔬 AI-Powered Oral Cancer Detection & Clinical Triage Platform (OSCC AI)
 
 <p align="center">
-  <img src="assets/diagrams/system_architecture.png" alt="OSCC AI System Architecture Banner" width="90%" style="border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);" />
-</p>
-
-<p align="center">
   <strong>An enterprise-grade multimodal deep learning diagnostic platform for non-invasive, early detection and automated triage of Oral Squamous Cell Carcinoma (OSCC) from clinical intraoral photographs.</strong>
 </p>
 

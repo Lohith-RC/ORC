@@ -1,4 +1,5 @@
 import io
+import gc
 import json
 import logging
 import datetime
@@ -98,9 +99,12 @@ async def predict(
                 detail=f"File exceeds maximum limit of {settings.MAX_IMAGE_SIZE_MB}MB."
             )
 
-    # 3. Decode image
+    # 3. Decode image and constrain dimensions to prevent OOM
     try:
         image = Image.open(io.BytesIO(image_bytes)).convert("RGB")
+        # Constrain dimensions to 512px max to safeguard container memory on cloud instances
+        if max(image.size) > 512:
+            image.thumbnail((512, 512), Image.LANCZOS)
     except Exception:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid or corrupt image payload.")
 
@@ -122,6 +126,8 @@ async def predict(
                 )
         try:
             vital_img = Image.open(io.BytesIO(vital_bytes)).convert("RGB")
+            if max(vital_img.size) > 512:
+                vital_img.thumbnail((512, 512), Image.LANCZOS)
         except Exception:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid or corrupt vital stain image.")
 
@@ -139,9 +145,8 @@ async def predict(
 
     clinical_risk_score = compute_clinical_risk_score(risk_form)
 
-    # 4b. Optical Preprocessing: Specular Glare / Saliva Suppression & Reinhard LAB Mucosal Normalization
+    # 4b. Optical Preprocessing: Specular Glare / Saliva Suppression
     clean_image, glare_telemetry = detect_and_suppress_specular_glare(image)
-    normalized_image = apply_reinhard_mucosal_normalization(clean_image)
 
     # 5. ASYNCHRONOUS DUAL-STAGE INFERENCE (Unblocks Event Loop!)
     try:
@@ -287,6 +292,10 @@ async def predict(
 
     staging_dict = staging_report.model_dump() if hasattr(staging_report, "model_dump") else staging_report.dict()
     trajectory_dict = longitudinal_delta.model_dump() if hasattr(longitudinal_delta, "model_dump") else longitudinal_delta.dict()
+
+    # Clean up transient arrays
+    del clean_image, image
+    gc.collect()
 
     return {
         "id": new_analysis.id,

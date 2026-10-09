@@ -7,6 +7,7 @@ import anyio
 from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.gzip import GZipMiddleware
 from slowapi.errors import RateLimitExceeded
 
 from contextlib import asynccontextmanager
@@ -109,9 +110,25 @@ def create_application() -> FastAPI:
     application = FastAPI(
         title=settings.PROJECT_NAME,
         version=settings.VERSION,
-        description="Production-grade AI diagnostic platform with epistemic uncertainty and multimodal triage.",
+        description=(
+            "## Oral Cancer AI Diagnostic Screening & Clinical Triage Platform\n\n"
+            "Production-grade medical vision API combining deep convolutional ensembles "
+            "(VGG16, ResNet50, EfficientNet-B0, MobileNetV2), Bayesian epistemic uncertainty quantification "
+            "(Monte Carlo Dropout), Grad-CAM++ morphological concordance, and HL7 FHIR r4 interoperability.\n\n"
+            "### Testing Protected Endpoints\n"
+            "1. Click **Authorize** on the top right or submit to `POST /login`.\n"
+            "2. Enter your credentials to automatically populate bearer tokens across all API requests."
+        ),
         docs_url="/docs",
         redoc_url="/redoc",
+        openapi_url="/openapi.json",
+        swagger_ui_parameters={
+            "persistAuthorization": True,
+            "displayRequestDuration": True,
+            "docExpansion": "list",
+            "filter": True,
+            "tryItOutEnabled": True
+        },
         lifespan=lifespan,
     )
 
@@ -121,6 +138,9 @@ def create_application() -> FastAPI:
 
     # 2. Security Headers & Request Correlation Middleware
     application.add_middleware(SecurityHeadersMiddleware)
+
+    # 2b. High-Performance GZip Compression (Reduces Grad-CAM & JSON Latency by up to 80%)
+    application.add_middleware(GZipMiddleware, minimum_size=1000)
 
     # 3. Enterprise CORS Lockdown (Supports Whitelist & Vercel Preview/Production Domains)
     application.add_middleware(

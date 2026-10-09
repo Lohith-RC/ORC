@@ -90,7 +90,8 @@ async def lifespan(app: FastAPI):
     Base.metadata.create_all(bind=engine)
     run_safe_migrations()
     logger.info("Database schema synchronized successfully.")
-    if settings.WARMUP_ON_STARTUP:
+    onnx_int8_file = settings.BASE_DIR / "merged_model_int8.onnx"
+    if settings.WARMUP_ON_STARTUP or onnx_int8_file.exists():
         warmup_model()
     else:
         logger.info("Startup model warmup skipped (lazy loading enabled to conserve container memory).")

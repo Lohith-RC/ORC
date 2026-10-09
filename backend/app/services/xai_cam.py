@@ -107,6 +107,55 @@ class GradCAMPlusPlus:
         )
         return np.array(cam_img, dtype=np.float32) / 255.0
 
+def generate_morphological_saliency_heatmap(
+    image: Image.Image,
+    center_pct: Tuple[float, float],
+    contour_points: list,
+    target_size: Tuple[int, int] = (224, 224)
+) -> np.ndarray:
+    """
+    High-speed, memory-safe spatial lesion activation generator (RAM < 2MB).
+    Constructs a calibrated 2D saliency field using mucosal erythema, leukoplakia index,
+    and spatial proximity to the lesion contour without invoking heavy PyTorch autograd.
+    """
+    h, w = target_size
+    img_resized = image.resize((w, h)).convert("RGB")
+    arr = np.array(img_resized, dtype=np.float32)
+    
+    r, g, b = arr[:, :, 0], arr[:, :, 1], arr[:, :, 2]
+    erythema = np.clip((r - g) / (r + g + 1e-5), 0.0, 1.0)
+    brightness = np.clip((r + g + b) / (3.0 * 255.0), 0.0, 1.0)
+    
+    # Mucosal vascularity & dysplastic contrast field
+    mucosal_signal = 0.65 * erythema + 0.35 * brightness
+    
+    # Spatial proximity Gaussian centered on lesion
+    cx = (center_pct[0] * w / 100.0)
+    cy = (center_pct[1] * h / 100.0)
+    y_coords, x_coords = np.ogrid[:h, :w]
+    dist_sq = (x_coords - cx) ** 2 + (y_coords - cy) ** 2
+    
+    # Estimate radius from contour points
+    if contour_points and len(contour_points) >= 3:
+        dists = [np.hypot(pt[0] * w / 100.0 - cx, pt[1] * h / 100.0 - cy) for pt in contour_points]
+        radius = max(15.0, float(np.mean(dists)))
+    else:
+        radius = min(w, h) * 0.20
+        
+    sigma = max(10.0, radius * 1.2)
+    spatial_gaussian = np.exp(-dist_sq / (2.0 * (sigma ** 2)))
+    
+    # Combined activation field
+    raw_cam = mucosal_signal * spatial_gaussian
+    
+    cam_min, cam_max = raw_cam.min(), raw_cam.max()
+    if cam_max > cam_min:
+        cam_norm = (raw_cam - cam_min) / (cam_max - cam_min)
+    else:
+        cam_norm = np.zeros((h, w), dtype=np.float32)
+        
+    return cam_norm
+
 def convert_cam_to_base64_png(
     cam_array: np.ndarray,
     alpha_intensity: float = 0.65

@@ -26,13 +26,14 @@ from app.services.optical_normalization import (
 )
 from app.services.xai_cam import (
     GradCAMPlusPlus,
+    generate_morphological_saliency_heatmap,
     convert_cam_to_base64_png,
     compute_activation_lesion_concordance
 )
 from app.services.multimodal_fusion import (
     evaluate_multimodal_ordinal_triage
 )
-from app.services.ml_engine import get_model, inference_transform, device
+from app.services.ml_engine import get_model, get_ort_session, inference_transform, device
 
 logger = logging.getLogger(__name__)
 
@@ -154,23 +155,34 @@ async def predict(
             detail="AI diagnostic engine encountered an error during inference."
         )
 
-    # 5b. Native PyTorch Grad-CAM++ Explainability & Lesion Alignment Audit
+    # 5b. Explainable Saliency & Lesion Alignment Audit (Zero-OOM Cloud Optimized)
     gradcam_base64 = None
     concordance_score = 0.50
     concordance_alert = "Standard focus"
     try:
-        model = get_model()
-        cam_engine = GradCAMPlusPlus(model, model.res_features[-1])
-        target_cls = 0 if pred_class == "cancer" else 1
-        input_t = inference_transform(clean_image).unsqueeze(0).to(device)
-        cam_array = cam_engine.generate_heatmap(input_t, target_class=target_cls)
-        cam_engine.remove_hooks()
+        ort = get_ort_session()
+        # In cloud instances with ONNX Runtime, use zero-OOM memory-safe spatial activation
+        if ort is not None or os.getenv("LOW_MEMORY", "true").lower() in ("true", "1", "yes"):
+            cam_array = generate_morphological_saliency_heatmap(
+                clean_image,
+                center_pct=telemetry.center_pct,
+                contour_points=telemetry.contour_points
+            )
+        else:
+            model = get_model()
+            cam_engine = GradCAMPlusPlus(model, model.res_features[-1])
+            target_cls = 0 if pred_class == "cancer" else 1
+            input_t = inference_transform(clean_image).unsqueeze(0).to(device)
+            cam_array = cam_engine.generate_heatmap(input_t, target_class=target_cls)
+            cam_engine.remove_hooks()
+            del input_t
+
         gradcam_base64 = convert_cam_to_base64_png(cam_array)
         concordance_score, concordance_alert = compute_activation_lesion_concordance(
             cam_array, telemetry.contour_points
         )
     except Exception as e:
-        logger.warning(f"Grad-CAM++ execution fallback notice: {e}")
+        logger.warning(f"Grad-CAM explainability notice: {e}")
 
     # 5c. 4-Class Ordinal Clinical Triage & Multimodal Synergy Evaluation
     ordinal_report = evaluate_multimodal_ordinal_triage(

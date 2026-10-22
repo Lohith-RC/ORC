@@ -2,7 +2,7 @@
 
 **Authors:**  
 Lohith R C$^1$, Rakshith Y B$^1$, Keerthi A$^1$, and Prof. Aishwarya S$^1$  
-$^1$*Department of Computer Science & Engineering, Global Academy of Technology, Bengaluru, India*  
+$^1$*Department of Computer Science & Engineering, Kalpataru Institute of Technology, Tiptur, Tumkur District, Karnataka, India*  
 
 ---
 

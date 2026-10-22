@@ -200,3 +200,14 @@ roster-*.json
 *.tar.gz
 *.rar
 
+# Microsoft Office Lock Files
+~$*.docx
+~$*.doc
+~$*.pptx
+~$*.xlsx
+
+# External Guidelines & Temporary Generator Scripts
+docs/00.-Guidelines-for-Project-work-.pdf
+docs/*Guidelines*.pdf
+docs/update_build_vtu_docs.py
+

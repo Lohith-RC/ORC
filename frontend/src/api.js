@@ -13,6 +13,10 @@ const getApiBaseUrl = () => {
         if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
             return 'http://localhost:8000';
         }
+        if (window.location.hostname.includes('trycloudflare.com') || window.location.hostname.includes('loca.lt') || window.location.hostname.includes('ngrok')) {
+            // Tunneling to local Vite dev server: use relative URL so Vite proxies to local FastAPI backend
+            return '';
+        }
         if (window.location.protocol === 'https:') {
             return 'https://oral-cancer-backend-fiwu.onrender.com';
         }

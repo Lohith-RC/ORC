@@ -30,7 +30,41 @@ export default defineConfig({
   },
   server: {
     port: 3000,
+    host: true,
+    allowedHosts: true,
     proxy: {
+      '/predict': {
+        target: 'http://localhost:8000',
+        changeOrigin: true,
+      },
+      '/login': {
+        target: 'http://localhost:8000',
+        changeOrigin: true,
+      },
+      '/register': {
+        target: 'http://localhost:8000',
+        changeOrigin: true,
+      },
+      '/me': {
+        target: 'http://localhost:8000',
+        changeOrigin: true,
+      },
+      '/health': {
+        target: 'http://localhost:8000',
+        changeOrigin: true,
+      },
+      '/analyses': {
+        target: 'http://localhost:8000',
+        changeOrigin: true,
+      },
+      '/active-learning': {
+        target: 'http://localhost:8000',
+        changeOrigin: true,
+      },
+      '/interoperability': {
+        target: 'http://localhost:8000',
+        changeOrigin: true,
+      },
       '/api': {
         target: 'http://localhost:8000',
         changeOrigin: true,

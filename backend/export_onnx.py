@@ -34,15 +34,28 @@ def export_and_quantize():
             state_dict = torch.load(model_path, map_location="cpu", mmap=True)
         except Exception:
             state_dict = torch.load(model_path, map_location="cpu")
-        with torch.no_grad():
-            for name, param in model.named_parameters():
-                if name in state_dict:
-                    param.copy_(state_dict[name].float())
-            for name, buf in model.named_buffers():
-                if name in state_dict:
-                    buf.copy_(state_dict[name].float())
-        del state_dict
-        print("      Checkpoint loaded successfully.")
+        
+        # Remap checkpoint keys from original ensemble training schema to MergedNet schema
+        remapped_state = {}
+        for k, v in state_dict.items():
+            nk = k
+            if k.startswith("vgg16."):
+                nk = "vgg_features." + k[len("vgg16."):]
+            elif k.startswith("resnet."):
+                nk = "res_features." + k[len("resnet."):]
+            elif k.startswith("efficientnet."):
+                nk = "eff_features." + k[len("efficientnet."):]
+            elif k.startswith("mobilenet."):
+                nk = "mob_features." + k[len("mobilenet."):]
+            elif k.startswith("classifier.0."):
+                nk = "fc.1." + k[len("classifier.0."):]
+            elif k.startswith("classifier.3."):
+                nk = "fc.4." + k[len("classifier.3."):]
+            remapped_state[nk] = v
+
+        missing, unexpected = model.load_state_dict(remapped_state, strict=False)
+        del state_dict, remapped_state
+        print(f"      Trained checkpoint loaded successfully (Missing: {len(missing)}, Unexpected: {len(unexpected)}).")
     else:
         print(f"      [WARN] Checkpoint not found at {model_path}, exporting with baseline weights.")
 

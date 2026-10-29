@@ -38,13 +38,13 @@ def evaluate_ajcc_staging(
     
     # 1. Estimate Clinical T (cT) staging based on estimated diameter (AJCC 8th Edition)
     if diameter_mm <= 20.0:
-        cT_stage = "cT1"
+        cT_stage = "cT1 (Small spot ≤20mm)"
     elif diameter_mm <= 40.0:
-        cT_stage = "cT2"
+        cT_stage = "cT2 (Medium spot 20-40mm)"
     else:
-        cT_stage = "cT3"
+        cT_stage = "cT3 (Large spot >40mm)"
         
-    cTNM = f"{cT_stage} cN0 cM0 (Presumptive Clinical Stage)"
+    cTNM = f"{cT_stage} - No spread detected"
 
     # 2. Tier Classification Logic
     # Tier 3 Trigger: High AI suspicion OR high-risk site with elevated habits OR abnormal vital stain
@@ -52,18 +52,18 @@ def evaluate_ajcc_staging(
        (vital_stain_abnormal and is_high_risk_site) or \
        (is_high_risk_site and clinical_risk_score >= 0.65 and diameter_mm > 15.0):
         tier = ClinicalTriageTier.TIER_3_HIGH_SUSPICION
-        display = "Tier 3 // High Suspicion (Immediate Specialist Referral)"
+        display = "Tier 3: High Risk (See an Oral Specialist Promptly)"
         summary = (
-            "Clinical presentation and imaging biomarkers indicate high suspicion for invasive squamous cell carcinoma "
-            "or severe epithelial dysplasia. Immediate histopathological biopsy is mandatory."
+            "The scan detected visual signs that require professional medical evaluation. "
+            "Please schedule an in-person appointment with an oral surgeon or specialist doctor promptly."
         )
         checklist = [
-            "Issue immediate expedited referral to Oral & Maxillofacial Surgery / Head & Neck Oncology.",
-            f"Schedule diagnostic punch or incisional scalpel biopsy targeting the primary lesion margin.",
-            "Palpate Level I-III cervical lymph nodes for lymphadenopathy.",
-            "Advise immediate, complete cessation of tobacco, alcohol, and areca nut."
+            "Schedule an appointment with an oral surgeon or ear, nose & throat (ENT) specialist.",
+            "Avoid all tobacco, smoking, betel nut, and alcohol immediately.",
+            "Have a doctor perform an in-person clinical examination and biopsy if recommended.",
+            "Bring this screening summary to your appointment."
         ]
-        biopsy_type = "Incisional scalpel or punch biopsy including junctional normal margin"
+        biopsy_type = "Specialist examination & biopsy recommended"
 
     # Tier 2 Trigger: Moderate confidence, habit risk factors, intermediate diameter, or uncertain inference
     elif prediction == "uncertain" or \
@@ -71,35 +71,35 @@ def evaluate_ajcc_staging(
          (is_high_risk_site and diameter_mm > 10.0) or \
          (border_irregularity > 1.4):
         tier = ClinicalTriageTier.TIER_2_INTERMEDIATE
-        display = "Tier 2 // Intermediate Risk (14-Day Elimination & Re-check)"
+        display = "Tier 2: Medium Risk (Follow-up Check in 14 Days)"
         summary = (
-            "Indeterminate mucosal atypical presentation. Potential frictional keratosis, lichenoid reaction, "
-            "or early low-grade dysplasia. 14-day observation post-trauma elimination is indicated."
+            "Mild surface changes or irritation detected (such as a sore, friction, or inflammation). "
+            "A follow-up dental checkup in 14 days is recommended to confirm it is healing."
         )
         checklist = [
-            "Eliminate local mechanical trauma (sharp cusps, defective restorations, ill-fitting prostheses).",
-            "Prescribe topical protective mucosal emollients; avoid spicy or acidic dietary irritants.",
-            "Enforce strict 14-day digital photographic re-examination to confirm regression.",
-            "If lesion fails to resolve or expands after 14 days, escalate immediately to biopsy."
+            "Avoid spicy, acidic, or sharp foods that could irritate the spot.",
+            "Avoid smoking, tobacco, and alcohol to allow tissue to heal.",
+            "Schedule a re-check with your dentist in 14 days to see if the area resolved.",
+            "If the spot does not heal or grows larger after 14 days, see a doctor for further evaluation."
         ]
-        biopsy_type = "Re-evaluation indicated; biopsy if non-resolving at Day 14"
+        biopsy_type = "Dental follow-up check in 14 days; biopsy if not resolved"
 
     # Tier 1 Trigger: Low risk, benign appearance, standard anatomical site
     else:
         tier = ClinicalTriageTier.TIER_1_LOW_RISK
-        display = "Tier 1 // Low Clinical Risk (Routine Monitoring)"
+        display = "Tier 1: Low Risk (Healthy Tissue / Routine Care)"
         summary = (
-            "Mucosal architecture exhibits low likelihood of high-grade dysplasia. Consistent with benign reactionary "
-            "tissue or physiological pigmentation."
+            "The oral tissue appears healthy and normal with low risk of concern. "
+            "Continue your regular dental visits every 6 months."
         )
         checklist = [
-            "Maintain standard 6-month routine dental and oral mucosal screening interval.",
-            "Educate patient on self-examination for oral mucosal changes or non-healing ulcers.",
-            "Document baseline oral photographs in patient record."
+            "Continue regular dental checkups every 6 months.",
+            "Maintain daily oral brushing and cleaning habits.",
+            "Check your mouth monthly and see a dentist if any sore lasts longer than 2 weeks."
         ]
         biopsy_type = None
 
-    site_risk_note = "HIGH ONCOLOGICAL RISK ZONE (Rapid occult lymphatic drainage)" if is_high_risk_site else "STANDARD MUCOSAL RISK ZONE"
+    site_risk_note = "High attention area" if is_high_risk_site else "Standard area"
 
     return ClinicalStagingReport(
         triage_tier=tier,

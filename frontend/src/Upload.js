@@ -240,16 +240,16 @@ const Upload = ({ token }) => {
         phaseTimersRef.current.forEach(clearTimeout);
         phaseTimersRef.current = [];
 
-        // Simulated laboratory sequencer phases for genuine clinical feel
-        setLoadingPhase('Executing Stage I Lesion Segmentation & Spatial Morphology...');
+        // User-friendly sequencer phases
+        setLoadingPhase('Checking photo clarity and finding spot location...');
         phaseTimersRef.current.push(setTimeout(() => {
-            setLoadingPhase('Executing 8-fold Test-Time Augmentation (TTA)...');
+            setLoadingPhase('Examining tissue features from multiple angles...');
         }, 600));
         phaseTimersRef.current.push(setTimeout(() => {
-            setLoadingPhase('Computing Monte Carlo dropout variational passes (15 runs)...');
+            setLoadingPhase('Running AI accuracy and confidence checks...');
         }, 1200));
         phaseTimersRef.current.push(setTimeout(() => {
-            setLoadingPhase('Synthesizing AJCC 8th Edition cTNM Clinical Decision Directives...');
+            setLoadingPhase('Preparing your simple health summary...');
         }, 1800));
 
         const formData = new FormData();
@@ -352,7 +352,7 @@ const Upload = ({ token }) => {
                             <span className="absolute -bottom-1 -right-1 text-[10px] font-mono text-stone-400">+</span>
 
                             <div className="flex items-center justify-between font-mono text-[10px] text-stone-500 uppercase mb-3 border-b border-stone-200 dark:border-stone-800 pb-2">
-                                <span>01 // SPECIMEN CAPTURE</span>
+                                <span>01 // UPLOAD OR TAKE PHOTO</span>
                                 <div className="flex items-center gap-2">
                                     {isOffline ? (
                                         <span className="flex items-center gap-1 text-amber-600 dark:text-amber-400 font-semibold">
@@ -364,7 +364,8 @@ const Upload = ({ token }) => {
                                         </span>
                                     )}
                                 </div>
-                            </div>                            {/* Offline Vault Indicator & Sync Action */}
+                            </div>
+                            {/* Offline Vault Indicator & Sync Action */}
                             <OfflineSyncBanner
                                 offlineVaultCount={offlineVaultCount}
                                 isOffline={isOffline}
@@ -381,7 +382,7 @@ const Upload = ({ token }) => {
                                     className="w-full py-2.5 px-3 border border-clinical-teal bg-teal-50/60 dark:bg-teal-950/40 text-clinical-teal dark:text-teal-400 font-mono text-xs uppercase font-semibold flex items-center justify-center gap-2 hover:bg-clinical-teal hover:text-white dark:hover:bg-clinical-teal dark:hover:text-white transition-all shadow-xs"
                                 >
                                     <Camera className="w-4 h-4" />
-                                    <span>Launch Intraoral Video Stream (Live Viewfinder)</span>
+                                    <span>Open Live Mouth Camera</span>
                                 </button>
                             </div>
 
@@ -398,10 +399,10 @@ const Upload = ({ token }) => {
                                         <input {...getInputProps()} />
                                         <Microscope className="w-10 h-10 mx-auto text-stone-400 mb-3" />
                                         <p className="font-serif text-base text-stone-800 dark:text-stone-200 mb-1">
-                                            {isDragActive ? 'Drop oral lesion photograph...' : 'Ingest Clinical Photograph'}
+                                            {isDragActive ? 'Drop your mouth photo here...' : 'Upload Oral Photo'}
                                         </p>
                                         <p className="font-mono text-[11px] text-stone-400">
-                                            Click or drag specimen file here (JPEG, PNG, WEBP)
+                                            Click to select a photo or drag & drop (JPEG, PNG, WEBP)
                                         </p>
                                     </div>
                                 ) : (
@@ -437,19 +438,19 @@ const Upload = ({ token }) => {
                                             <CheckCircle2 className="w-4 h-4 text-clinical-teal shrink-0" />
                                         )}
                                         <span className="text-[11px] font-semibold">
-                                            {clientBlurWarning ? 'POTENTIAL BLUR DETECTED' : 'OPTICAL CLARITY VERIFIED'}
+                                            {clientBlurWarning ? 'Photo May Be Blurry' : 'Photo Is Sharp & Clear'}
                                         </span>
                                     </div>
-                                    <span className="text-[10px] opacity-80">SHARPNESS σ²: {clientSharpness.toFixed(1)} (Min 50.0)</span>
+                                    <span className="text-[10px] opacity-80">Clarity Score: {clientSharpness.toFixed(1)}</span>
                                 </div>
                             )}
                         </div>
 
-                        {/* Patient Identifier & Serial Record Link */}
+                        {/* Patient Identifier & Record ID */}
                         <div className="border border-stone-300 dark:border-stone-800 bg-stone-50 dark:bg-stone-900 p-4">
                             <div className="flex items-center justify-between font-mono text-[10px] text-stone-500 uppercase mb-2 border-b border-stone-200 dark:border-stone-800 pb-1.5">
-                                <span>PATIENT IDENTIFIER // SERIAL TRACKING</span>
-                                <span>MRN / RECORD ID</span>
+                                <span>PATIENT / RECORD IDENTIFIER</span>
+                                <span>RECORD ID</span>
                             </div>
                             <div className="flex items-center gap-2">
                                 <input
@@ -460,7 +461,7 @@ const Upload = ({ token }) => {
                                     className="w-full bg-white dark:bg-stone-950 border border-stone-300 dark:border-stone-700 px-3 py-2 font-mono text-xs text-stone-900 dark:text-stone-100 focus:outline-none focus:border-clinical-teal"
                                 />
                                 <div className="text-[10px] font-mono text-stone-400 whitespace-nowrap">
-                                    Calibrates Δ velocity
+                                    For tracking progress
                                 </div>
                             </div>
                         </div>
@@ -468,24 +469,24 @@ const Upload = ({ token }) => {
                         {/* Anatomical Lesion Site Targeting Map */}
                         <div className="border border-stone-300 dark:border-stone-800 bg-stone-50 dark:bg-stone-900 p-6">
                             <div className="flex items-center justify-between font-mono text-[10px] text-stone-500 uppercase mb-3 border-b border-stone-200 dark:border-stone-800 pb-2">
-                                <span>02 // ANATOMICAL LESION SITE</span>
-                                <span>TOPOLOGY SELECTOR</span>
+                                <span>02 // WHERE IS THE SPOT LOCATED?</span>
+                                <span>CLICK TO SELECT AREA</span>
                             </div>
                             <OralCavityMap selectedSite={selectedSite} onSelectSite={setSelectedSite} />
                         </div>
 
-                        {/* Patient Epidemiological Risk Factors */}
+                        {/* Patient Health & Lifestyle Factors */}
                         <div className="border border-stone-300 dark:border-stone-800 bg-stone-50 dark:bg-stone-900 p-6">
                             <div className="flex items-center justify-between font-mono text-[10px] text-stone-500 uppercase mb-4 border-b border-stone-200 dark:border-stone-800 pb-2">
-                                <span>03 // EPIDEMIOLOGICAL RISK PROFILE</span>
-                                <span>PRIOR WEIGHTING</span>
+                                <span>03 // HEALTH & HABITS QUESTIONNAIRE</span>
+                                <span>LIFESTYLE FACTORS</span>
                             </div>
 
                             <div className="space-y-3">
                                 {/* Age Slider */}
                                 <div className="border border-stone-200 dark:border-stone-800 p-3 bg-stone-50/50 dark:bg-stone-900/30">
                                     <div className="flex justify-between items-center mb-1 font-mono text-xs">
-                                        <span className="text-stone-700 dark:text-stone-300">PATIENT AGE:</span>
+                                        <span className="text-stone-700 dark:text-stone-300">AGE:</span>
                                         <span className="font-bold text-stone-900 dark:text-stone-100">{riskForm.age} YEARS</span>
                                     </div>
                                     <input 
@@ -496,45 +497,45 @@ const Upload = ({ token }) => {
                                         onChange={e => setRiskForm(p => ({...p, age: parseInt(e.target.value)}))}
                                         className="w-full accent-clinical-teal cursor-pointer"
                                     />
-                                    <span className="font-mono text-[9px] text-stone-400 block mt-1">Age &gt; 45 exponentially elevates oral mucosal vulnerability</span>
+                                    <span className="text-[10px] text-stone-400 block mt-1">Screening frequency is especially recommended for adults over 40</span>
                                 </div>
 
                                 <RiskFactorToggle 
-                                    label="Habitual Tobacco Usage" 
-                                    weight="+0.35 OR" 
-                                    note="Cigarettes, bidi, or chewing tobacco"
+                                    label="Tobacco Use" 
+                                    weight="Risk factor" 
+                                    note="Smoking, cigarettes, bidi, or chewing tobacco"
                                     active={riskForm.tobacco_use} 
                                     onChange={v => setRiskForm(p => ({...p, tobacco_use: v}))}
                                 />
                                 <RiskFactorToggle 
-                                    label="Frequent Alcohol Ingestion" 
-                                    weight="+0.20 OR" 
-                                    note="Synergistic co-carcinogen with tobacco"
+                                    label="Frequent Alcohol Use" 
+                                    weight="Risk factor" 
+                                    note="Regular or heavy alcohol consumption"
                                     active={riskForm.alcohol_use} 
                                     onChange={v => setRiskForm(p => ({...p, alcohol_use: v}))}
                                 />
                                 <RiskFactorToggle 
-                                    label="Betel Quid / Areca Nut Usage" 
-                                    weight="+0.30 OR" 
-                                    note="High correlation with oral submucous fibrosis"
+                                    label="Betel Nut / Paan / Gutka" 
+                                    weight="High risk" 
+                                    note="Chewing betel quid, areca nut, or gutka"
                                     active={riskForm.betel_nut} 
                                     onChange={v => setRiskForm(p => ({...p, betel_nut: v}))}
                                 />
                                 <RiskFactorToggle 
-                                    label="Prior Leukoplakia / Erythroplakia" 
-                                    weight="+0.25 OR" 
-                                    note="Pre-existing mucosal premalignancy"
+                                    label="Previous Mouth Patches or Sores" 
+                                    weight="History" 
+                                    note="Past history of long-lasting white or red spots"
                                     active={riskForm.prior_lesions} 
                                     onChange={v => setRiskForm(p => ({...p, prior_lesions: v}))}
                                 />
                             </div>
                         </div>
 
-                        {/* Optical Acquisition & Vital Dye Protocol */}
+                        {/* Camera Distance & Filter Options */}
                         <div className="border border-stone-300 dark:border-stone-800 bg-stone-50 dark:bg-stone-900 p-6">
                             <div className="flex items-center justify-between font-mono text-[10px] text-stone-500 uppercase mb-4 border-b border-stone-200 dark:border-stone-800 pb-2">
-                                <span>04 // OPTICAL PROTOCOL & MULTIMODAL DYE</span>
-                                <span>STAGE I TELEMETRY</span>
+                                <span>04 // CAMERA & SPECIAL OPTIONS</span>
+                                <span>OPTIONAL</span>
                             </div>
 
                             <div className="space-y-4">
@@ -548,12 +549,12 @@ const Upload = ({ token }) => {
                                     }`}
                                 >
                                     <div className="flex flex-col">
-                                        <span className="text-xs font-mono font-medium text-stone-900 dark:text-stone-100 flex items-center gap-1.5">
+                                        <span className="text-xs font-sans font-medium text-stone-900 dark:text-stone-100 flex items-center gap-1.5">
                                             <Layers className="w-3.5 h-3.5 text-indigo-500" />
-                                            Cross-Polarized Lens Ingestion
+                                            Anti-Glare Filter Mode
                                         </span>
-                                        <span className="text-[10px] text-stone-400 font-mono mt-0.5">
-                                            Suppresses surface glare & specular artifacts
+                                        <span className="text-[10px] text-stone-400 mt-0.5">
+                                            Reduces saliva and flash reflections
                                         </span>
                                     </div>
                                     <div className={`w-9 h-5 rounded-full p-0.5 transition-colors ${crossPolarized ? 'bg-indigo-600' : 'bg-stone-300 dark:bg-stone-700'}`}>
@@ -561,12 +562,12 @@ const Upload = ({ token }) => {
                                     </div>
                                 </div>
 
-                                {/* Calibrated Distance Slider */}
+                                {/* Distance Slider */}
                                 <div className="border border-stone-200 dark:border-stone-800 p-3 bg-stone-50/50 dark:bg-stone-900/30">
                                     <div className="flex justify-between items-center mb-1 font-mono text-xs">
-                                        <span className="text-stone-700 dark:text-stone-300 flex items-center gap-1.5">
+                                        <span className="text-stone-700 dark:text-stone-300 flex items-center gap-1.5 font-sans">
                                             <Sliders className="w-3.5 h-3.5 text-clinical-teal" />
-                                            FOCAL DISTANCE:
+                                            CAMERA DISTANCE:
                                         </span>
                                         <span className="font-bold text-stone-900 dark:text-stone-100">{distanceMm} MM</span>
                                     </div>
@@ -579,24 +580,24 @@ const Upload = ({ token }) => {
                                         onChange={e => setDistanceMm(parseFloat(e.target.value))}
                                         className="w-full accent-clinical-teal cursor-pointer"
                                     />
-                                    <span className="font-mono text-[9px] text-stone-400 block mt-1">Calibrates spatial pixel-to-millimeter scaling ratio</span>
+                                    <span className="text-[10px] text-stone-400 block mt-1">Approximate distance from camera to mouth (usually ~50 mm)</span>
                                 </div>
 
                                 {/* Vital Stain / Autofluorescence Ingestion */}
                                 <div className="border border-stone-200 dark:border-stone-800 p-3 bg-stone-50/50 dark:bg-stone-900/30">
-                                    <div className="font-mono text-xs font-medium text-stone-800 dark:text-stone-200 mb-1 flex items-center justify-between">
-                                        <span>SECONDARY DYE CHANNEL (OPTIONAL):</span>
+                                    <div className="text-xs font-medium text-stone-800 dark:text-stone-200 mb-1 flex items-center justify-between">
+                                        <span>SPECIAL DYE / LIGHT SCAN (OPTIONAL):</span>
                                         {vitalFile && (
                                             <button 
                                                 onClick={() => { setVitalFile(null); setVitalPreview(null); }}
-                                                className="text-[10px] text-red-500 font-mono hover:underline"
+                                                className="text-[10px] text-red-500 hover:underline font-mono"
                                             >
                                                 Clear
                                             </button>
                                         )}
                                     </div>
-                                    <p className="text-[10px] text-stone-400 font-mono mb-2">
-                                        Upload Toluidine Blue or VELscope autofluorescence image
+                                    <p className="text-[10px] text-stone-400 mb-2">
+                                        Upload Toluidine Blue or special light scan if taken by doctor
                                     </p>
                                     
                                     {!vitalPreview ? (
@@ -607,12 +608,12 @@ const Upload = ({ token }) => {
                                                 className="hidden" 
                                                 onChange={handleVitalFileChange} 
                                             />
-                                            <span className="font-mono text-[10px] text-clinical-teal uppercase">
-                                                + Attach Vital Stain Specimen
+                                            <span className="text-[11px] text-clinical-teal font-medium">
+                                                + Attach Dye / Light Photo
                                             </span>
                                         </label>
                                     ) : (
-                                        <div className="flex items-center gap-2 p-2 border border-teal-500/40 bg-teal-500/10 font-mono text-[10px] text-teal-700 dark:text-teal-300">
+                                        <div className="flex items-center gap-2 p-2 border border-teal-500/40 bg-teal-500/10 text-[11px] text-teal-700 dark:text-teal-300">
                                             <span className="w-2 h-2 bg-teal-500 rounded-full"></span>
                                             <span>Attached: {vitalFile?.name}</span>
                                         </div>
@@ -626,7 +627,7 @@ const Upload = ({ token }) => {
                             <div className="space-y-2">
                                 <button
                                     onClick={handleUpload}
-                                    className={`w-full py-4 text-sm font-mono tracking-wider uppercase font-semibold transition-all shadow-lg flex items-center justify-center gap-2 ${
+                                    className={`w-full py-3.5 text-sm font-sans tracking-wide uppercase font-semibold transition-all shadow-md flex items-center justify-center gap-2 ${
                                         isOffline
                                             ? 'bg-amber-600 hover:bg-amber-700 text-white'
                                             : 'bg-stone-900 dark:bg-stone-100 text-stone-100 dark:text-stone-900 hover:bg-clinical-teal dark:hover:bg-clinical-teal dark:hover:text-white'
@@ -635,11 +636,11 @@ const Upload = ({ token }) => {
                                     {isOffline ? (
                                         <>
                                             <HardDrive className="w-4 h-4" />
-                                            <span>Save to Offline Clinical Vault (Offline Active)</span>
+                                            <span>Save Scan Offline (No Connection)</span>
                                         </>
                                     ) : (
                                         <>
-                                            <span>Run Multi-Model Triage Synthesis</span>
+                                            <span>Analyze Photo Now</span>
                                             <ArrowRight className="w-4 h-4" />
                                         </>
                                     )}
@@ -649,10 +650,10 @@ const Upload = ({ token }) => {
                                     <button
                                         type="button"
                                         onClick={handleSaveOffline}
-                                        className="w-full py-2.5 border border-stone-300 dark:border-stone-700 bg-stone-50 dark:bg-stone-900 hover:bg-stone-100 dark:hover:bg-stone-800 text-stone-700 dark:text-stone-300 font-mono text-xs uppercase font-medium flex items-center justify-center gap-2 transition-colors"
+                                        className="w-full py-2.5 border border-stone-300 dark:border-stone-700 bg-stone-50 dark:bg-stone-900 hover:bg-stone-100 dark:hover:bg-stone-800 text-stone-700 dark:text-stone-300 text-xs font-sans font-medium flex items-center justify-center gap-2 transition-colors"
                                     >
                                         <HardDrive className="w-3.5 h-3.5" />
-                                        <span>Save to Local Vault for Batch Sync Later</span>
+                                        <span>Save for Later (Offline Vault)</span>
                                     </button>
                                 )}
                             </div>
@@ -681,7 +682,7 @@ const Upload = ({ token }) => {
                                 {/* Docket Stamp Header */}
                                 <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 pb-6 border-b border-stone-200 dark:border-stone-800 font-mono text-xs">
                                     <div>
-                                        <div className="text-[10px] text-stone-400 uppercase">OFFICIAL CLINICAL TRIAGE REPORT</div>
+                                        <div className="text-[10px] text-stone-400 uppercase">Screening Report Summary</div>
                                         <div className="font-bold text-stone-900 dark:text-stone-100 text-sm">{specimenId}</div>
                                     </div>
                                     <div className="flex items-center gap-2">
@@ -695,14 +696,14 @@ const Upload = ({ token }) => {
                                             }`}
                                         >
                                             <Microscope className="w-3.5 h-3.5" />
-                                            <span>{result.biopsy_proven ? 'BIOPSY VERIFIED' : 'VERIFY GROUND TRUTH'}</span>
+                                            <span>{result.biopsy_proven ? 'VERIFIED BY DOCTOR' : 'DOCTOR VERIFICATION'}</span>
                                         </button>
                                         <button 
                                             onClick={handleDownload}
                                             className="px-3 py-1.5 border border-stone-300 dark:border-stone-700 hover:bg-stone-100 dark:hover:bg-stone-800 text-stone-700 dark:text-stone-300 text-xs font-mono flex items-center gap-1.5 transition-colors"
                                         >
                                             <Download className="w-3.5 h-3.5" />
-                                            <span>EXPORT PDF</span>
+                                            <span>DOWNLOAD PDF</span>
                                         </button>
                                         <button
                                             type="button"
@@ -710,7 +711,7 @@ const Upload = ({ token }) => {
                                             className="px-3 py-1.5 border border-stone-800 dark:border-stone-200 bg-stone-900 dark:bg-stone-100 text-white dark:text-stone-900 text-xs font-mono font-semibold flex items-center gap-1.5 hover:bg-clinical-teal dark:hover:bg-clinical-teal dark:hover:text-white transition-colors"
                                         >
                                             <FileText className="w-3.5 h-3.5" />
-                                            <span>REFERRAL & FHIR</span>
+                                            <span>DOCTOR REFERRAL</span>
                                         </button>
                                     </div>
                                 </div>
@@ -718,37 +719,37 @@ const Upload = ({ token }) => {
                                 {/* Primary Verdict Stamp */}
                                 <div className="my-6">
                                     {result.prediction.toLowerCase() === 'cancer' ? (
-                                        <div className="border-2 border-clinical-terracotta bg-red-50/50 dark:bg-red-950/20 p-5">
+                                        <div className="border-2 border-rose-500 bg-red-50/50 dark:bg-red-950/20 p-5">
                                             <div className="flex items-center gap-3">
-                                                <ShieldAlert className="w-7 h-7 text-clinical-terracotta flex-shrink-0" />
+                                                <ShieldAlert className="w-7 h-7 text-rose-600 flex-shrink-0" />
                                                 <div>
-                                                    <span className="font-mono text-[10px] text-clinical-terracotta tracking-widest uppercase block">
-                                                        CLASSIFICATION VERDICT // HIGH SUSPICION
+                                                    <span className="font-mono text-[10px] text-rose-600 tracking-widest uppercase block">
+                                                        Screening Result // High Risk Notice
                                                     </span>
-                                                    <h2 className="font-serif text-2xl sm:text-3xl text-clinical-terracotta font-medium">
-                                                        Presumptive OSCC Malignancy
+                                                    <h2 className="font-serif text-2xl sm:text-3xl text-rose-600 font-medium">
+                                                        High Risk: Possible Oral Cancer
                                                     </h2>
                                                 </div>
                                             </div>
                                             <p className="font-sans text-xs text-stone-700 dark:text-stone-300 mt-3 font-normal leading-relaxed">
-                                                Tissue features correlate strongly with Oral Squamous Cell Carcinoma. Prompt histological biopsy and specialist maxillofacial or oncological referral is indicated.
+                                                The scan detected visual signs that require professional evaluation by a dentist or oral specialist. Please schedule an in-person clinical checkup promptly.
                                             </p>
                                         </div>
                                     ) : result.prediction.toLowerCase() === 'uncertain' ? (
-                                        <div className="border-2 border-clinical-ochre bg-amber-50/50 dark:bg-amber-950/20 p-5">
+                                        <div className="border-2 border-amber-500 bg-amber-50/50 dark:bg-amber-950/20 p-5">
                                             <div className="flex items-center gap-3">
-                                                <HelpCircle className="w-7 h-7 text-clinical-ochre flex-shrink-0" />
+                                                <HelpCircle className="w-7 h-7 text-amber-600 flex-shrink-0" />
                                                 <div>
-                                                    <span className="font-mono text-[10px] text-clinical-ochre tracking-widest uppercase block">
-                                                        VARIANCE WARNING // INCONCLUSIVE INFERENCE
+                                                    <span className="font-mono text-[10px] text-amber-600 tracking-widest uppercase block">
+                                                        Screening Notice // Inconclusive Scan
                                                     </span>
-                                                    <h2 className="font-serif text-2xl sm:text-3xl text-clinical-ochre font-medium">
-                                                        Uncertain Classification (σ² &gt; 0.015)
+                                                    <h2 className="font-serif text-2xl sm:text-3xl text-amber-600 font-medium">
+                                                        Uncertain Result — Please Retake Photo
                                                     </h2>
                                                 </div>
                                             </div>
                                             <p className="font-sans text-xs text-stone-700 dark:text-stone-300 mt-3 font-normal leading-relaxed">
-                                                Model disagreement across Monte Carlo perturbation passes exceeds safe clinical thresholds. Re-capture photograph under uniform lighting or conduct direct clinical examination.
+                                                The photo lighting or camera angle made it difficult for the AI to reach a confident conclusion. Please take another photo with bright, steady lighting or have a dentist take a look.
                                             </p>
                                         </div>
                                     ) : (
@@ -757,33 +758,33 @@ const Upload = ({ token }) => {
                                                 <ShieldCheck className="w-7 h-7 text-clinical-teal dark:text-teal-400 flex-shrink-0" />
                                                 <div>
                                                     <span className="font-mono text-[10px] text-clinical-teal dark:text-teal-400 tracking-widest uppercase block">
-                                                        CLASSIFICATION VERDICT // BENIGN / NORMAL
+                                                        Screening Result // Low Risk / Normal
                                                     </span>
                                                     <h2 className="font-serif text-2xl sm:text-3xl text-clinical-teal dark:text-teal-400 font-medium">
-                                                        Non-Malignant Mucosa
+                                                        Healthy Oral Tissue (Low Risk)
                                                     </h2>
                                                 </div>
                                             </div>
                                             <p className="font-sans text-xs text-stone-700 dark:text-stone-300 mt-3 font-normal leading-relaxed">
-                                                No high-confidence dysplasia or carcinomatous biomarkers detected. Maintain regular oral health screening interval.
+                                                No signs of oral cancer detected. The tissue appears healthy. Keep up with your regular dental checkups every 6 months.
                                             </p>
                                         </div>
                                     )}
                                 </div>
 
-                                {/* Anatomical Site & Metastatic Staging Ribbon */}
+                                {/* Anatomical Site & Location Ribbon */}
                                 <div className="my-4 p-4 border border-stone-200 dark:border-stone-800 bg-stone-50/80 dark:bg-stone-950/60 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                                     <div className="flex items-start gap-3">
                                         <div className="p-2 border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-900 text-clinical-teal">
                                             <MapPin className="w-4 h-4" />
                                         </div>
                                         <div>
-                                            <div className="font-mono text-[10px] text-stone-400 uppercase">ANATOMICAL LESION SITE</div>
+                                            <div className="font-mono text-[10px] text-stone-400 uppercase">Location in Mouth</div>
                                             <div className="font-serif text-base sm:text-lg font-medium text-stone-900 dark:text-stone-100">
-                                                {result.lesion_site_display || ORAL_SITES.find(s => s.id === selectedSite)?.label || 'Buccal Mucosa'}
+                                                {result.lesion_site_display || ORAL_SITES.find(s => s.id === selectedSite)?.label || 'Buccal Mucosa (Inner Cheek)'}
                                             </div>
                                             <div className="font-sans text-xs text-stone-500 mt-0.5">
-                                                Metastatic Propensity: <span className="font-medium text-stone-700 dark:text-stone-300">{result.metastatic_propensity || 'Standard regional drainage'}</span>
+                                                Spread Risk: <span className="font-medium text-stone-700 dark:text-stone-300">{result.metastatic_propensity || 'Standard / Low'}</span>
                                             </div>
                                         </div>
                                     </div>
@@ -798,13 +799,13 @@ const Upload = ({ token }) => {
                                     </div>
                                 </div>
 
-                                {/* 4-Class Ordinal Pathology Spectrum & Clinical Triage */}
+                                {/* Category Breakdown & Risk Details */}
                                 {result.ordinal_triage && (
                                     <div className="my-5 border border-stone-300 dark:border-stone-800 bg-white dark:bg-stone-900/90 p-5 shadow-sm">
                                         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-stone-200 dark:border-stone-800">
                                             <div>
-                                                <span className="font-mono text-[10px] text-rose-500 uppercase tracking-widest font-semibold block">
-                                                    WHO PATHOLOGICAL SPECTRUM // 4-CLASS ORDINAL TRIAGE
+                                                <span className="font-mono text-[10px] text-teal-600 dark:text-teal-400 uppercase tracking-widest font-semibold block">
+                                                    Category Breakdown & Risk Details
                                                 </span>
                                                 <h3 className="font-serif text-lg font-medium text-stone-900 dark:text-stone-100">
                                                     {result.ordinal_triage.metadata?.label || result.ordinal_triage.predicted_class.toUpperCase()}
@@ -818,7 +819,7 @@ const Upload = ({ token }) => {
                                                         ? 'bg-amber-500/15 border-amber-500/40 text-amber-600 dark:text-amber-400'
                                                         : 'bg-teal-500/15 border-teal-500/40 text-teal-600 dark:text-teal-400'
                                                 }`}>
-                                                    URGENCY: {result.ordinal_triage.triage_urgency}
+                                                    Priority: {result.ordinal_triage.triage_urgency}
                                                 </span>
                                             </div>
                                         </div>
@@ -826,7 +827,7 @@ const Upload = ({ token }) => {
                                         {/* Severity Gauge Slider */}
                                         <div className="my-4">
                                             <div className="flex justify-between items-center text-[10px] font-mono text-stone-500 mb-1.5">
-                                                <span>ORDINAL SEVERITY CONTINUUM:</span>
+                                                <span>Risk Scale (0 = Healthy, 3 = High Risk):</span>
                                                 <span className="font-bold text-stone-800 dark:text-stone-200">
                                                     Score: {result.ordinal_triage.ordinal_severity_score} / 3.0
                                                 </span>
@@ -845,9 +846,9 @@ const Upload = ({ token }) => {
                                             </div>
                                             <div className="flex justify-between text-[9px] font-mono text-stone-400 mt-1">
                                                 <span>0.0 (Normal)</span>
-                                                <span>1.0 (Benign)</span>
-                                                <span>2.0 (OPMD Pre-Malignant)</span>
-                                                <span>3.0 (OSCC Malignant)</span>
+                                                <span>1.0 (Harmless)</span>
+                                                <span>2.0 (Pre-Cancer Risk)</span>
+                                                <span>3.0 (High Risk)</span>
                                             </div>
                                         </div>
 
@@ -855,13 +856,24 @@ const Upload = ({ token }) => {
                                         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 my-3 font-mono text-xs">
                                             {Object.entries(result.ordinal_triage.class_probabilities || {}).map(([cName, prob]) => {
                                                 const isHighest = cName === result.ordinal_triage.predicted_class;
+                                                const friendlyName = {
+                                                    'normal': 'Normal',
+                                                    'benign': 'Harmless',
+                                                    'opmd': 'Pre-Cancer',
+                                                    'malignant': 'High Risk',
+                                                    'Normal': 'Normal',
+                                                    'Benign': 'Harmless',
+                                                    'OPMD': 'Pre-Cancer',
+                                                    'Cancer': 'High Risk'
+                                                }[cName] || cName;
+
                                                 return (
                                                     <div key={cName} className={`p-2.5 border ${
                                                         isHighest 
                                                             ? 'border-stone-800 dark:border-stone-200 bg-stone-100 dark:bg-stone-800' 
                                                             : 'border-stone-200 dark:border-stone-800/80 bg-stone-50/60 dark:bg-stone-950/40'
                                                     }`}>
-                                                        <div className="text-[9px] text-stone-500 uppercase tracking-wider">{cName}</div>
+                                                        <div className="text-[9px] text-stone-500 uppercase tracking-wider">{friendlyName}</div>
                                                         <div className="text-sm font-bold text-stone-900 dark:text-stone-100 mt-0.5">
                                                             {(prob * 100).toFixed(1)}%
                                                         </div>
@@ -871,9 +883,9 @@ const Upload = ({ token }) => {
                                         </div>
 
                                         {/* Specific Clinical Recall Directive */}
-                                        <div className="p-3 mt-3 bg-stone-100/70 dark:bg-stone-950/80 border-l-2 border-rose-500 font-mono text-[11px] text-stone-700 dark:text-stone-300">
-                                            <span className="font-bold text-rose-600 dark:text-rose-400 uppercase block text-[10px]">
-                                                CLINICAL ACTION DIRECTIVE:
+                                        <div className="p-3 mt-3 bg-stone-100/70 dark:bg-stone-950/80 border-l-2 border-teal-500 font-mono text-[11px] text-stone-700 dark:text-stone-300">
+                                            <span className="font-bold text-teal-600 dark:text-teal-400 uppercase block text-[10px]">
+                                                Recommended Next Step:
                                             </span>
                                             <span>{result.ordinal_triage.clinical_directive}</span>
                                         </div>
@@ -896,12 +908,12 @@ const Upload = ({ token }) => {
                                     <LongitudinalProgressionCard trajectory={result.longitudinal_trajectory} />
                                 )}
 
-                                {/* AJCC 8th Edition Clinical Staging & Decision Support */}
+                                {/* Clinical Summary & Staging */}
                                 {result.clinical_staging && (
                                     <div className="border border-stone-300 dark:border-stone-800 bg-stone-50 dark:bg-stone-950/60 p-6 my-5">
                                         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-stone-200 dark:border-stone-800">
                                             <div>
-                                                <div className="text-[10px] font-mono text-stone-400 uppercase">AJCC 8TH EDITION CLINICAL TRIAGE</div>
+                                                <div className="text-[10px] font-mono text-stone-400 uppercase">Clinical Summary & Staging</div>
                                                 <div className="font-serif text-lg font-medium text-stone-900 dark:text-stone-100">
                                                     {result.clinical_staging.triage_tier_display}
                                                 </div>
@@ -919,14 +931,14 @@ const Upload = ({ token }) => {
                                             <div className="p-3 mb-4 bg-teal-50/70 dark:bg-teal-950/30 border border-clinical-teal/40 font-mono text-xs text-stone-800 dark:text-stone-200 flex items-start gap-2.5">
                                                 <Stethoscope className="w-4 h-4 text-clinical-teal flex-shrink-0 mt-0.5" />
                                                 <div>
-                                                    <span className="font-bold text-clinical-teal uppercase block text-[10px]">Diagnostic Biopsy Directives:</span>
+                                                    <span className="font-bold text-clinical-teal uppercase block text-[10px]">Doctor Recommendation:</span>
                                                     <span>{result.clinical_staging.recommended_biopsy_type}</span>
                                                 </div>
                                             </div>
                                         )}
 
                                         <div className="mt-4">
-                                            <div className="text-[10px] font-mono text-stone-400 uppercase mb-2">CLINICAL ACTION CHECKLIST</div>
+                                            <div className="text-[10px] font-mono text-stone-400 uppercase mb-2">What You Should Do</div>
                                             <div className="space-y-2">
                                                 {result.clinical_staging.action_checklist.map((item, idx) => (
                                                     <div key={idx} className="flex items-start gap-2.5 p-2.5 bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 font-sans text-xs text-stone-800 dark:text-stone-200">
@@ -946,30 +958,30 @@ const Upload = ({ token }) => {
                                     prediction={result.prediction}
                                 />
 
-                                {/* Multimodal Telemetry Metrics */}
+                                {/* Simple Summary Metrics Grid */}
                                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 py-4 border-y border-stone-200 dark:border-stone-800 font-mono text-xs">
                                     <div>
-                                        <span className="text-[9px] text-stone-400 block uppercase">Confidence</span>
+                                        <span className="text-[9px] text-stone-400 block uppercase">AI Confidence</span>
                                         <span className="font-bold text-stone-900 dark:text-stone-100 text-sm">
                                             {(result.confidence * 100).toFixed(1)}%
                                         </span>
                                     </div>
                                     <div>
-                                        <span className="text-[9px] text-stone-400 block uppercase">Risk Score</span>
+                                        <span className="text-[9px] text-stone-400 block uppercase">Lifestyle Risk</span>
                                         <span className="font-bold text-stone-900 dark:text-stone-100 text-sm">
                                             {(result.clinical_risk_score * 100).toFixed(0)} / 100
                                         </span>
                                     </div>
                                     <div>
-                                        <span className="text-[9px] text-stone-400 block uppercase">TTA Passes</span>
+                                        <span className="text-[9px] text-stone-400 block uppercase">AI Scan Passes</span>
                                         <span className="font-bold text-stone-900 dark:text-stone-100 text-sm">
                                             {result.tta_passes}-Fold
                                         </span>
                                     </div>
                                     <div>
-                                        <span className="text-[9px] text-stone-400 block uppercase">Image Quality</span>
+                                        <span className="text-[9px] text-stone-400 block uppercase">Photo Clarity</span>
                                         <span className={`font-bold text-sm ${result.image_quality === 'acceptable' ? 'text-emerald-500' : 'text-amber-500'}`}>
-                                            {result.image_quality.toUpperCase()}
+                                            {result.image_quality === 'acceptable' ? 'GOOD' : 'FAIR'}
                                         </span>
                                     </div>
                                 </div>
@@ -977,13 +989,13 @@ const Upload = ({ token }) => {
                                 {result.clinical_alert && (
                                     <div className="mt-4 p-3 bg-amber-50 dark:bg-amber-950/20 border border-amber-300 dark:border-amber-800 text-amber-800 dark:text-amber-300 font-mono text-[11px] flex items-center gap-2">
                                         <AlertTriangle className="w-4 h-4 flex-shrink-0" />
-                                        <span>EPIDEMIOLOGICAL ALERT: Patient risk score exceeds 0.60 threshold due to habitual tobacco/betel nut usage.</span>
+                                        <span>Health Notice: Elevated lifestyle risk score detected based on questionnaire responses.</span>
                                     </div>
                                 )}
 
                                 {/* Legal & Clinical Disclaimer */}
-                                <p className="font-mono text-[9px] text-stone-400 dark:text-stone-500 mt-6 leading-relaxed uppercase">
-                                    DISCLAIMER: This report is an assistive clinical screening metric generated by neural network ensemble inference. It does not constitute a definitive medical diagnosis. In all cases of persistent oral lesions, clinical biopsy and histopathological verification remain mandatory.
+                                <p className="font-sans text-[10px] text-stone-500 dark:text-stone-400 mt-6 leading-relaxed">
+                                    DISCLAIMER: This screening tool is an AI-powered assistant designed for early detection support. It does not provide a definitive medical diagnosis. For any persistent mouth sores, white or red patches, or pain lasting over two weeks, please consult a dentist or doctor for an in-person checkup.
                                 </p>
                             </div>
                         ) : (

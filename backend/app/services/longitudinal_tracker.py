@@ -56,10 +56,10 @@ def compute_longitudinal_delta(
             current_border_irregularity=round(current_irregularity, 2),
             current_contour_points=current_contour,
             trajectory_status=TrajectoryStatus.BASELINE_INITIAL,
-            trajectory_status_display="Baseline Index Encounter",
+            trajectory_status_display="First Scan (Baseline)",
             clinical_directive=(
-                "First documented digital optical record for this anatomical lesion site. "
-                "Baseline geometry and margin coordinates stored for longitudinal surveillance."
+                "This is your first saved scan for this area. "
+                "It will be used as a reference to track any changes in future checkups."
             )
         )
 
@@ -100,36 +100,34 @@ def compute_longitudinal_delta(
     # Rapid expansion: >15% expansion or velocity > 0.40 mm2/day or diameter expansion > 3mm
     if pct_change >= 15.0 or velocity_per_day >= 0.40 or delta_diam >= 3.0:
         status = TrajectoryStatus.RAPID_EXPANSION_CRITICAL
-        display = "CRITICAL // Rapid Mucosal Lesion Expansion"
+        display = "Notice: Spot Has Grown Noticeably"
         directive = (
-            f"Lesion area has expanded by {pct_change}% (+{delta_area} mm²) at a velocity of {velocity_per_day} mm²/day over {elapsed_days} days. "
-            "Rapid dimensional expansion strongly signals active malignant transformation. "
-            "Immediate surgical biopsy escalation is mandatory."
+            f"The spot has grown by {pct_change}% (+{delta_area} mm²) over {elapsed_days} days. "
+            "Because it is expanding, please consult a dentist or doctor promptly for an in-person checkup."
         )
     # Regression: >10% area decrease
     elif pct_change <= -10.0 or delta_diam <= -2.0:
         status = TrajectoryStatus.REGRESSION_RESOLVING
-        display = "POSITIVE // Lesion Regression Observed"
+        display = "Positive: Spot Is Shrinking / Healing"
         directive = (
-            f"Lesion has contracted by {abs(pct_change)}% (-{abs(delta_area)} mm²) over {elapsed_days} days. "
-            "Suggestive of resolving inflammatory response or healing post-irritant removal. "
-            "Continue conservative observation until complete epithelial clearance."
+            f"The spot decreased in size by {abs(pct_change)}% (-{abs(delta_area)} mm²) over {elapsed_days} days, "
+            "showing positive signs of normal healing. Continue maintaining good oral care."
         )
     # Indolent expansion: 5% to 15%
     elif pct_change >= 5.0:
         status = TrajectoryStatus.INDOLENT_EXPANSION
-        display = "ELEVATED // Indolent Low-Grade Expansion"
+        display = "Notice: Slight Increase in Spot Size"
         directive = (
-            f"Mild area increase of {pct_change}% (+{delta_area} mm²) observed over {elapsed_days} days. "
-            "Progressive non-healing lesion warrants 7-day follow-up or incisional diagnostic sampling."
+            f"The spot slightly increased in area by {pct_change}% (+{delta_area} mm²) over {elapsed_days} days. "
+            "A follow-up visit with a dentist in 7 to 14 days is recommended."
         )
     # Stable persistence: within +/- 5%
     else:
         status = TrajectoryStatus.STABLE_PERSISTENCE
-        display = "STABLE // Static Mucosal Architecture"
+        display = "Stable: No Noticeable Change in Size"
         directive = (
-            f"Lesion dimensions are unchanged ({pct_change}%, {delta_area} mm² delta) over {elapsed_days} days. "
-            "Persistent static leukoplakia/erythroplakia requires continued histological vigilance."
+            f"The spot dimensions are unchanged ({pct_change}%) over {elapsed_days} days. "
+            "Continue with your regular dental checkups."
         )
 
     return LongitudinalDelta(

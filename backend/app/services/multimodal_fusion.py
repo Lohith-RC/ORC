@@ -10,31 +10,31 @@ ORDINAL_CLASSES = ["normal", "benign", "opmd", "malignant"]
 
 ORDINAL_CLASS_METADATA = {
     "normal": {
-        "label": "Healthy / Normal Mucosa",
-        "description": "Intact physiological oral mucosa without architectural or cytological atypia.",
+        "label": "Healthy / Normal Tissue",
+        "description": "Healthy oral tissue with no suspicious changes detected.",
         "triage_urgency": "ROUTINE",
-        "recall_interval": "6-12 Months (Routine Checkup)",
+        "recall_interval": "Regular 6-12 month dental checkup",
         "color_tier": "emerald"
     },
     "benign": {
-        "label": "Benign / Reactive Inflammatory Lesion",
-        "description": "Focal reactive or inflammatory changes (aphthous ulcer, traumatic keratosis, morsicatio). Low dysplastic risk.",
+        "label": "Harmless / Mild Irritation",
+        "description": "Minor surface irritation or common sore (like a cheek bite or aphthous ulcer). Very low risk.",
         "triage_urgency": "MONITOR",
-        "recall_interval": "14-Day Re-evaluation post-irritant elimination",
+        "recall_interval": "Check again in 14 days if irritation continues",
         "color_tier": "teal"
     },
     "opmd": {
-        "label": "Oral Potentially Malignant Disorder (OPMD)",
-        "description": "Pre-malignant clinical entity (Leukoplakia, Erythroplakia, Oral Submucous Fibrosis) requiring histopathological grading.",
+        "label": "Pre-Cancer Risk Spot",
+        "description": "A noticeable white or red patch that should be evaluated by a dentist to prevent complications.",
         "triage_urgency": "ELEVATED",
-        "recall_interval": "Immediate Incisional Biopsy & Tobacco/Areca Cessation",
+        "recall_interval": "Schedule an in-person checkup with a dentist or doctor",
         "color_tier": "amber"
     },
     "malignant": {
-        "label": "Malignant Oral Squamous Cell Carcinoma (OSCC)",
-        "description": "High-suspicion invasive carcinoma with structural breach, marked architectural atypia, or atypical neo-vascularity.",
+        "label": "High Risk (Possible Cancer)",
+        "description": "Suspicious tissue change that requires prompt evaluation by an oral specialist.",
         "triage_urgency": "CRITICAL",
-        "recall_interval": "Urgent Maxillofacial Oncology Staging within 72h",
+        "recall_interval": "See an oral surgeon or specialist doctor promptly",
         "color_tier": "rose"
     }
 }

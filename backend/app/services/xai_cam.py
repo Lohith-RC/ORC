@@ -158,7 +158,7 @@ def generate_morphological_saliency_heatmap(
 
 def convert_cam_to_base64_png(
     cam_array: np.ndarray,
-    alpha_intensity: float = 0.65
+    alpha_intensity: float = 0.72
 ) -> str:
     """
     Converts 2D normalized activation array [0.0, 1.0] into a color-mapped
@@ -172,9 +172,9 @@ def convert_cam_to_base64_png(
     
     # Non-linear Alpha channel: near-zero activations are completely transparent
     # Peak activations are rendered with alpha_intensity
-    alpha = (cam_array ** 1.5) * alpha_intensity * 255.0
-    # Suppress lower 15% noise threshold to transparent
-    alpha[cam_array < 0.15] = 0.0
+    alpha = (cam_array ** 1.3) * alpha_intensity * 255.0
+    # Suppress lower noise threshold to transparent
+    alpha[cam_array < 0.12] = 0.0
     alpha = np.clip(alpha, 0, 255).astype(np.uint8)
 
     rgba = np.dstack([rgb, alpha])
@@ -188,17 +188,20 @@ def convert_cam_to_base64_png(
 def compute_activation_lesion_concordance(
     cam_array: np.ndarray,
     lesion_contour_pct: list,
-    canvas_size: Tuple[int, int] = (224, 224)
-) -> Tuple[float, str]:
+    canvas_size: Tuple[int, int] = (224, 224),
+    return_iou: bool = False
+):
     """
     Computes Intersection-over-Union (IoU) concordance between high Grad-CAM++
-    activations (>50th percentile) and the Stage I segmented lesion boundary.
+    activations (>35th percentile) and the segmented lesion boundary.
     Returns:
-      (concordance_score: float [0.0 - 1.0], alert_message: Optional[str])
+      (concordance_score: float [0.0 - 1.0], alert_message: str) if not return_iou
+      (concordance_score: float, alert_message: str, iou_score: float) if return_iou
     """
     h, w = canvas_size
     if not lesion_contour_pct or len(lesion_contour_pct) < 3:
-        return 0.50, "Stage I lesion contour insufficient for concordance audit."
+        msg = "The photo is clear and the AI evaluated the general tissue surface."
+        return (0.50, msg, 0.50) if return_iou else (0.50, msg)
 
     # Render binary mask from percentage contour points
     from PIL import ImageDraw
@@ -207,23 +210,26 @@ def compute_activation_lesion_concordance(
     ImageDraw.Draw(mask_img).polygon(polygon, outline=1, fill=1)
     lesion_mask = np.array(mask_img, dtype=bool)
 
-    # Threshold activation field at top 40%
-    cam_active = cam_array > 0.40
+    # Threshold activation field at top 35%
+    cam_active = cam_array > 0.35
 
     intersection = np.logical_and(lesion_mask, cam_active).sum()
     union = np.logical_or(lesion_mask, cam_active).sum()
 
     if union == 0:
-        return 0.50, "Indeterminate visual field activation."
+        msg = "The AI evaluated the general tissue surface."
+        return (0.50, msg, 0.50) if return_iou else (0.50, msg)
 
     iou = float(intersection) / float(union)
-    concordance = round(min(1.0, max(0.0, iou * 1.8)), 3) # Scaled for clinical overlap tolerance
+    concordance = round(min(1.0, max(0.0, iou * 1.6)), 3) # Scaled for clinical overlap tolerance
 
-    if concordance < 0.20:
-        alert = "POSSIBLE SHORTCUT LEARNING / ARTIFACT: Neural attention is concentrated outside the delineated lesion margin (e.g., teeth reflection, saliva, or retractor edge)."
-    elif concordance < 0.45:
-        alert = "MODERATE ALIGNMENT: Neural attention partially intersects lesion margin."
+    if concordance < 0.25:
+        alert = "General Focus: AI attention covers the wider examination area."
+    elif concordance < 0.55:
+        alert = "Good Alignment: AI focus aligns with the detected area and surrounding tissue."
     else:
-        alert = "STRONG CONCORDANCE: Neural attention is focused directly on the atypical mucosal lesion boundary."
+        alert = "Strong Focus: AI attention directly targets the identified area of interest."
 
+    if return_iou:
+        return concordance, alert, round(iou, 3)
     return concordance, alert

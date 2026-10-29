@@ -9,10 +9,10 @@ export const UncertaintyCaliper = ({ confidence, uncertainty, prediction }) => {
 
     return (
         <div className="border border-stone-300 dark:border-stone-800 bg-stone-50 dark:bg-stone-900/70 p-5 rounded-none my-4">
-            <div className="flex items-center justify-between font-mono text-[11px] mb-2 uppercase text-stone-500">
-                <span>EPISTEMIC UNCERTAINTY CALIPER</span>
-                <span className={isUncertain ? 'text-amber-500 font-bold' : 'text-clinical-teal dark:text-teal-400'}>
-                    σ² = {uncertainty.toFixed(5)} ({isUncertain ? 'HIGH VARIANCE' : 'STABLE CONSENSUS'})
+            <div className="flex items-center justify-between text-xs mb-2 uppercase text-stone-600 dark:text-stone-400 font-medium">
+                <span>AI Confidence & Stability Gauge</span>
+                <span className={isUncertain ? 'text-amber-500 font-bold' : 'text-teal-600 dark:text-teal-400 font-semibold'}>
+                    {isUncertain ? 'Needs Better Photo (High Variance)' : 'High Agreement (Consistent Scan)'}
                 </span>
             </div>
 
@@ -42,9 +42,9 @@ export const UncertaintyCaliper = ({ confidence, uncertainty, prediction }) => {
             </div>
 
             <div className="flex items-center justify-between font-mono text-[10px] text-stone-500 pt-1">
-                <span>LOWER BOUND: {leftBound.toFixed(1)}%</span>
-                <span className="font-semibold text-stone-800 dark:text-stone-200">POINT ESTIMATE: {confPct.toFixed(1)}%</span>
-                <span>UPPER BOUND: {rightBound.toFixed(1)}%</span>
+                <span>LOWER: {leftBound.toFixed(1)}%</span>
+                <span className="font-semibold text-stone-800 dark:text-stone-200">AI ESTIMATE: {confPct.toFixed(1)}%</span>
+                <span>UPPER: {rightBound.toFixed(1)}%</span>
             </div>
         </div>
     );

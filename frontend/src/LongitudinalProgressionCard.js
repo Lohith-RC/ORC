@@ -69,13 +69,13 @@ const LongitudinalProgressionCard = ({ trajectory }) => {
                         <Clock className="w-4 h-4 text-stone-500" />
                     )}
                     <span className="font-semibold uppercase tracking-wider text-stone-900 dark:text-stone-100">
-                        LONGITUDINAL LESION GROWTH CALIBRATION
+                        Comparison With Previous Scans
                     </span>
                 </div>
                 <div className="flex items-center gap-2">
-                    <span className="text-[10px] text-stone-400">INTERVAL:</span>
+                    <span className="text-[10px] text-stone-400">Time Interval:</span>
                     <span className="px-2 py-0.5 bg-stone-900 text-stone-100 text-[10px] font-bold">
-                        {elapsed_days} DAYS ELAPSED
+                        {elapsed_days === 0 ? 'Same Day' : `${elapsed_days} Days Apart`}
                     </span>
                 </div>
             </div>
@@ -102,7 +102,7 @@ const LongitudinalProgressionCard = ({ trajectory }) => {
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 my-4 font-mono">
                 {/* Delta Area */}
                 <div className="p-3 border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-950/60">
-                    <span className="text-[9px] text-stone-400 block uppercase">AREA DELTA (Δ)</span>
+                    <span className="text-[9px] text-stone-400 block uppercase">Size Change</span>
                     <div className="flex items-baseline gap-1 mt-0.5">
                         <span className={`text-base font-bold ${delta_surface_area_mm2 > 0 ? (isRapid ? 'text-rose-600' : 'text-amber-600') : 'text-teal-600'}`}>
                             {delta_surface_area_mm2 > 0 ? `+${delta_surface_area_mm2}` : delta_surface_area_mm2}
@@ -116,7 +116,7 @@ const LongitudinalProgressionCard = ({ trajectory }) => {
 
                 {/* Growth Velocity */}
                 <div className="p-3 border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-950/60">
-                    <span className="text-[9px] text-stone-400 block uppercase">GROWTH VELOCITY</span>
+                    <span className="text-[9px] text-stone-400 block uppercase">Daily Change Rate</span>
                     <div className="flex items-baseline gap-1 mt-0.5">
                         <span className={`text-base font-bold ${growth_velocity_mm2_per_day > 0.35 ? 'text-rose-600' : 'text-stone-800 dark:text-stone-200'}`}>
                             {growth_velocity_mm2_per_day > 0 ? `+${growth_velocity_mm2_per_day}` : growth_velocity_mm2_per_day}
@@ -124,13 +124,13 @@ const LongitudinalProgressionCard = ({ trajectory }) => {
                         <span className="text-[10px] text-stone-500">mm²/day</span>
                     </div>
                     <span className="text-[9px] text-stone-400 block mt-0.5 font-sans">
-                        Expansion rate
+                        Rate of change
                     </span>
                 </div>
 
                 {/* Diameter Delta */}
                 <div className="p-3 border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-950/60">
-                    <span className="text-[9px] text-stone-400 block uppercase">DIAMETER DELTA</span>
+                    <span className="text-[9px] text-stone-400 block uppercase">Width Difference</span>
                     <div className="flex items-baseline gap-1 mt-0.5">
                         <span className={`text-base font-bold ${delta_diameter_mm > 0 ? 'text-amber-600' : 'text-teal-600'}`}>
                             {delta_diameter_mm > 0 ? `+${delta_diameter_mm}` : delta_diameter_mm}
@@ -144,14 +144,14 @@ const LongitudinalProgressionCard = ({ trajectory }) => {
 
                 {/* Border Compactness Delta */}
                 <div className="p-3 border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-950/60">
-                    <span className="text-[9px] text-stone-400 block uppercase">IRREGULARITY DELTA</span>
+                    <span className="text-[9px] text-stone-400 block uppercase">Border Smoothness</span>
                     <div className="flex items-baseline gap-1 mt-0.5">
                         <span className={`text-base font-bold ${delta_irregularity > 0.2 ? 'text-rose-600' : 'text-stone-800 dark:text-stone-200'}`}>
                             {delta_irregularity > 0 ? `+${delta_irregularity}` : delta_irregularity}
                         </span>
                     </div>
                     <span className="text-[9px] text-stone-400 block mt-0.5 font-sans">
-                        {prior_border_irregularity} → {current_border_irregularity}
+                        Edge variation
                     </span>
                 </div>
             </div>
@@ -162,16 +162,16 @@ const LongitudinalProgressionCard = ({ trajectory }) => {
                     <div className="flex items-center justify-between font-mono text-[10px] text-stone-400 pb-2 border-b border-stone-800 mb-2">
                         <span className="flex items-center gap-1.5 text-stone-200">
                             <Layers className="w-3.5 h-3.5 text-clinical-teal" />
-                            DUAL-CONTOUR SPATIAL PROGRESSION OVERLAY
+                            Spot Boundary Comparison
                         </span>
                         <div className="flex items-center gap-3">
                             <span className="flex items-center gap-1 text-amber-400">
                                 <span className="w-3 h-0.5 border-b border-dashed border-amber-400 inline-block"></span>
-                                Prior Baseline Margin
+                                Previous Scan
                             </span>
                             <span className="flex items-center gap-1 text-teal-400">
                                 <span className="w-3 h-0.5 bg-teal-400 inline-block"></span>
-                                Current Follow-up Margin
+                                Current Scan
                             </span>
                         </div>
                     </div>

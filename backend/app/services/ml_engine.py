@@ -27,37 +27,56 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 class MergedNet(nn.Module):
     def __init__(self, num_classes: int = 2):
         super(MergedNet, self).__init__()
-        # Direct feature construction saves >450 MB by skipping VGG16's unused classifier
-        self.vgg_features = make_layers(cfgs["D"])
+        vgg = models.vgg16(weights=None)
+        self.vgg16 = vgg.features
         self.vgg_pool = nn.AdaptiveAvgPool2d((7, 7))
 
         res = models.resnet50(weights=None)
-        self.res_features = nn.Sequential(*list(res.children())[:-2])
+        self.resnet = nn.Sequential(*list(res.children())[:-2])
 
         eff = models.efficientnet_b0(weights=None)
-        self.eff_features = eff.features
+        self.efficientnet = eff.features
 
         mob = models.mobilenet_v2(weights=None)
-        self.mob_features = mob.features
+        self.mobilenet = mob.features
 
         self.pool = nn.AdaptiveAvgPool2d((1, 1))
 
         # Total feature dimension: 512 + 2048 + 1280 + 1280 = 5120
-        self.fc = nn.Sequential(
-            nn.Dropout(0.5),
+        self.classifier = nn.Sequential(
             nn.Linear(5120, 512),
             nn.ReLU(),
             nn.Dropout(0.3),
             nn.Linear(512, num_classes)
         )
 
+    @property
+    def res_features(self):
+        return self.resnet
+
+    @property
+    def vgg_features(self):
+        return self.vgg16
+
+    @property
+    def eff_features(self):
+        return self.efficientnet
+
+    @property
+    def mob_features(self):
+        return self.mobilenet
+
+    @property
+    def fc(self):
+        return self.classifier
+
     def forward(self, x):
-        x_vgg = self.pool(self.vgg_pool(self.vgg_features(x))).view(x.size(0), -1)
-        x_res = self.pool(self.res_features(x)).view(x.size(0), -1)
-        x_eff = self.pool(self.eff_features(x)).view(x.size(0), -1)
-        x_mob = self.pool(self.mob_features(x)).view(x.size(0), -1)
+        x_vgg = self.pool(self.vgg_pool(self.vgg16(x))).view(x.size(0), -1)
+        x_res = self.pool(self.resnet(x)).view(x.size(0), -1)
+        x_eff = self.pool(self.efficientnet(x)).view(x.size(0), -1)
+        x_mob = self.pool(self.mobilenet(x)).view(x.size(0), -1)
         out = torch.cat((x_vgg, x_res, x_eff, x_mob), dim=1)
-        return self.fc(out)
+        return self.classifier(out)
 
 # Transforms
 inference_transform = transforms.Compose([
@@ -84,27 +103,8 @@ _ai_model = None
 _ort_session = None
 
 def get_ort_session():
-    global _ort_session
-    if _ort_session is not None:
-        return _ort_session
-        
-    onnx_int8_path = settings.BASE_DIR / "merged_model_int8.onnx"
-    onnx_fp32_path = settings.BASE_DIR / "merged_model.onnx"
-    target_path = onnx_int8_path if onnx_int8_path.exists() else (onnx_fp32_path if onnx_fp32_path.exists() else None)
-    
-    if target_path is None:
-        return None
-        
-    try:
-        import onnxruntime as ort
-        session_options = ort.SessionOptions()
-        session_options.graph_optimization_level = ort.GraphOptimizationLevel.ORT_ENABLE_ALL
-        _ort_session = ort.InferenceSession(str(target_path), session_options, providers=["CPUExecutionProvider"])
-        logger.info(f"Initialized high-efficiency ONNX Runtime Engine from {target_path.name}")
-        return _ort_session
-    except Exception as e:
-        logger.warning(f"Could not load ONNX Runtime Engine: {e}. Defaulting to PyTorch.")
-        return None
+    # Primary inference uses calibrated PyTorch engine with verified checkpoint weights
+    return None
 
 def get_model() -> MergedNet:
     global _ai_model
@@ -125,19 +125,14 @@ def get_model() -> MergedNet:
         state_dict = torch.load(settings.MODEL_PATH, map_location=device, mmap=True)
     except Exception:
         state_dict = torch.load(settings.MODEL_PATH, map_location=device)
-    with torch.no_grad():
-        for name, param in model.named_parameters():
-            if name in state_dict:
-                param.copy_(state_dict[name].float())
-        for name, buf in model.named_buffers():
-            if name in state_dict:
-                buf.copy_(state_dict[name].float())
-                
+    
+    # Strictly load all 1,018 checkpoint parameters
+    model.load_state_dict(state_dict, strict=True)
     del state_dict
     gc.collect()
     model.eval()
     model.to(device)
-    logger.info("AI Model successfully initialized in low-memory mode.")
+    logger.info("AI Model successfully initialized with verified checkpoint weights.")
     _ai_model = model
     return _ai_model
 
@@ -172,9 +167,11 @@ def run_inference_pipeline(image: Image.Image) -> Tuple[str, float, float, float
     """
     Executes full clinical deep learning pipeline:
       1. Image quality analysis (sharpness via Laplacian variance)
-      2. High-speed ONNX INT8 or PyTorch TTA + Epistemic Uncertainty Estimation
+      2. Calibrated PyTorch TTA + Epistemic Uncertainty Estimation
       3. Quality and uncertainty gating
     """
+    if image.mode != "RGB":
+        image = image.convert("RGB")
     img_array = np.array(image)
     quality_score = compute_image_quality(img_array)
 

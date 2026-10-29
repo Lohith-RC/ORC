@@ -158,6 +158,9 @@ def clean_latex_text(text):
     text = re.sub(r'\\eqref\{([^}]*)\}', r'(\1)', text)
     # \label{...}
     text = re.sub(r'\\label\{[^}]*\}', '', text)
+    text = re.sub(r'\\addcontentsline\{[^}]*\}\{[^}]*\}\{[^}]*\}', '', text)
+    text = re.sub(r'\\begin\{(itemize|enumerate|center|flushleft|flushright)\}', '', text)
+    text = re.sub(r'\\end\{(itemize|enumerate|center|flushleft|flushright)\}', '', text)
     
     # Remove $ enclosing
     text = re.sub(r'\$([^$]+)\$', r'\1', text)
@@ -335,8 +338,8 @@ def build_word_document():
     table_sig1.alignment = WD_TABLE_ALIGNMENT.CENTER
     sig_titles = [
         ("Prof. AISHWARYA S\nGuide\nDept. of CS&E", WD_ALIGN_PARAGRAPH.LEFT),
-        ("Dr. [HOD Name]\nHead of the Department\nDept. of CS&E", WD_ALIGN_PARAGRAPH.CENTER),
-        ("Dr. [Principal Name]\nPrincipal\nKIT, Tiptur", WD_ALIGN_PARAGRAPH.RIGHT)
+        ("Dr. Maithri C\nHead of the Department\nDept. of CS&E", WD_ALIGN_PARAGRAPH.CENTER),
+        ("Dr. Sateesh Kumar H C\nPrincipal\nKIT, Tiptur", WD_ALIGN_PARAGRAPH.RIGHT)
     ]
     for col_idx, (text, align) in enumerate(sig_titles):
         cell = table_sig1.rows[1].cells[col_idx]
@@ -464,10 +467,10 @@ def build_word_document():
         "First and foremost, we express our profound gratitude to the Management of Kalpataru Vidya Samsthe (KVS), Tiptur, "
         "for providing excellent infrastructure and an inspiring academic atmosphere to undertake this project.",
 
-        "We express our deep gratitude and heartfelt respect to our Principal, Dr. [Principal Name], Kalpataru Institute of "
+        "We express our deep gratitude and heartfelt respect to our Principal, Dr. Sateesh Kumar H C, Kalpataru Institute of "
         "Technology, Tiptur, for his constant support and encouragement throughout the course of our undergraduate study.",
 
-        "We are profoundly indebted to Dr. [HOD Name], Professor & Head, Department of Computer Science & Engineering, for his "
+        "We are profoundly indebted to Dr. Maithri C, Professor & Head, Department of Computer Science & Engineering, for his "
         "valuable guidance, constant encouragement, and for providing the necessary laboratory facilities to carry out this work successfully.",
 
         "We deem it a great privilege to express our sincere respect, deep sense of gratitude, and heartfelt thanks to our guide, "
@@ -500,69 +503,88 @@ def build_word_document():
         ("Declaration", "iii"),
         ("Abstract", "iv"),
         ("Acknowledgement", "v"),
+        ("Table of Contents", "vi"),
         ("List of Figures", "viii"),
         ("List of Tables", "x"),
-        ("List of Abbreviations", "xi"),
+        ("List of Abbreviations", "xii"),
         ("CHAPTER 1: INTRODUCTION", "1"),
-        ("    1.1 Background and Clinical Imperative", "1"),
-        ("    1.2 Problem Statement", "4"),
-        ("    1.3 Objectives of the Project", "5"),
-        ("    1.4 Scope and Limitations", "7"),
-        ("    1.5 Report Organization", "8"),
-        ("CHAPTER 2: LITERATURE SURVEY", "10"),
-        ("    2.1 Clinical Epidemiology of Oral Cancer", "10"),
-        ("    2.2 Classical Computer Vision Approaches", "12"),
-        ("    2.3 Deep Learning and CNN Architectures", "14"),
-        ("    2.4 Bayesian Deep Learning and Uncertainty Quantification", "18"),
-        ("    2.5 Summary Table of Related Works", "22"),
-        ("    2.6 Identification of Research Gaps", "24"),
-        ("CHAPTER 3: SOFTWARE REQUIREMENTS SPECIFICATION (SRS)", "26"),
-        ("    3.1 Functional Requirements", "26"),
-        ("    3.2 Non-Functional Requirements", "29"),
-        ("    3.3 Hardware Requirements", "32"),
-        ("    3.4 Software Requirements", "33"),
-        ("    3.5 System Modeling (Use Case, Sequence, Activity Diagrams)", "35"),
-        ("CHAPTER 4: SYSTEM DESIGN AND ARCHITECTURE", "42"),
-        ("    4.1 High-Level Architecture", "42"),
-        ("    4.2 Multi-Backbone Ensemble Architecture (MergedNet)", "45"),
-        ("    4.3 Backend Module Design", "48"),
-        ("    4.4 Frontend UI/UX Architecture", "51"),
-        ("    4.5 Database Schema and Entity-Relationship Diagram", "54"),
-        ("    4.6 RESTful API Design", "57"),
-        ("CHAPTER 5: DETAILED IMPLEMENTATION", "60"),
-        ("    5.1 Deep Learning Ensemble Implementation", "60"),
-        ("    5.2 Monte Carlo Dropout Epistemic Uncertainty Estimation", "64"),
-        ("    5.3 8-Pass Test-Time Augmentation (TTA)", "68"),
-        ("    5.4 Multimodal Risk Prior and Epidemiological Scoring", "72"),
-        ("    5.5 Laplacian-Variance Image Quality Gating", "75"),
-        ("    5.6 ONNX INT8 Quantization and Performance Optimization", "78"),
-        ("    5.7 Security Hardening and JWT Session Management", "81"),
-        ("CHAPTER 6: TESTING AND VALIDATION", "85"),
-        ("    6.1 Testing Methodology and Infrastructure", "85"),
-        ("    6.2 Unit Testing of Computational Pipelines", "87"),
-        ("    6.3 Integration and API Testing", "90"),
-        ("    6.4 Clinical Validation on N = 1,200 Cohort", "93"),
-        ("    6.5 Test Cases and Results Summary", "96"),
-        ("CHAPTER 7: RESULTS AND DISCUSSION", "100"),
-        ("    7.1 Quantitative Diagnostic Performance", "100"),
-        ("    7.2 Confusion Matrix and Error Analysis", "103"),
-        ("    7.3 Comparative Baseline Benchmarks", "106"),
-        ("    7.4 Systematic Six-Stage Ablation Study", "109"),
-        ("    7.5 Inference Latency and Hardware Profiling", "112"),
-        ("CHAPTER 8: USER INTERFACE AND SYSTEM WALKTHROUGH", "115"),
-        ("    8.1 Web Interface Overview", "115"),
-        ("    8.2 Clinical Triage Screening Workflow", "117"),
-        ("    8.3 Diagnostic Report and Risk Badging Screen", "120"),
-        ("    8.4 Dark Surgical Mode and Mobile Responsiveness", "123"),
-        ("CHAPTER 9: APPLICATIONS, CONCLUSION, AND FUTURE SCOPE", "126"),
-        ("    9.1 Practical Applications in Public Health", "126"),
-        ("    9.2 Summary of Accomplishments", "128"),
-        ("    9.3 Limitations", "130"),
-        ("    9.4 Future Enhancements (v2.0, v3.0, v4.0)", "131"),
-        ("REFERENCES (30 IEEE References)", "134"),
-        ("ANNEXURE A: GLOSSARY", "138"),
-        ("ANNEXURE B: RESEARCH PAPER PUBLICATION", "141"),
-        ("ANNEXURE C: PROJECT EXHIBITION CERTIFICATE", "143")
+        ("    1.1 Overview and Clinical Imperative", "1"),
+        ("    1.2 Pathogenesis and Etiology of Oral Neoplasms", "3"),
+        ("    1.3 Conventional Screening Modalities and Diagnostic Delays", "4"),
+        ("    1.4 Problem Statement", "5"),
+        ("    1.5 Objectives of the Project (O1 to O8)", "6"),
+        ("    1.6 Scope and Technical Delimitations", "7"),
+        ("    1.7 Organization of the Report", "8"),
+        ("CHAPTER 2: LITERATURE SURVEY", "9"),
+        ("    2.1 Introduction", "9"),
+        ("    2.2 Historical Evolution of CAD in Oral Pathology", "9"),
+        ("    2.3 Deep Learning and CNN Architectures in Oral Oncology", "11"),
+        ("    2.4 Epistemic Uncertainty and Bayesian Deep Learning", "13"),
+        ("    2.5 Explainable Artificial Intelligence (XAI) in Oncology", "15"),
+        ("    2.6 Multimodal Data Fusion and Predictive Standards (TRIPOD+AI)", "16"),
+        ("    2.7 Comparative Synthesis Matrix of Landmark Works (2014-2026)", "18"),
+        ("    2.8 Critical Identification of Research Gaps", "20"),
+        ("CHAPTER 3: REQUIREMENT ENGINEERING (SRS)", "22"),
+        ("    3.1 Overview and IEEE 830-1998 Standard Compliance", "22"),
+        ("    3.2 Stakeholder Analysis and User Personas", "22"),
+        ("    3.3 Functional Requirements Specification (FR-01 to FR-15)", "24"),
+        ("    3.4 Non-Functional Requirements Specification (NFR-01 to NFR-10)", "27"),
+        ("    3.5 Hardware and Software Tool Specifications", "29"),
+        ("    3.6 Conceptual Analysis and Formal UML Modeling", "31"),
+        ("        3.6.1 UML Use Case Diagram and Actor Analysis", "31"),
+        ("        3.6.2 Detailed Use Case Specification Narratives", "32"),
+        ("        3.6.3 UML Activity Diagram for Clinical Triage Workflow", "34"),
+        ("    3.7 Clinical Data Governance and Regulatory Compliance (HIPAA/FHIR)", "35"),
+        ("CHAPTER 4: PROJECT PLANNING", "37"),
+        ("    4.1 Software Engineering Process Model (Agile-Scrum)", "37"),
+        ("    4.2 Work Breakdown Structure (WBS)", "38"),
+        ("    4.3 Software Project Estimation via COCOMO II", "39"),
+        ("    4.4 Project Timeline and Milestone Schedule (Gantt Chart)", "41"),
+        ("    4.5 Risk Assessment and Failure Mode Analysis (FMEA)", "42"),
+        ("    4.6 Team Organization and Governance Architecture", "44"),
+        ("CHAPTER 5: SYSTEM DESIGN AND ARCHITECTURE", "46"),
+        ("    5.1 High-Level Architectural Topology (5-Tier Pattern)", "46"),
+        ("    5.2 MergedNet Multi-Backbone Feature Concatenation Architecture", "48"),
+        ("    5.3 Multimodal Cross-Attention Fusion Network", "50"),
+        ("    5.4 Reinhard CIELAB Optical Normalization Formulation", "52"),
+        ("    5.5 Database Architecture and Relational Schema Design", "54"),
+        ("    5.6 RESTful API Design and Contract Specifications", "58"),
+        ("CHAPTER 6: IMPLEMENTATION DETAILS", "61"),
+        ("    6.1 Deep Learning Ensemble Implementation (PyTorch)", "61"),
+        ("    6.2 Monte Carlo Dropout Epistemic Uncertainty Estimation", "63"),
+        ("    6.3 8-Pass Test-Time Augmentation (TTA) Engine", "65"),
+        ("    6.4 Laplacian-Variance Image Quality Gating Algorithm", "67"),
+        ("    6.5 Reinhard CIELAB Mucosal Normalization Algorithm", "68"),
+        ("    6.6 HL7 FHIR Release 4 JSON Exporter", "70"),
+        ("    6.7 Dynamic ONNX INT8 Quantization Engine", "72"),
+        ("    6.8 Security Hardening and Session Middleware", "74"),
+        ("CHAPTER 7: TESTING AND QUALITY ASSURANCE", "76"),
+        ("    7.1 Testing Philosophy and V-Model Quality Assurance Hierarchy", "76"),
+        ("    7.2 Unit Testing of Computational Pipelines", "77"),
+        ("    7.3 Concurrency and Stress Profiling with Locust", "78"),
+        ("    7.4 Adversarial Perturbation and Optical Domain-Shift Stress Testing", "80"),
+        ("    7.5 Security Vulnerability Penetration Audit", "82"),
+        ("    7.6 Master Test Execution Matrix (20 Formal Test Cases)", "83"),
+        ("CHAPTER 8: RESULTS DISCUSSION AND PERFORMANCE ANALYSIS", "86"),
+        ("    8.1 Comprehensive Diagnostic Performance Metrics", "86"),
+        ("    8.2 ROC, Precision-Recall, and Decision Curve Analysis (DCA)", "88"),
+        ("    8.3 Confusion Matrix and Forensic Error Breakdown", "90"),
+        ("    8.4 Comparative Benchmark Against Baselines and Literature", "91"),
+        ("    8.5 Systematic Six-Stage Ablation Study", "93"),
+        ("    8.6 Epistemic Uncertainty Distribution and Calibration Reliability", "95"),
+        ("    8.7 Computational Latency and Hardware Profiling (ONNX INT8)", "97"),
+        ("    8.8 Explainable AI Grad-CAM++ Pathological Concordance", "99"),
+        ("    8.9 Algorithmic Fairness and Subgroup Demographic Parity Audit", "101"),
+        ("    8.10 User Interface and Complete System Walkthrough", "103"),
+        ("CHAPTER 9: CONCLUSION, APPLICATION AND FUTURE WORK", "109"),
+        ("    9.1 Public Health and Practical Clinical Applications", "109"),
+        ("    9.2 Systematic Verification of Project Objectives (O1 to O8)", "110"),
+        ("    9.3 Technical Limitations and Boundary Conditions", "112"),
+        ("    9.4 Comprehensive Future Research Roadmap (v2.0, v3.0, v4.0)", "113"),
+        ("REFERENCES (45 IEEE References)", "116"),
+        ("ANNEXURE A: BIOMEDICAL & AI GLOSSARY", "121"),
+        ("ANNEXURE B: RESEARCH PAPER PUBLICATION", "125"),
+        ("ANNEXURE C: HARDWARE & DEPLOYMENT SPECIFICATIONS", "127")
     ]
     
     table_toc = doc.add_table(rows=len(toc_items), cols=2)
@@ -583,6 +605,113 @@ def build_word_document():
     
     doc.add_page_break()
 
+    doc.add_page_break()
+
+    # -------------------------------------------------------------
+    # 7.1 LIST OF FIGURES
+    # -------------------------------------------------------------
+    print("Building List of Figures...")
+    add_styled_paragraph(doc, "LIST OF FIGURES", space_before=0, space_after=14, align=WD_ALIGN_PARAGRAPH.CENTER, bold=True, font_size=16, color=RGBColor(10, 45, 90))
+    
+    figures_list = [
+        ("Figure 1.1", "Clinical Progression Continuum of Oral Squamous Cell Carcinoma (OSCC)", "3"),
+        ("Figure 2.1", "Reinhard CIELAB Mucosal Color Space Normalization Pipeline", "17"),
+        ("Figure 3.1", "UML Use Case Diagram Depicting Actor Roles and Boundary Interactions", "32"),
+        ("Figure 3.2", "UML Activity Diagram Illustrating Quality Gating and Decision Logic", "35"),
+        ("Figure 4.1", "Project Milestone Schedule and Critical Path Gantt Chart", "41"),
+        ("Figure 4.2", "5×5 Project Risk Assessment and Mitigation Heatmap", "43"),
+        ("Figure 5.1", "End-to-End System Architectural Topology Depicting Multi-Tier Ingestion", "47"),
+        ("Figure 5.2", "Multimodal Cross-Attention Network Architecture Fusing Visual and Clinical Priors", "51"),
+        ("Figure 5.3", "Entity-Relationship Diagram (ERD) of Relational Database Schema", "55"),
+        ("Figure 8.1", "Receiver Operating Characteristic (ROC) Curve (AUROC = 1.0000)", "89"),
+        ("Figure 8.2", "Precision-Recall Curve and Decision Curve Analysis (DCA Net Clinical Utility)", "90"),
+        ("Figure 8.3", "Final Evaluation Confusion Matrix with Deferred Borderline Resolution", "91"),
+        ("Figure 8.4", "Systematic Six-Stage Ablation Study Tracking Performance Gains", "94"),
+        ("Figure 8.5", "Empirical Distribution of Epistemic Variances for Benign vs. Malignant Cases", "96"),
+        ("Figure 8.6", "Reliability Diagram (ECE = 0.82%) and Confidence Score Histogram", "97"),
+        ("Figure 8.7", "End-to-End Pipeline Latency Breakdown Across Computational Stages", "98"),
+        ("Figure 8.8", "Explainable AI Grad-CAM++ Heatmap Concordance Overlays", "100"),
+        ("Figure 8.9", "Subgroup Demographic Fairness and Diagnostic Parity Audit", "102"),
+        ("Figure 8.10", "Visionary Diagnostics Landing Page and Clinical Overview", "104"),
+        ("Figure 8.11", "Secure Healthcare Provider Authentication Portal with NIST PBKDF2 Hashing", "105"),
+        ("Figure 8.12", "Interactive Patient Photographic Upload and Risk Factor Form", "106"),
+        ("Figure 8.13", "Step-by-Step Clinical Triage and Decision Support Workflow Guide", "106"),
+        ("Figure 8.14", "Surgical Dark Mode Diagnostic Dashboard with Calibrated Risk Badges", "107"),
+        ("Figure 8.15", "Platform Feature Matrix and Tele-Oncology Summary", "108"),
+        ("Figure 8.16", "Academic Investigator Profile and Institutional Credits", "108")
+    ]
+    
+    table_lof = doc.add_table(rows=len(figures_list) + 1, cols=3)
+    table_lof.alignment = WD_TABLE_ALIGNMENT.CENTER
+    table_lof.rows[0].cells[0].text = "Figure No."
+    table_lof.rows[0].cells[1].text = "Figure Title / Caption"
+    table_lof.rows[0].cells[2].text = "Page"
+    for cell in table_lof.rows[0].cells:
+        set_cell_shading(cell, "EBF0F5")
+        for p in cell.paragraphs:
+            for run in p.runs:
+                run.font.name = 'Times New Roman'
+                run.font.size = Pt(11)
+                run.bold = True
+    
+    for idx, (fno, ftitle, fpage) in enumerate(figures_list):
+        row_cells = table_lof.rows[idx + 1].cells
+        row_cells[0].text = fno
+        row_cells[1].text = ftitle
+        row_cells[2].text = fpage
+        row_cells[2].paragraphs[0].alignment = WD_ALIGN_PARAGRAPH.RIGHT
+        for c in row_cells:
+            for run in c.paragraphs[0].runs:
+                run.font.name = 'Times New Roman'
+                run.font.size = Pt(10)
+    
+    doc.add_page_break()
+
+    # -------------------------------------------------------------
+    # 7.2 LIST OF TABLES
+    # -------------------------------------------------------------
+    print("Building List of Tables...")
+    add_styled_paragraph(doc, "LIST OF TABLES", space_before=0, space_after=14, align=WD_ALIGN_PARAGRAPH.CENTER, bold=True, font_size=16, color=RGBColor(10, 45, 90))
+    
+    tables_list = [
+        ("Table 2.1", "Comparative Literature Survey Matrix of Landmark Works (2014-2026)", "19"),
+        ("Table 4.1", "COCOMO II Project Effort, Duration, and Staffing Projections", "40"),
+        ("Table 5.1", "Core RESTful API Endpoint Contract Specifications", "58"),
+        ("Table 6.1", "Architectural and Parameter Summary of MergedNet Ensemble Backbones", "62"),
+        ("Table 7.1", "System Performance Metrics Under Simulated Concurrent User Loads (Locust)", "78"),
+        ("Table 7.2", "Master Test Execution Matrix (20 Formal Test Cases)", "83"),
+        ("Table 8.1", "Primary Diagnostic Evaluation Metrics with Clopper-Pearson 95% CIs", "87"),
+        ("Table 8.2", "Comparative Benchmark Against Component Baselines and Literature", "92"),
+        ("Table 8.3", "Ablation Study Quantitative Performance Progression Across Six Stages", "94"),
+        ("Table 8.4", "Hardware Execution Profiling and Latency Comparison (FP32 vs. INT8)", "98"),
+        ("Table 9.1", "Systematic Verification Audit of Project Engineering Objectives (O1 to O8)", "111")
+    ]
+    
+    table_lot = doc.add_table(rows=len(tables_list) + 1, cols=3)
+    table_lot.alignment = WD_TABLE_ALIGNMENT.CENTER
+    table_lot.rows[0].cells[0].text = "Table No."
+    table_lot.rows[0].cells[1].text = "Table Title"
+    table_lot.rows[0].cells[2].text = "Page"
+    for cell in table_lot.rows[0].cells:
+        set_cell_shading(cell, "EBF0F5")
+        for p in cell.paragraphs:
+            for run in p.runs:
+                run.font.name = 'Times New Roman'
+                run.font.size = Pt(11)
+                run.bold = True
+                
+    for idx, (tno, ttitle, tpage) in enumerate(tables_list):
+        row_cells = table_lot.rows[idx + 1].cells
+        row_cells[0].text = tno
+        row_cells[1].text = ttitle
+        row_cells[2].text = tpage
+        row_cells[2].paragraphs[0].alignment = WD_ALIGN_PARAGRAPH.RIGHT
+        for c in row_cells:
+            for run in c.paragraphs[0].runs:
+                run.font.name = 'Times New Roman'
+                run.font.size = Pt(10)
+    
+    doc.add_page_break()
     # Abbreviations Table
     print("Building Abbreviations Table...")
     add_styled_paragraph(doc, "LIST OF ABBREVIATIONS", space_before=0, space_after=14, align=WD_ALIGN_PARAGRAPH.CENTER, bold=True, font_size=16, color=RGBColor(10, 45, 90))
@@ -1073,6 +1202,28 @@ def render_latex_figure(doc, fig_text):
             img_path = os.path.join(FIG_DIR, "ui_dark_mode.png")
         elif "team" in caption_lower or "investigator" in caption_lower:
             img_path = os.path.join(FIG_DIR, "ui_about_team.png")
+        elif "use case" in caption_lower:
+            img_path = os.path.join(FIG_DIR, "use_case_diagram.png")
+        elif "activity" in caption_lower or "workflow" in caption_lower:
+            img_path = os.path.join(FIG_DIR, "activity_workflow.png")
+        elif "progression" in caption_lower or "pathogenesis" in caption_lower:
+            img_path = os.path.join(FIG_DIR, "clinical_progression_diagram.png")
+        elif "reinhard" in caption_lower or "color space" in caption_lower:
+            img_path = os.path.join(FIG_DIR, "reinhard_color_space.png")
+        elif "gantt" in caption_lower or "schedule" in caption_lower:
+            img_path = os.path.join(FIG_DIR, "gantt_schedule.png")
+        elif "risk matrix" in caption_lower or "heatmap" in caption_lower:
+            img_path = os.path.join(FIG_DIR, "risk_matrix_heatmap.png")
+        elif "cross-attention" in caption_lower or "multimodal attention" in caption_lower:
+            img_path = os.path.join(FIG_DIR, "multimodal_attention_fusion.png")
+        elif "erd" in caption_lower or "entity-relationship" in caption_lower or "schema" in caption_lower:
+            img_path = os.path.join(FIG_DIR, "database_erd.png")
+        elif "precision-recall" in caption_lower or "decision curve" in caption_lower or "dca" in caption_lower:
+            img_path = os.path.join(FIG_DIR, "precision_recall_dca_curve.png")
+        elif "calibration" in caption_lower or "reliability" in caption_lower or "ece" in caption_lower:
+            img_path = os.path.join(FIG_DIR, "calibration_reliability_curve.png")
+        elif "fairness" in caption_lower or "subgroup" in caption_lower or "parity" in caption_lower:
+            img_path = os.path.join(FIG_DIR, "subgroup_fairness_chart.png")
         
     if img_path and os.path.exists(img_path):
         p_img = doc.add_paragraph()

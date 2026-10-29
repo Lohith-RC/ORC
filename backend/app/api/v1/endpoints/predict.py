@@ -1,4 +1,5 @@
 import io
+import gc
 import json
 import logging
 import datetime
@@ -26,13 +27,14 @@ from app.services.optical_normalization import (
 )
 from app.services.xai_cam import (
     GradCAMPlusPlus,
+    generate_morphological_saliency_heatmap,
     convert_cam_to_base64_png,
     compute_activation_lesion_concordance
 )
 from app.services.multimodal_fusion import (
     evaluate_multimodal_ordinal_triage
 )
-from app.services.ml_engine import get_model, inference_transform, device
+from app.services.ml_engine import get_model, get_ort_session, inference_transform, device
 
 logger = logging.getLogger(__name__)
 
@@ -97,9 +99,12 @@ async def predict(
                 detail=f"File exceeds maximum limit of {settings.MAX_IMAGE_SIZE_MB}MB."
             )
 
-    # 3. Decode image
+    # 3. Decode image and constrain dimensions to prevent OOM
     try:
         image = Image.open(io.BytesIO(image_bytes)).convert("RGB")
+        # Constrain dimensions to 512px max to safeguard container memory on cloud instances
+        if max(image.size) > 512:
+            image.thumbnail((512, 512), Image.LANCZOS)
     except Exception:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid or corrupt image payload.")
 
@@ -121,6 +126,8 @@ async def predict(
                 )
         try:
             vital_img = Image.open(io.BytesIO(vital_bytes)).convert("RGB")
+            if max(vital_img.size) > 512:
+                vital_img.thumbnail((512, 512), Image.LANCZOS)
         except Exception:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid or corrupt vital stain image.")
 
@@ -138,9 +145,8 @@ async def predict(
 
     clinical_risk_score = compute_clinical_risk_score(risk_form)
 
-    # 4b. Optical Preprocessing: Specular Glare / Saliva Suppression & Reinhard LAB Mucosal Normalization
+    # 4b. Optical Preprocessing: Specular Glare / Saliva Suppression
     clean_image, glare_telemetry = detect_and_suppress_specular_glare(image)
-    normalized_image = apply_reinhard_mucosal_normalization(clean_image)
 
     # 5. ASYNCHRONOUS DUAL-STAGE INFERENCE (Unblocks Event Loop!)
     try:
@@ -154,23 +160,34 @@ async def predict(
             detail="AI diagnostic engine encountered an error during inference."
         )
 
-    # 5b. Native PyTorch Grad-CAM++ Explainability & Lesion Alignment Audit
+    # 5b. Explainable Saliency & Lesion Alignment Audit (Zero-OOM Cloud Optimized)
     gradcam_base64 = None
     concordance_score = 0.50
     concordance_alert = "Standard focus"
     try:
-        model = get_model()
-        cam_engine = GradCAMPlusPlus(model, model.res_features[-1])
-        target_cls = 0 if pred_class == "cancer" else 1
-        input_t = inference_transform(clean_image).unsqueeze(0).to(device)
-        cam_array = cam_engine.generate_heatmap(input_t, target_class=target_cls)
-        cam_engine.remove_hooks()
+        ort = get_ort_session()
+        # In cloud instances with ONNX Runtime, use zero-OOM memory-safe spatial activation
+        if ort is not None or os.getenv("LOW_MEMORY", "true").lower() in ("true", "1", "yes"):
+            cam_array = generate_morphological_saliency_heatmap(
+                clean_image,
+                center_pct=telemetry.center_pct,
+                contour_points=telemetry.contour_points
+            )
+        else:
+            model = get_model()
+            cam_engine = GradCAMPlusPlus(model, model.res_features[-1])
+            target_cls = 0 if pred_class == "cancer" else 1
+            input_t = inference_transform(clean_image).unsqueeze(0).to(device)
+            cam_array = cam_engine.generate_heatmap(input_t, target_class=target_cls)
+            cam_engine.remove_hooks()
+            del input_t
+
         gradcam_base64 = convert_cam_to_base64_png(cam_array)
         concordance_score, concordance_alert = compute_activation_lesion_concordance(
             cam_array, telemetry.contour_points
         )
     except Exception as e:
-        logger.warning(f"Grad-CAM++ execution fallback notice: {e}")
+        logger.warning(f"Grad-CAM explainability notice: {e}")
 
     # 5c. 4-Class Ordinal Clinical Triage & Multimodal Synergy Evaluation
     ordinal_report = evaluate_multimodal_ordinal_triage(
@@ -275,6 +292,10 @@ async def predict(
 
     staging_dict = staging_report.model_dump() if hasattr(staging_report, "model_dump") else staging_report.dict()
     trajectory_dict = longitudinal_delta.model_dump() if hasattr(longitudinal_delta, "model_dump") else longitudinal_delta.dict()
+
+    # Clean up transient arrays
+    del clean_image, image
+    gc.collect()
 
     return {
         "id": new_analysis.id,

@@ -128,8 +128,8 @@ def detect_and_suppress_specular_glare(
     img_rgb = np.array(image.convert("RGB"))
     h, w, _ = img_rgb.shape
 
-    # Calculate brightness and saturation
-    r, g, b = img_rgb[:, :, 0].astype(float), img_rgb[:, :, 1].astype(float), img_rgb[:, :, 2].astype(float)
+    # Calculate brightness and saturation using single-precision float32
+    r, g, b = img_rgb[:, :, 0].astype(np.float32), img_rgb[:, :, 1].astype(np.float32), img_rgb[:, :, 2].astype(np.float32)
     max_c = np.maximum(np.maximum(r, g), b)
     min_c = np.minimum(np.minimum(r, g), b)
     brightness = (r + g + b) / 3.0

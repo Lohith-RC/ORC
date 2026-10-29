@@ -76,8 +76,10 @@ def compute_lesion_segmentation(
 
     # Compute spatial center of mass
     y_indices, x_indices = np.where(binary_mask)
-    cy_pct = round(float(np.mean(y_indices)) / h * 100.0, 1)
-    cx_pct = round(float(np.mean(x_indices)) / w * 100.0, 1)
+    mean_y = float(np.mean(y_indices))
+    mean_x = float(np.mean(x_indices))
+    cy_pct = round(mean_y / h * 100.0, 1)
+    cx_pct = round(mean_x / w * 100.0, 1)
 
     # Spatial optical calibration: 50mm optical spacer equates to ~0.08 mm per pixel on 224x224
     mm_per_pixel = (distance_mm / 50.0) * (20.0 / max(h, w))
@@ -98,15 +100,15 @@ def compute_lesion_segmentation(
         # Ray-march to find edge of binary mask
         edge_r = equivalent_radius_mm / mm_per_pixel
         for r_step in range(int(edge_r * 0.5), int(edge_r * 2.2), 2):
-            sample_x = int(np.mean(x_indices) + r_step * dx)
-            sample_y = int(np.mean(y_indices) + r_step * dy)
+            sample_x = int(mean_x + r_step * dx)
+            sample_y = int(mean_y + r_step * dy)
             if 0 <= sample_x < w and 0 <= sample_y < h:
                 if not binary_mask[sample_y, sample_x]:
                     edge_r = r_step
                     break
                     
-        pt_x = round(float(np.mean(x_indices) + edge_r * dx) / w * 100.0, 1)
-        pt_y = round(float(np.mean(y_indices) + edge_r * dy) / h * 100.0, 1)
+        pt_x = round(float(mean_x + edge_r * dx) / w * 100.0, 1)
+        pt_y = round(float(mean_y + edge_r * dy) / h * 100.0, 1)
         contour.append((max(2.0, min(98.0, pt_x)), max(2.0, min(98.0, pt_y))))
 
     # Border irregularity (compactness metric: P^2 / (4 * pi * A))

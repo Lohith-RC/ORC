@@ -20,6 +20,7 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTheme } from './ThemeContext';
 import axios from 'axios';
+import { API_BASE_URL } from './api';
 
 function Navbar({ loggedIn, onLogout, onOpenManifesto }) {
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -30,7 +31,7 @@ function Navbar({ loggedIn, onLogout, onOpenManifesto }) {
         let isMounted = true;
         const checkHealth = async () => {
             try {
-                const res = await axios.get('http://127.0.0.1:8000/health', { timeout: 3000 });
+                const res = await axios.get(`${API_BASE_URL}/health`, { timeout: 4000 });
                 if (isMounted) setApiHealthy(res.data?.status === 'ok');
             } catch {
                 if (isMounted) setApiHealthy(false);

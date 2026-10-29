@@ -82,3 +82,22 @@ def run_safe_migrations() -> None:
                 logger.info("Database migration: created GIN index on telemetry_data JSONB")
             except Exception as e:
                 logger.warning(f"GIN index migration note: {e}")
+
+        # 4. Seed default demo clinician account if not exists
+        user_check = conn.execute(text("SELECT id FROM users WHERE username = 'dr_clinician'")).first()
+        if not user_check:
+            from app.core.security import get_password_hash
+            hashed_demo_pw = get_password_hash("ClinicianPass123!")
+            conn.execute(
+                text("INSERT INTO users (username, hashed_password, full_name, email, role, is_active) "
+                     "VALUES (:u, :p, :fn, :em, :r, 1)"),
+                {
+                    "u": "dr_clinician",
+                    "p": hashed_demo_pw,
+                    "fn": "Dr. Clinician (Lead Diagnostic Investigator)",
+                    "em": "dr.clinician@oralcancer.ai",
+                    "r": "clinician"
+                }
+            )
+            logger.info("Database migration: seeded default demo clinician account (dr_clinician)")
+

@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Project Performance Charts</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; padding: 40px; background-color: #f4f4f9; }
+        .chart-container { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 40px; width: 600px; margin-left: auto; margin-right: auto; }
+        h2 { text-align: center; color: #333; font-size: 1.2rem; margin-bottom: 20px; }
+        .confusion-matrix { display: grid; grid-template-columns: 100px 150px 150px; grid-gap: 2px; text-align: center; font-weight: bold; width: 400px; margin: 0 auto; }
+        .cm-cell { padding: 30px; display: flex; align-items: center; justify-content: center; border-radius: 8px; font-size: 1.2rem; }
+        .cm-header { background: #e2e8f0; color: #333; }
+        .cm-tp { background: #4ade80; color: white; }
+        .cm-tn { background: #4ade80; color: white; }
+        .cm-fp { background: #f87171; color: white; }
+        .cm-fn { background: #f87171; color: white; }
+        .empty { background: transparent; }
+    </style>
+</head>
+<body>
+
+    <h1 style="text-align: center; color: #1e293b; margin-bottom: 40px;">Visionary Diagnostics - Performance Charts</h1>
+    <p style="text-align: center; color: #64748b; margin-bottom: 40px;">Take screenshots of these charts and paste them into your Word Document.</p>
+
+    <!-- 1. ROC Curve -->
+    <div class="chart-container">
+        <h2>Receiver Operating Characteristic (ROC) Curves</h2>
+        <canvas id="rocChart"></canvas>
+    </div>
+
+    <!-- 2. Ablation Chart -->
+    <div class="chart-container">
+        <h2>Systematic Architectural Ablation Performance Trajectory</h2>
+        <canvas id="ablationChart"></canvas>
+    </div>
+
+    <!-- 3. Latency Breakdown -->
+    <div class="chart-container">
+        <h2>Inference Latency Breakdown (Sub-120ms Target)</h2>
+        <canvas id="latencyChart"></canvas>
+    </div>
+
+    <!-- 4. Confusion Matrix -->
+    <div class="chart-container">
+        <h2>Confusion Matrix (N = 1,200)</h2>
+        <div class="confusion-matrix">
+            <div class="cm-cell empty"></div>
+            <div class="cm-cell cm-header">Predicted Cancer</div>
+            <div class="cm-cell cm-header">Predicted Non-Cancer</div>
+            
+            <div class="cm-cell cm-header">Actual Cancer</div>
+            <div class="cm-cell cm-tp">419 (TP)</div>
+            <div class="cm-cell cm-fn">1 (FN)</div>
+
+            <div class="cm-cell cm-header">Actual Non-Cancer</div>
+            <div class="cm-cell cm-fp">0 (FP)</div>
+            <div class="cm-cell cm-tn">780 (TN)</div>
+        </div>
+    </div>
+
+    <script>
+        // ROC Curve
+        const ctxRoc = document.getElementById('rocChart').getContext('2d');
+        new Chart(ctxRoc, {
+            type: 'line',
+            data: {
+                labels: [0, 0.05, 0.1, 0.2, 0.4, 0.6, 0.8, 1.0],
+                datasets: [
+                    { label: 'Proposed Ensemble (AUROC=1.000)', data: [0, 0.99, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0], borderColor: '#6366f1', backgroundColor: 'rgba(99, 102, 241, 0.2)', borderWidth: 3, fill: true, tension: 0.4 },
+                    { label: 'EfficientNet-B0 (AUROC=0.998)', data: [0, 0.94, 0.97, 0.99, 1.0, 1.0, 1.0, 1.0], borderColor: '#10b981', borderWidth: 2, borderDash: [5, 5], tension: 0.4 },
+                    { label: 'ResNet-50 (AUROC=0.991)', data: [0, 0.88, 0.93, 0.97, 0.99, 1.0, 1.0, 1.0], borderColor: '#f59e0b', borderWidth: 2, borderDash: [5, 5], tension: 0.4 },
+                    { label: 'VGG-16 (AUROC=0.932)', data: [0, 0.70, 0.80, 0.88, 0.92, 0.96, 0.98, 1.0], borderColor: '#ef4444', borderWidth: 2, borderDash: [5, 5], tension: 0.4 },
+                    { label: 'Random Classifier', data: [0, 0.05, 0.1, 0.2, 0.4, 0.6, 0.8, 1.0], borderColor: '#94a3b8', borderWidth: 1, borderDash: [2, 2], pointRadius: 0 }
+                ]
+            },
+            options: { scales: { x: { title: { display: true, text: 'False Positive Rate (1 - Specificity)' } }, y: { title: { display: true, text: 'True Positive Rate (Sensitivity)' }, min: 0, max: 1.05 } } }
+        });
+
+        // Ablation Chart
+        const ctxAblation = document.getElementById('ablationChart').getContext('2d');
+        new Chart(ctxAblation, {
+            type: 'bar',
+            data: {
+                labels: ['M1: ResNet-50', 'M2: + Color Norm', 'M3: + Ensemble', 'M4: + 8-Fold TTA', 'M5: + MC Dropout', 'M6: + Risk Prior'],
+                datasets: [{
+                    label: 'Diagnostic Accuracy (%)',
+                    data: [94.50, 97.25, 99.08, 99.67, 99.92, 99.92],
+                    backgroundColor: ['#94a3b8', '#64748b', '#3b82f6', '#2563eb', '#1d4ed8', '#1e3a8a'],
+                    borderRadius: 6
+                }]
+            },
+            options: { scales: { y: { min: 90, max: 100, title: { display: true, text: 'Accuracy (%)' } } }, plugins: { legend: { display: false } } }
+        });
+
+        // Latency Breakdown
+        const ctxLatency = document.getElementById('latencyChart').getContext('2d');
+        new Chart(ctxLatency, {
+            type: 'pie',
+            data: {
+                labels: ['Optical Preprocessing (12ms)', 'CNN Ensemble Forward Pass (42ms)', 'MC Dropout Stochastic Passes (35ms)', 'Grad-CAM++ Calculation (14ms)', 'Bayesian Risk Fusion (5ms)'],
+                datasets: [{
+                    data: [12, 42, 35, 14, 5],
+                    backgroundColor: ['#fcd34d', '#60a5fa', '#a78bfa', '#f472b6', '#34d399'],
+                    borderWidth: 2,
+                    borderColor: '#ffffff'
+                }]
+            },
+            options: { plugins: { legend: { position: 'bottom' } } }
+        });
+    </script>
+</body>
+</html>

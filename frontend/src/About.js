@@ -1,7 +1,7 @@
 import React from 'react';
 import { Database, Stethoscope, Award, BookOpen, GraduationCap, ShieldCheck, HeartPulse } from 'lucide-react';
-import team1 from './images/5.webp';
-import team2 from './images/7.webp';
+import team1 from './images/keerthi.jpg';
+import team2 from './images/rakshith.jpg';
 import doc1 from './images/1.jpg';
 import doc2 from './images/2.jpg';
 import doc3 from './images/3.jpg';
@@ -88,19 +88,22 @@ const About = () => {
                                 name: "Keerthi A", 
                                 role: "AI & Neural Architecture", 
                                 desc: "Dual-stage CNN ensemble training, Grad-CAM++ layer activation backpropagation, and PyTorch optimization.", 
-                                image: team1 
+                                image: team1,
+                                objectPosition: 'center 35%'
                             },
                             { 
                                 name: "Rakshith Y B", 
                                 role: "Backend & Systems Engineering", 
                                 desc: "FastAPI microservices, relational ORM data layer, Redis rate limiting, and Docker cloud orchestration.", 
-                                image: team2 
+                                image: team2,
+                                objectPosition: 'center 35%'
                             },
                             { 
                                 name: "Lohith R C", 
                                 role: "Platform Architect & Lead UI/UX", 
                                 desc: "Clinical pathology workstation design, coffered lattice matrix, and human-in-the-loop diagnostic ergonomics.", 
-                                image: '/assets/lohith_portrait.jpg' 
+                                image: '/assets/lohith_portrait.jpg',
+                                objectPosition: 'center 20%'
                             }
                         ].map((member, i) => (
                             <div
@@ -112,6 +115,7 @@ const About = () => {
                                         <img 
                                             src={member.image} 
                                             alt={member.name} 
+                                            style={{ objectPosition: member.objectPosition || 'center' }}
                                             className="w-full h-full object-cover filter contrast-[1.02] hover:scale-105 transition-transform duration-500" 
                                         />
                                     </div>

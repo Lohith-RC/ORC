@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { LogIn, User, Lock, ArrowRight, ShieldCheck, AlertCircle } from 'lucide-react';
+import { LogIn, User, Lock, ArrowRight, ShieldCheck, AlertCircle, Info } from 'lucide-react';
 import axios from 'axios';
 import { API_BASE_URL } from './api';
 import loginImage from './images/3.jpg';
@@ -12,6 +12,8 @@ const Login = ({ onLogin }) => {
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
     const navigate = useNavigate();
+    const location = useLocation();
+    const isExpired = new URLSearchParams(location.search).get('expired') === '1';
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -19,17 +21,29 @@ const Login = ({ onLogin }) => {
         setLoading(true);
         try {
             const formData = new URLSearchParams();
-            formData.append('username', email);
+            formData.append('username', email.trim());
             formData.append('password', password);
 
             const response = await axios.post(`${API_BASE_URL}/login`, formData, {
                 headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
             });
-            onLogin(response.data.access_token);
-            navigate('/upload');
+
+            if (response.data && response.data.access_token) {
+                onLogin(response.data.access_token);
+                navigate('/upload');
+            } else {
+                setError('Unexpected response from authentication service.');
+            }
         } catch (err) {
-            const msg = err.response?.data?.detail || err.response?.data?.error || 'Invalid credentials. Please verify your practitioner ID and password.';
-            setError(msg);
+            console.error('Login authentication error:', err);
+            const detail = err.response?.data?.detail;
+            if (Array.isArray(detail)) {
+                setError(detail.map(d => d.msg).join('. '));
+            } else if (typeof detail === 'string') {
+                setError(detail);
+            } else {
+                setError('Authentication failed. Please verify your practitioner credentials or network connection.');
+            }
         } finally {
             setLoading(false);
         }
@@ -38,6 +52,7 @@ const Login = ({ onLogin }) => {
     const handleFillDemo = () => {
         setEmail('dr_clinician');
         setPassword('ClinicianPass123!');
+        setError('');
     };
 
     return (
@@ -62,6 +77,13 @@ const Login = ({ onLogin }) => {
                             Enter authorized medical or dental credentials to access screening tools and patient dossiers.
                         </p>
                     </div>
+
+                    {isExpired && !error && (
+                        <div className="p-3.5 rounded-xl border border-amber-500/30 bg-amber-500/10 flex items-start gap-2 text-xs text-amber-700 dark:text-amber-300">
+                            <Info className="w-4 h-4 shrink-0 mt-0.5" />
+                            <span>Your clinical session has expired. Please authenticate to continue.</span>
+                        </div>
+                    )}
 
                     {error && (
                         <div className="p-3.5 rounded-xl border border-rose-500/30 bg-rose-500/10 flex items-start gap-2 text-xs text-rose-600 dark:text-rose-400">
